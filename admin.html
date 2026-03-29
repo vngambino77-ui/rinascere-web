@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Ph. Rinascere Fotografías</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
+      authDomain: "rinascere-fotografias.firebaseapp.com",
+      projectId: "rinascere-fotografias",
+      storageBucket: "rinascere-fotografias.firebasestorage.app",
+      messagingSenderId: "234239060454",
+      appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ── Cloudinary config ──────────────────────────────────
+    const CLOUD_NAME   = "dwqvqpkbe";
+    const UPLOAD_PRESET = "rinascere_upload";
+    const LOGO_ID      = "My Brand/logo_png_fwpt2v";
+
+    // URL con marca de agua automática de Cloudinary
+    window.urlMarcaAgua = (publicId, w=600) => {
+      const l = encodeURIComponent(LOGO_ID);
+      return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/l_${l},o_50,w_0.35,g_center/fl_layer_apply/w_${w},q_auto,f_auto/${publicId}`;
+    };
+
+    // ── Subir foto a Cloudinary via fetch (sin SDK) ────────
+    window.subirFotoCloudinary = async function(archivo, nombreCarpeta, onProgress) {
+      const formData = new FormData();
+      formData.append("file", archivo);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("folder", `albumes/${nombreCarpeta}`);
+
+      const xhr = new XMLHttpRequest();
+      return new Promise((resolve, reject) => {
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100));
+        };
+        xhr.onload = () => {
+          const data = JSON.parse(xhr.responseText);
+          if (data.public_id) resolve(data.public_id);
+          else reject(new Error("Error al subir"));
+        };
+        xhr.onerror = reject;
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+        xhr.send(formData);
+      });
+    };
+
+    // ── CRUD Firebase ──────────────────────────────────────
+    window.fbGuardarAlbum = async (datos) => {
+      const ref = await addDoc(collection(db, "albumes"), datos);
+      return ref.id;
+    };
+
+    window.fbCargarAlbumes = async () => {
+      const snap = await getDocs(collection(db, "albumes"));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    };
+
+    window.fbEliminarAlbum = async (id) => {
+      await deleteDoc(doc(db, "albumes", id));
+    };
+
+    window.fbActualizarAlbum = async (id, datos) => {
+      await updateDoc(doc(db, "albumes", id), datos);
+    };
+
+    // Iniciamos el panel cuando carga
+    document.addEventListener("DOMContentLoaded", () => {
+      window.iniciarPanel();
+    });
+  </script>
+
+  <style>
+    :root{
+      --dorado:#C9A84C;--dorado-claro:#E8C97A;--dorado-oscuro:#A07830;
+      --blanco:#fff;--gris-claro:#F5F5F0;--gris-medio:#888;--negro:#1A1A1A;
+      --verde:#27ae60;--rojo:#e74c3c;
+      --fuente-titulo:'Playfair Display',serif;--fuente-cuerpo:'Inter',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--fuente-cuerpo);background:#f0ede8;color:var(--negro);}
+
+    /* ── LAYOUT ── */
+    .layout{display:flex;min-height:100vh;}
+    .sidebar{
+      width:230px;background:var(--negro);color:var(--blanco);
+      display:flex;flex-direction:column;padding:24px 0;
+      position:fixed;top:0;left:0;height:100vh;z-index:50;
+    }
+    .sidebar-logo{
+      padding:0 20px 24px;border-bottom:1px solid #2a2a2a;
+      display:flex;align-items:center;gap:10px;
+    }
+    .sidebar-logo img{height:44px;width:auto;mix-blend-mode:screen;}
+    .sidebar-logo-txt{font-family:var(--fuente-titulo);font-size:0.85rem;line-height:1.3;}
+    .sidebar-logo-txt span{display:block;font-size:0.65rem;color:var(--dorado);letter-spacing:2px;text-transform:uppercase;}
+    .sidebar nav{padding:16px 0;flex:1;}
+    .sidebar nav a{
+      display:flex;align-items:center;gap:12px;padding:12px 20px;
+      color:#aaa;text-decoration:none;font-size:0.85rem;
+      border-left:3px solid transparent;transition:all 0.2s;cursor:pointer;
+    }
+    .sidebar nav a:hover,.sidebar nav a.activo{color:var(--blanco);background:rgba(201,168,76,0.1);border-left-color:var(--dorado);}
+    .sidebar-footer{padding:16px 20px;font-size:0.72rem;color:#444;border-top:1px solid #2a2a2a;}
+
+    /* ── CONTENIDO ── */
+    .contenido{margin-left:230px;flex:1;padding:32px;}
+
+    /* ── STATS ── */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px;}
+    .stat{background:var(--blanco);border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border-left:4px solid var(--dorado);}
+    .stat .num{font-size:1.9rem;font-weight:700;font-family:var(--fuente-titulo);}
+    .stat .lbl{font-size:0.72rem;color:var(--gris-medio);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+    /* ── ENCABEZADO ── */
+    .encabezado{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+    .encabezado h1{font-family:var(--fuente-titulo);font-size:1.7rem;}
+    .encabezado h1 span{color:var(--dorado);}
+
+    /* ── BOTONES ── */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-family:var(--fuente-cuerpo);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+    .btn-dorado{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);box-shadow:0 3px 12px rgba(201,168,76,0.3);}
+    .btn-dorado:hover{transform:translateY(-1px);}
+    .btn-negro{background:var(--negro);color:var(--blanco);}
+    .btn-rojo{background:var(--rojo);color:var(--blanco);}
+    .btn-verde{background:var(--verde);color:var(--blanco);}
+    .btn-sm{padding:6px 14px;font-size:0.78rem;}
+
+    /* ── TABLA ── */
+    .tabla-wrap{background:var(--blanco);border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,0.07);}
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--negro);color:var(--blanco);}
+    thead th{padding:13px 16px;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;text-align:left;}
+    tbody tr{border-bottom:1px solid #f0f0f0;transition:background 0.15s;}
+    tbody tr:hover{background:#fafaf8;}
+    tbody td{padding:13px 16px;font-size:0.85rem;vertical-align:middle;}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;}
+    .badge-pub{background:#e8f5e9;color:#2e7d32;}
+    .badge-priv{background:#fff8e1;color:#f57f17;}
+    .acciones{display:flex;gap:6px;flex-wrap:wrap;}
+    .thumb{width:48px;height:36px;object-fit:cover;border-radius:6px;}
+
+    /* ── MODAL ── */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center;}
+    .overlay.open{display:flex;}
+    .modal{background:var(--blanco);border-radius:16px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+    .modal h2{font-family:var(--fuente-titulo);font-size:1.4rem;margin-bottom:22px;}
+    .modal h2 span{color:var(--dorado);}
+
+    /* ── FORM ── */
+    .fg{margin-bottom:16px;}
+    .fg label{display:block;font-size:0.8rem;font-weight:600;color:#444;margin-bottom:5px;}
+    .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:var(--fuente-cuerpo);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+    .fg input:focus,.fg select:focus{border-color:var(--dorado);}
+    .fila{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+    /* ── TOGGLE ── */
+    .tog-wrap{display:flex;align-items:center;gap:12px;}
+    .tog{position:relative;width:46px;height:24px;}
+    .tog input{opacity:0;width:0;height:0;}
+    .tog-sl{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;}
+    .tog-sl::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+    .tog input:checked+.tog-sl{background:var(--dorado);}
+    .tog input:checked+.tog-sl::before{transform:translateX(22px);}
+
+    /* ── DROP ZONE ── */
+    .drop{border:2px dashed var(--dorado);border-radius:12px;padding:28px;text-align:center;cursor:pointer;background:rgba(201,168,76,0.03);transition:background 0.2s;}
+    .drop:hover,.drop.over{background:rgba(201,168,76,0.1);}
+    .drop .ico{font-size:2.2rem;margin-bottom:8px;}
+    .drop p{color:var(--gris-medio);font-size:0.85rem;margin-top:6px;}
+    .drop .hint{color:var(--dorado);font-size:0.78rem;margin-top:4px;}
+
+    /* ── PROGRESO SUBIDA ── */
+    .prog-wrap{margin-top:14px;display:none;}
+    .prog-wrap.visible{display:block;}
+    .prog-item{margin-bottom:10px;}
+    .prog-item .nombre{font-size:0.8rem;color:#444;margin-bottom:4px;display:flex;justify-content:space-between;}
+    .prog-bar{height:6px;background:#eee;border-radius:6px;overflow:hidden;}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--dorado),var(--dorado-claro));border-radius:6px;transition:width 0.3s;width:0%;}
+
+    /* ── PREVIEW FOTOS ── */
+    .preview-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+    .preview-grid img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--dorado-claro);}
+
+    /* ── QR ── */
+    .qr-box{background:var(--gris-claro);border-radius:12px;padding:18px;text-align:center;margin-top:18px;display:none;}
+    .qr-box.vis{display:block;}
+    .qr-box strong{display:block;font-size:0.82rem;margin-bottom:10px;}
+    .qr-box p{font-size:0.75rem;color:var(--gris-medio);margin-top:8px;word-break:break-all;}
+
+    /* ── ALERTA ── */
+    .alerta{
+      position:fixed;top:20px;right:20px;z-index:999;
+      background:var(--negro);color:var(--blanco);
+      padding:14px 22px;border-radius:12px;font-size:0.88rem;
+      box-shadow:0 6px 24px rgba(0,0,0,0.2);
+      transform:translateY(-10px);opacity:0;transition:all 0.3s;
+      border-left:4px solid var(--dorado);
+    }
+    .alerta.show{transform:translateY(0);opacity:1;}
+
+    /* ── INSTRUCCIÓN CLOUDINARY ── */
+    .info-box{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 18px;font-size:0.83rem;line-height:1.6;margin-bottom:20px;}
+    .info-box strong{color:var(--dorado-oscuro);}
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
+      <div class="sidebar-logo-txt">
+        Ph. Rinascere
+        <span>Panel admin</span>
+      </div>
+    </div>
+    <nav>
+      <a class="activo">🗂 Álbumes</a>
+      <a>📦 Pedidos</a>
+      <a>📊 Estadísticas</a>
+      <a>🖼 Fondo del sitio</a>
+      <a href="index.html" target="_blank">🌐 Ver sitio web</a>
+    </nav>
+    <div class="sidebar-footer">
+      Sesión: Verónica Gambino<br>
+      <span style="color:var(--dorado)">● Firebase conectado</span>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="contenido">
+
+    <!-- Stats -->
+    <div class="stats" id="stats">
+      <div class="stat"><div class="num" id="st-albumes">—</div><div class="lbl">Álbumes</div></div>
+      <div class="stat"><div class="num" id="st-publicos">—</div><div class="lbl">Públicos</div></div>
+      <div class="stat"><div class="num" id="st-privados">—</div><div class="lbl">Privados</div></div>
+      <div class="stat"><div class="num">$0</div><div class="lbl">Ventas del mes</div></div>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="encabezado">
+      <h1>Mis <span>álbumes</span></h1>
+      <button class="btn btn-dorado" onclick="abrirModal()">+ Nuevo álbum</button>
+    </div>
+
+    <!-- Aviso upload preset -->
+    <div class="info-box" id="aviso-preset">
+      ⚠️ <strong>Paso previo necesario en Cloudinary:</strong>
+      Entrá a <strong>cloudinary.com → Settings → Upload → Upload presets → Add upload preset</strong>.
+      Poné el nombre exacto <strong>rinascere_upload</strong>, cambiá "Signing Mode" a <strong>Unsigned</strong> y guardá.
+      Solo necesitás hacerlo una vez. Después cerrá este aviso.
+      <button class="btn btn-sm btn-negro" style="margin-top:10px" onclick="this.parentElement.style.display='none'">✓ Ya lo hice, cerrar aviso</button>
+    </div>
+
+    <!-- Tabla de álbumes -->
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Portada</th>
+            <th>Nombre del evento</th>
+            <th>Fecha</th>
+            <th>Precio</th>
+            <th>Visibilidad</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL NUEVO ÁLBUM -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Nuevo <span>álbum</span></h2>
+
+    <div class="fila">
+      <div class="fg"><label>Nombre del evento *</label><input id="f-nombre" placeholder="Ej: Maratón 2025"/></div>
+      <div class="fg"><label>Fecha *</label><input type="date" id="f-fecha"/></div>
+    </div>
+    <div class="fila">
+      <div class="fg"><label>Lugar</label><input id="f-lugar" placeholder="Ej: Río Gallegos"/></div>
+      <div class="fg"><label>Precio por foto (ARS) *</label><input type="number" id="f-precio" placeholder="2500"/></div>
+    </div>
+
+    <div class="fg">
+      <label>¿Cómo se identifica el cliente?</label>
+      <select id="f-identif">
+        <option value="dorsal">Por número de dorsal</option>
+        <option value="selfie">Por selfie</option>
+        <option value="ambos">Ambas opciones</option>
+        <option value="ninguno">Sin filtro (ven todo)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Visibilidad</label>
+      <div class="tog-wrap">
+        <label class="tog"><input type="checkbox" id="f-publico" checked/><span class="tog-sl"></span></label>
+        <span id="lbl-vis">🌐 Público — cualquiera con el link puede verlo</span>
+      </div>
+    </div>
+
+    <!-- Subida de fotos -->
+    <div class="fg">
+      <label>Subir fotos del evento</label>
+      <div class="drop" id="drop" onclick="document.getElementById('f-fotos').click()">
+        <div class="ico">📁</div>
+        <strong>Arrastrá las fotos acá o hacé clic</strong>
+        <p>Podés seleccionar múltiples fotos a la vez · JPG, PNG</p>
+        <div class="hint">Tu logo se aplica automáticamente como marca de agua ✓</div>
+      </div>
+      <input type="file" id="f-fotos" multiple accept="image/*" style="display:none"/>
+      <div class="preview-grid" id="preview"></div>
+      <div class="prog-wrap" id="prog-wrap"></div>
+    </div>
+
+    <!-- QR -->
+    <div class="qr-box" id="qr-box">
+      <strong>🔗 Link y QR del álbum</strong>
+      <div id="qr-div"></div>
+      <p id="qr-txt"></p>
+      <button class="btn btn-negro btn-sm" style="margin-top:10px" onclick="descargarQR()">⬇ Descargar QR</button>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;">
+      <button class="btn btn-negro" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-dorado" onclick="guardarAlbum()" id="btn-guardar">✓ Crear álbum y generar QR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTA TOAST -->
+<div class="alerta" id="alerta"></div>
+
+<script>
+  // ── Protección ──────────────────────────────────────────
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  let albumesCache = [];
+  let archivosSeleccionados = [];
+
+  // ── Toggle visibilidad ──────────────────────────────────
+  document.getElementById('f-publico').addEventListener('change', function() {
+    document.getElementById('lbl-vis').textContent = this.checked
+      ? '🌐 Público — cualquiera con el link puede verlo'
+      : '🔒 Privado — solo quien tenga el link y se identifique';
+  });
+
+  // ── Drag & drop ─────────────────────────────────────────
+  const drop = document.getElementById('drop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); procesarArchivos(e.dataTransfer.files); });
+  document.getElementById('f-fotos').addEventListener('change', function() { procesarArchivos(this.files); });
+
+  function procesarArchivos(files) {
+    archivosSeleccionados = Array.from(files);
+    const prev = document.getElementById('preview');
+    prev.innerHTML = '';
+    archivosSeleccionados.slice(0,16).forEach(f => {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      prev.appendChild(img);
+    });
+    if (archivosSeleccionados.length > 16) {
+      const más = document.createElement('div');
+      más.style.cssText = 'width:64px;height:64px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#888;text-align:center;';
+      más.textContent = `+${archivosSeleccionados.length - 16} más`;
+      prev.appendChild(más);
+    }
+  }
+
+  // ── Iniciar panel ────────────────────────────────────────
+  window.iniciarPanel = async function() {
+    try {
+      albumesCache = await window.fbCargarAlbumes();
+      renderTabla(albumesCache);
+      actualizarStats(albumesCache);
+    } catch(e) {
+      console.warn("Error cargando Firebase:", e);
+      renderTabla([]);
+    }
+  };
+
+  // ── Render tabla ─────────────────────────────────────────
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tbody');
+    if (lista.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa">
+        Todavía no hay álbumes. ¡Creá el primero! 👆</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(a => `
+      <tr>
+        <td>${a.portadaUrl ? `<img class="thumb" src="${a.portadaUrl}"/>` : '📷'}</td>
+        <td><strong>${a.nombre}</strong></td>
+        <td>${a.fecha || '—'}</td>
+        <td>$${Number(a.precio||0).toLocaleString('es-AR')}</td>
+        <td><span class="badge ${a.publico ? 'badge-pub':'badge-priv'}">${a.publico ? '🌐 Público':'🔒 Privado'}</span></td>
+        <td>
+          <div class="acciones">
+            <button class="btn btn-negro btn-sm" onclick="verQR('${a.slug}','${a.nombre}')">📱 QR</button>
+            <button class="btn btn-rojo btn-sm" onclick="eliminarAlbum('${a.id}','${a.nombre}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function actualizarStats(lista) {
+    document.getElementById('st-albumes').textContent  = lista.length;
+    document.getElementById('st-publicos').textContent = lista.filter(a=>a.publico).length;
+    document.getElementById('st-privados').textContent = lista.filter(a=>!a.publico).length;
+  }
+
+  // ── Modal ────────────────────────────────────────────────
+  function abrirModal()  { document.getElementById('overlay').classList.add('open'); }
+  function cerrarModal() {
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('qr-box').classList.remove('vis');
+    document.getElementById('preview').innerHTML = '';
+    document.getElementById('prog-wrap').innerHTML = '';
+    document.getElementById('prog-wrap').classList.remove('visible');
+    archivosSeleccionados = [];
+  }
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) cerrarModal();
+  });
+
+  // ── Guardar álbum ────────────────────────────────────────
+  window.guardarAlbum = async function() {
+    const nombre  = document.getElementById('f-nombre').value.trim();
+    const fecha   = document.getElementById('f-fecha').value;
+    const precio  = document.getElementById('f-precio').value;
+    const lugar   = document.getElementById('f-lugar').value.trim();
+    const publico = document.getElementById('f-publico').checked;
+    const identif = document.getElementById('f-identif').value;
+
+    if (!nombre || !fecha || !precio) {
+      toast('⚠️ Completá nombre, fecha y precio'); return;
+    }
+
+    // Generar slug único para el link y QR
+    const slug = nombre.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
+      + '-' + Math.random().toString(36).slice(2,6);
+
+    const btn = document.getElementById('btn-guardar');
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+
+    // Subir fotos a Cloudinary si hay archivos seleccionados
+    let portadaUrl = null;
+    let fotosSubidas = [];
+
+    if (archivosSeleccionados.length > 0) {
+      const progWrap = document.getElementById('prog-wrap');
+      progWrap.innerHTML = '';
+      progWrap.classList.add('visible');
+
+      for (let i = 0; i < archivosSeleccionados.length; i++) {
+        const archivo = archivosSeleccionados[i];
+        const nombre_corto = archivo.name.length > 25 ? archivo.name.slice(0,22)+'...' : archivo.name;
+
+        // Crear barra de progreso para esta foto
+        const item = document.createElement('div');
+        item.className = 'prog-item';
+        item.innerHTML = `
+          <div class="nombre"><span>${nombre_corto}</span><span id="pct-${i}">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="fill-${i}"></div></div>`;
+        progWrap.appendChild(item);
+
+        try {
+          const publicId = await window.subirFotoCloudinary(
+            archivo, slug,
+            pct => {
+              document.getElementById(`pct-${i}`).textContent = pct + '%';
+              document.getElementById(`fill-${i}`).style.width = pct + '%';
+            }
+          );
+          fotosSubidas.push(publicId);
+          if (i === 0) {
+            // La primera foto es la portada, con marca de agua
+            portadaUrl = window.urlMarcaAgua(publicId, 400);
+          }
+          document.getElementById(`pct-${i}`).textContent = '✓';
+        } catch(err) {
+          document.getElementById(`pct-${i}`).textContent = '✗ Error';
+          console.error("Error subiendo foto:", err);
+        }
+      }
+    }
+
+    // Guardar en Firebase
+    try {
+      const datos = {
+        nombre, fecha, precio: Number(precio), lugar, publico,
+        identificacion: identif, slug,
+        portadaUrl, fotos: fotosSubidas,
+        cantidadFotos: fotosSubidas.length,
+        creadoEn: new Date().toISOString()
+      };
+      const id = await window.fbGuardarAlbumFirebase(datos);
+      albumesCache.unshift({ id, ...datos });
+      renderTabla(albumesCache);
+      actualizarStats(albumesCache);
+      generarQR(slug, nombre);
+      toast('✅ Álbum creado y guardado en Firebase');
+    } catch(err) {
+      toast('❌ Error guardando en Firebase: ' + err.message);
+    }
+
+    btn.textContent = '✓ Crear álbum y generar QR';
+    btn.disabled = false;
+  };
+
+  // ── Generar QR ───────────────────────────────────────────
+  function generarQR(slug, nombre) {
+    const link = `https://rinascerefotografias.com.ar/evento/${slug}`;
+    const div = document.getElementById('qr-div');
+    div.innerHTML = '';
+    new QRCode(div, { text: link, width: 150, height: 150, colorDark:'#1A1A1A', correctLevel: QRCode.CorrectLevel.H });
+    document.getElementById('qr-txt').textContent = link;
+    document.getElementById('qr-box').classList.add('vis');
+  }
+
+  function verQR(slug, nombre) {
+    abrirModal();
+    document.getElementById('f-nombre').value = nombre;
+    setTimeout(() => generarQR(slug, nombre), 100);
+  }
+
+  function descargarQR() {
+    const img = document.querySelector('#qr-div img');
+    if (!img) return;
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'qr-rinascere.png';
+    a.click();
+  }
+
+  // ── Eliminar álbum ───────────────────────────────────────
+  window.eliminarAlbum = async function(id, nombre) {
+    if (!confirm(`¿Eliminás el álbum "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await window.fbEliminarAlbum(id);
+      albumesCache = albumesCache.filter(a => a.id !== id);
+      renderTabla(albumesCache);
+      actualizarStats(albumesCache);
+      toast('🗑 Álbum eliminado');
+    } catch(e) {
+      toast('❌ Error al eliminar');
+    }
+  };
+
+  // ── Toast de notificación ────────────────────────────────
+  function toast(msg) {
+    const el = document.getElementById('alerta');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+</script>
+</body>
+</html>

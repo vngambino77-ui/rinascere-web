@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ph. Rinascere Fotografías — by Verónica Gambino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --dorado:#C9A84C;--dorado-claro:#E8C97A;--dorado-oscuro:#A07830;
+      --blanco:#fff;--crema:#FAF8F4;--gris-claro:#F5F5F0;--gris:#888;
+      --negro:#1A1A1A;--fuente-t:'Playfair Display',serif;--fuente-c:'Inter',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--fuente-c);background:var(--blanco);color:var(--negro);user-select:none;}
+    img{pointer-events:none;-webkit-user-drag:none;}
+
+    /* ══ NAV ══ */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);
+      border-bottom:1px solid #eee;padding:0 40px;
+      display:flex;align-items:center;justify-content:space-between;height:64px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.06);
+    }
+    .nav-links{display:flex;gap:28px;align-items:center;}
+    .nav-links a{text-decoration:none;color:var(--negro);font-size:0.85rem;font-weight:400;transition:color 0.2s;}
+    .nav-links a:hover{color:var(--dorado);}
+    .nav-wa{
+      background:linear-gradient(135deg,#25D366,#128C7E);
+      color:var(--blanco)!important;padding:8px 18px;border-radius:50px;
+      font-weight:600!important;font-size:0.8rem!important;display:flex;align-items:center;gap:6px;
+    }
+    .nav-admin{
+      background:var(--negro);color:var(--blanco)!important;
+      padding:8px 16px;border-radius:50px;font-weight:600!important;font-size:0.8rem!important;
+    }
+    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+    .hamburger span{width:24px;height:2px;background:var(--negro);border-radius:2px;transition:all 0.3s;}
+
+    /* ══ HERO ══ */
+    .hero{
+      min-height:100vh;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;text-align:center;
+      padding:100px 40px 60px;background:var(--crema);
+      position:relative;overflow:hidden;
+    }
+    .hero::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.12) 0%,transparent 70%);
+    }
+    .hero-contenido{position:relative;z-index:2;max-width:700px;}
+
+    /* Logo centrado grande */
+    .hero-logo{
+      width:260px;height:auto;margin:0 auto 8px;
+      mix-blend-mode:multiply;filter:contrast(1.05);
+      animation:fadeDown 0.8s ease both;
+    }
+    @keyframes fadeDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+
+    .hero-nombre{
+      font-family:var(--fuente-t);font-size:clamp(1.6rem,4vw,2.4rem);
+      font-weight:700;color:var(--negro);letter-spacing:1px;
+      animation:fadeUp 0.9s ease 0.2s both;
+    }
+    .hero-sub{
+      font-size:0.8rem;color:var(--dorado-oscuro);letter-spacing:3px;
+      text-transform:uppercase;font-weight:600;margin-bottom:28px;
+      animation:fadeUp 0.9s ease 0.3s both;
+    }
+    .separador{
+      width:60px;height:2px;
+      background:linear-gradient(90deg,var(--dorado),var(--dorado-claro));
+      margin:16px auto;border-radius:2px;
+      animation:fadeUp 0.9s ease 0.35s both;
+    }
+    .hero-bienvenida{
+      font-family:var(--fuente-t);font-style:italic;
+      font-size:clamp(1rem,2.5vw,1.25rem);color:#444;
+      line-height:1.8;max-width:580px;margin:0 auto 12px;
+      animation:fadeUp 0.9s ease 0.4s both;
+    }
+    .hero-bienvenida span{color:var(--dorado);}
+    .hero-tagline{
+      font-size:0.88rem;color:var(--gris);margin-bottom:36px;
+      animation:fadeUp 0.9s ease 0.45s both;
+    }
+    .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.9s ease 0.5s both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:50px;border:none;font-family:var(--fuente-c);font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.25s;text-decoration:none;}
+    .btn-dorado{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);box-shadow:0 4px 18px rgba(201,168,76,0.35);}
+    .btn-dorado:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(201,168,76,0.45);}
+    .btn-outline{background:transparent;color:var(--negro);border:2px solid var(--dorado);}
+    .btn-outline:hover{background:var(--dorado);color:var(--blanco);}
+    .btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:var(--blanco);}
+    .btn-wa:hover{transform:translateY(-2px);}
+
+    /* ══ SECCIONES GENERALES ══ */
+    section{padding:80px 40px;}
+    .sec-titulo{text-align:center;margin-bottom:50px;}
+    .sec-titulo h2{font-family:var(--fuente-t);font-size:2rem;margin-bottom:10px;}
+    .sec-titulo h2::after{content:'';display:block;width:50px;height:2px;background:var(--dorado);margin:12px auto 0;}
+    .sec-titulo p{color:var(--gris);font-size:0.95rem;max-width:500px;margin:0 auto;}
+
+    /* ══ SOBRE MÍ ══ */
+    .sobre-mi{background:var(--blanco);}
+    .sobre-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;max-width:1000px;margin:0 auto;}
+    .sobre-foto{
+      aspect-ratio:4/5;border-radius:20px;overflow:hidden;
+      background:linear-gradient(135deg,var(--gris-claro),#ddd);
+      position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.1);
+    }
+    .sobre-foto::after{
+      content:'📷';position:absolute;inset:0;display:flex;
+      align-items:center;justify-content:center;font-size:5rem;opacity:0.3;
+    }
+    /* Cuando tengas foto personal, agregá: background-image:url('tu-foto.jpg');background-size:cover; */
+    .sobre-foto-placeholder{
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:12px;
+    }
+    .sobre-foto img{width:100%;height:100%;object-fit:cover;}
+    .sobre-logo-sobre{width:180px;opacity:0.15;mix-blend-mode:multiply;}
+    .sobre-texto{}
+    .sobre-texto .eyebrow{font-size:0.75rem;color:var(--dorado);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+    .sobre-texto h2{font-family:var(--fuente-t);font-size:2rem;margin-bottom:6px;}
+    .sobre-texto .nombre-dorado{color:var(--dorado);}
+    .sobre-texto p{color:#555;line-height:1.85;font-size:0.95rem;margin-bottom:16px;font-weight:300;}
+    .sobre-texto p strong{color:var(--negro);font-weight:600;}
+    .sobre-datos{display:flex;flex-direction:column;gap:8px;margin-top:24px;}
+    .sobre-dato{display:flex;align-items:center;gap:10px;font-size:0.88rem;color:#444;}
+    .sobre-dato span:first-child{font-size:1.1rem;}
+
+    /* ══ ÁLBUMES ══ */
+    .albumes-sec{background:var(--crema);}
+    .grilla-albumes{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;max-width:1100px;margin:0 auto;}
+    .tarjeta{border-radius:14px;overflow:hidden;background:var(--blanco);box-shadow:0 2px 16px rgba(0,0,0,0.07);transition:transform 0.25s,box-shadow 0.25s;text-decoration:none;color:inherit;display:block;}
+    .tarjeta:hover{transform:translateY(-5px);box-shadow:0 14px 36px rgba(0,0,0,0.13);}
+    .tarjeta-img{height:190px;background:#ddd;position:relative;overflow:hidden;}
+    .tarjeta-img img{width:100%;height:100%;object-fit:cover;}
+    .t-badge{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.72rem;padding:3px 10px;border-radius:20px;}
+    .t-priv{position:absolute;top:10px;left:10px;background:rgba(201,168,76,0.85);color:#fff;font-size:0.7rem;padding:3px 10px;border-radius:20px;font-weight:600;}
+    .tarjeta-info{padding:16px 18px;}
+    .t-fecha{font-size:0.72rem;color:var(--dorado-oscuro);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+    .t-nombre{font-family:var(--fuente-t);font-size:1rem;font-weight:700;margin-bottom:4px;}
+    .t-lugar{font-size:0.82rem;color:var(--gris);}
+    .tarjeta-pie{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--gris-claro);border-top:1px solid #eee;}
+    .t-precio{font-weight:700;font-size:0.9rem;color:var(--dorado-oscuro);}
+    .t-cta{font-size:0.75rem;color:var(--dorado);font-weight:600;}
+
+    /* ══ BUSCADOR ══ */
+    .buscador-sec{background:var(--blanco);}
+    .buscador-box{max-width:600px;margin:0 auto;text-align:center;}
+    .buscador-inputs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+    .buscador-inputs input{border:2px solid #ddd;border-radius:50px;padding:12px 22px;font-size:0.92rem;outline:none;width:220px;transition:border-color 0.2s;font-family:var(--fuente-c);}
+    .buscador-inputs input:focus{border-color:var(--dorado);}
+
+    /* ══ RESERVAS ══ */
+    .reservas-sec{background:var(--crema);}
+    .reservas-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;max-width:900px;margin:0 auto;}
+    .reservas-info h3{font-family:var(--fuente-t);font-size:1.5rem;margin-bottom:14px;}
+    .reservas-info p{color:#555;line-height:1.8;font-size:0.93rem;margin-bottom:20px;font-weight:300;}
+    .reservas-items{display:flex;flex-direction:column;gap:12px;}
+    .res-item{display:flex;align-items:flex-start;gap:12px;font-size:0.88rem;color:#444;}
+    .res-item .ico{font-size:1.2rem;margin-top:1px;}
+    .calendario-embed{background:var(--blanco);border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.08);text-align:center;}
+    .calendario-embed p{color:var(--gris);font-size:0.85rem;margin-bottom:16px;}
+    .cal-btn{
+      display:block;width:100%;padding:14px;
+      background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));
+      color:var(--blanco);border:none;border-radius:12px;
+      font-family:var(--fuente-c);font-size:0.95rem;font-weight:600;
+      cursor:pointer;text-decoration:none;text-align:center;
+      transition:all 0.2s;box-shadow:0 4px 16px rgba(201,168,76,0.3);
+    }
+    .cal-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,0.4);}
+    .cal-nota{font-size:0.75rem;color:var(--gris);margin-top:10px;}
+
+    /* ══ PORTFOLIO ══ */
+    .portfolio-sec{background:var(--blanco);}
+    .portfolio-box{
+      max-width:800px;margin:0 auto;text-align:center;
+      background:var(--crema);border-radius:20px;padding:50px 40px;
+      border:1px solid #ede8dc;
+    }
+    .portfolio-logo{width:120px;margin:0 auto 20px;mix-blend-mode:multiply;}
+    .portfolio-box h3{font-family:var(--fuente-t);font-size:1.6rem;margin-bottom:12px;}
+    .portfolio-box p{color:#555;line-height:1.8;max-width:480px;margin:0 auto 28px;font-size:0.93rem;}
+
+    /* ══ FOOTER ══ */
+    footer{background:var(--negro);color:#aaa;padding:48px 40px 28px;}
+    .footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;max-width:1000px;margin:0 auto 32px;}
+    .footer-col h4{font-family:var(--fuente-t);color:var(--blanco);font-size:1rem;margin-bottom:14px;}
+    .footer-col p,.footer-col a{font-size:0.83rem;line-height:1.9;color:#888;text-decoration:none;display:block;}
+    .footer-col a:hover{color:var(--dorado);}
+    .footer-col .dorado{color:var(--dorado);}
+    .footer-bottom{text-align:center;border-top:1px solid #2a2a2a;padding-top:20px;font-size:0.78rem;color:#555;}
+    .footer-bottom span{color:var(--dorado);}
+
+    /* ══ BOT LUZ ══ */
+    .bot-btn{
+      position:fixed;bottom:24px;right:24px;z-index:500;
+      width:58px;height:58px;border-radius:50%;
+      background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));
+      border:none;cursor:pointer;
+      box-shadow:0 4px 20px rgba(201,168,76,0.5);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;transition:transform 0.2s;
+      animation:pulse 2.5s infinite;
+    }
+    .bot-btn:hover{transform:scale(1.1);}
+    @keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(201,168,76,0.5);}50%{box-shadow:0 4px 32px rgba(201,168,76,0.75);}}
+
+    .bot-ventana{
+      position:fixed;bottom:96px;right:24px;z-index:500;
+      width:340px;max-height:500px;
+      background:var(--blanco);border-radius:20px;
+      box-shadow:0 12px 48px rgba(0,0,0,0.18);
+      display:flex;flex-direction:column;overflow:hidden;
+      transform:scale(0.9) translateY(10px);opacity:0;
+      pointer-events:none;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .bot-ventana.abierto{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+
+    .bot-header{
+      background:linear-gradient(135deg,var(--negro),#2a2a2a);
+      padding:16px 18px;display:flex;align-items:center;gap:12px;
+    }
+    .bot-avatar{
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));
+      display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+      flex-shrink:0;
+    }
+    .bot-header-txt{flex:1;}
+    .bot-header-txt strong{color:var(--blanco);font-size:0.88rem;display:block;}
+    .bot-header-txt span{color:var(--dorado-claro);font-size:0.72rem;}
+    .bot-cerrar{background:none;border:none;color:#aaa;cursor:pointer;font-size:1.1rem;padding:4px;}
+
+    .bot-mensajes{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fafaf8;max-height:310px;}
+    .msg{max-width:82%;padding:10px 14px;border-radius:16px;font-size:0.84rem;line-height:1.55;animation:msgIn 0.25s ease;}
+    @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+    .msg-bot{background:var(--blanco);color:var(--negro);border-radius:4px 16px 16px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.07);align-self:flex-start;}
+    .msg-user{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);border-radius:16px 16px 4px 16px;align-self:flex-end;}
+
+    /* Opciones rápidas del bot */
+    .bot-opciones{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px;}
+    .bot-op{
+      background:var(--blanco);border:1.5px solid var(--dorado);
+      color:var(--dorado-oscuro);border-radius:20px;
+      padding:6px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;
+      transition:all 0.2s;font-family:var(--fuente-c);
+    }
+    .bot-op:hover{background:var(--dorado);color:var(--blanco);}
+
+    .bot-input-wrap{display:flex;gap:8px;padding:12px 14px;border-top:1px solid #eee;background:var(--blanco);}
+    .bot-input{flex:1;border:1.5px solid #eee;border-radius:20px;padding:9px 14px;font-size:0.83rem;outline:none;font-family:var(--fuente-c);}
+    .bot-input:focus{border-color:var(--dorado);}
+    .bot-send{background:var(--dorado);color:var(--blanco);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+    /* ══ RESPONSIVE ══ */
+    @media(max-width:768px){
+      nav{padding:0 20px;}
+      .nav-links{display:none;}
+      .hamburger{display:flex;}
+      section{padding:60px 20px;}
+      .sobre-grid,.reservas-grid,.footer-grid{grid-template-columns:1fr;}
+      .sobre-foto{aspect-ratio:1/1;max-width:300px;margin:0 auto;}
+      .hero{padding:90px 24px 50px;}
+      .hero-logo{width:180px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a href="#inicio" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v"
+         style="height:40px;mix-blend-mode:multiply;" alt="Logo"/>
+  </a>
+  <div class="nav-links">
+    <a href="#albumes">Álbumes</a>
+    <a href="#reservas">Reservas</a>
+    <a href="#sobre-mi">Sobre mí</a>
+    <a href="#portfolio">Portfolio</a>
+    <a href="https://wa.me/542966346212" target="_blank" class="nav-wa">💬 WhatsApp</a>
+    <a href="admin.html" class="nav-admin">⚙️ Admin</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="inicio">
+  <div class="hero-contenido">
+    <img
+      class="hero-logo"
+      src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v"
+      alt="Ph. Rinascere Fotografías"
+    />
+    <div class="hero-nombre">Ph. Rinascere Fotografías</div>
+    <div class="hero-sub">by Verónica Gambino</div>
+    <div class="separador"></div>
+    <p class="hero-bienvenida">
+      Hay momentos que no vuelven…<br>
+      <span>pero pueden quedarse para siempre</span>
+    </p>
+    <p class="hero-tagline">
+      En Rinascere capturo lo que es real: miradas, emociones y detalles que muchas veces pasan desapercibidos.<br>
+      Cada imagen es una forma de volver a sentir ✨
+    </p>
+    <div class="hero-btns">
+      <a href="#albumes" class="btn btn-dorado">📷 Ver álbumes</a>
+      <a href="#reservas" class="btn btn-outline">📅 Reservar sesión</a>
+      <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BUSCADOR ══ -->
+<section class="buscador-sec" id="buscar">
+  <div class="sec-titulo">
+    <h2>Buscá tu foto</h2>
+    <p>Ingresá tu número de dorsal o usá tu selfie para encontrar tus imágenes</p>
+  </div>
+  <div class="buscador-box">
+    <div class="buscador-inputs">
+      <input type="text" id="inputDorsal" placeholder="Número de dorsal (ej: 342)" maxlength="6"/>
+      <button class="btn btn-dorado" onclick="buscarDorsal()">🔍 Buscar</button>
+    </div>
+    <button class="btn btn-outline" style="margin:0 auto;display:flex;" onclick="alert('📸 Próximamente: búsqueda por selfie con reconocimiento facial')">📸 Buscarme por selfie</button>
+  </div>
+</section>
+
+<!-- ══ ÁLBUMES ══ -->
+<section class="albumes-sec" id="albumes">
+  <div class="sec-titulo">
+    <h2>Álbumes recientes</h2>
+    <p>Hacé clic en el evento para ver todas las fotos disponibles</p>
+  </div>
+  <div class="grilla-albumes" id="grilla"></div>
+</section>
+
+<!-- ══ SOBRE MÍ ══ -->
+<section class="sobre-mi" id="sobre-mi">
+  <div class="sobre-grid">
+    <div class="sobre-foto">
+      <!-- Cuando tengas foto personal reemplazá este div por: <img src="tu-foto.jpg"/> -->
+      <div class="sobre-foto-placeholder">
+        <img class="sobre-logo-sobre"
+          src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v"
+          alt="Logo"/>
+      </div>
+    </div>
+    <div class="sobre-texto">
+      <div class="eyebrow">Sobre mí</div>
+      <h2>Verónica <span class="nombre-dorado">Gambino</span></h2>
+      <div class="separador" style="margin:14px 0;"></div>
+      <p>Soy Verónica, fotógrafa y creadora de <strong>Rinascere Fotografías</strong>.</p>
+      <p>Mi forma de ver la fotografía nace desde la sensibilidad… desde lo simple, lo real y lo que muchas veces pasa desapercibido.</p>
+      <p><em>No busco fotos perfectas, busco momentos honestos</em> — miradas que dicen algo, gestos que se sienten y recuerdos que perduran. ✨</p>
+      <div class="sobre-datos">
+        <div class="sobre-dato"><span>📍</span><span>Río Gallegos, Santa Cruz · Toda la región patagónica</span></div>
+        <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank" style="color:var(--dorado);text-decoration:none;">+54 9 2966 346212</a></div>
+        <div class="sobre-dato"><span>🌐</span><span>Cobertura en toda Argentina</span></div>
+      </div>
+      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 Escribime</a>
+        <a href="#reservas" class="btn btn-outline">📅 Reservar sesión</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ RESERVAS ══ -->
+<section class="reservas-sec" id="reservas">
+  <div class="sec-titulo">
+    <h2>Reservá tu sesión</h2>
+    <p>Cupos limitados para garantizar la calidad de cada sesión</p>
+  </div>
+  <div class="reservas-grid">
+    <div class="reservas-info">
+      <h3>Una experiencia<br><span style="color:var(--dorado)">pensada para vos</span></h3>
+      <p>Trabajo con sesiones personalizadas, acompañándote desde la planificación hasta la entrega final. La idea es que disfrutes el proceso y no solo el resultado. ✨</p>
+      <div class="reservas-items">
+        <div class="res-item"><span class="ico">✨</span><span>Acompañamiento previo a la sesión</span></div>
+        <div class="res-item"><span class="ico">📸</span><span>Guía y dirección durante la sesión</span></div>
+        <div class="res-item"><span class="ico">🎨</span><span>Edición cuidada con estética personal</span></div>
+        <div class="res-item"><span class="ico">💛</span><span>Entrega digital de alta resolución</span></div>
+        <div class="res-item"><span class="ico">📍</span><span>Sesiones en Río Gallegos y toda la región</span></div>
+      </div>
+    </div>
+    <div class="calendario-embed">
+      <div style="font-size:2.5rem;margin-bottom:12px;">📅</div>
+      <h3 style="font-family:var(--fuente-t);font-size:1.2rem;margin-bottom:8px;">Elegí tu fecha</h3>
+      <p>Seleccioná el día y horario que mejor te quede. Te confirmo la disponibilidad al instante.</p>
+      <!--
+        INSTRUCCIÓN: Para conectar con Google Calendar:
+        1. Entrá a calendar.google.com
+        2. Creá un calendario nuevo llamado "Rinascere Sesiones"
+        3. Configuración → "Citas" → Copiar link de reserva
+        4. Reemplazá el href del botón de abajo con ese link
+      -->
+      <a
+        href="https://calendar.app.google/tbUKQMJbpSDcCqs88" 
+        target="_blank"
+        class="cal-btn"
+      >
+        📅 Ver disponibilidad y reservar
+      </a>
+      <p class="cal-nota">Cupos limitados · Confirmación inmediata por WhatsApp</p>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
+        <a href="https://wa.me/542966346212?text=Hola%20Ver%C3%B3nica!%20Quiero%20reservar%20una%20sesi%C3%B3n%20fotogr%C3%A1fica%20%F0%9F%93%B8" target="_blank" class="btn btn-wa" style="width:100%;justify-content:center;">
+          💬 Consultar por WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PORTFOLIO ══ -->
+<section class="portfolio-sec" id="portfolio">
+  <div class="sec-titulo">
+    <h2>Mi portfolio</h2>
+    <p>Una selección de trabajos que reflejan mi forma de ver y sentir la fotografía</p>
+  </div>
+  <div class="portfolio-box">
+    <img class="portfolio-logo"
+      src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v"
+      alt="Logo Rinascere"/>
+    <h3>Mirá mi trabajo completo</h3>
+    <p>Visitá mi portfolio en Adobe Portfolio para explorar todas mis colecciones, proyectos y el estilo que me define.</p>
+    <!--
+      INSTRUCCIÓN: Reemplazá el href con la URL de tu Adobe Portfolio
+      Ejemplo: https://veronicagambino.myportfolio.com
+    -->
+    <a       href="https://vngambino77.myportfolio.com" target="_blank" class="btn btn-dorado" style="margin:0 auto;">
+      🎨 Ver portfolio completo
+    </a>
+    <p style="font-size:0.78rem;color:var(--gris);margin-top:14px;">Adobe Portfolio · Fotografía profesional</p>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v"
+           style="height:50px;mix-blend-mode:screen;margin-bottom:12px;" alt="Logo"/>
+      <p>Fotografía profesional que captura momentos honestos y emociones reales.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navegación</h4>
+      <a href="#inicio">Inicio</a>
+      <a href="#albumes">Álbumes</a>
+      <a href="#reservas">Reservas</a>
+      <a href="#sobre-mi">Sobre mí</a>
+      <a href="#portfolio">Portfolio</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <a href="https://wa.me/542966346212" target="_blank">💬 +54 9 2966 346212</a>
+      <p>📍 Río Gallegos, Santa Cruz</p>
+      <p>🌐 Toda la región patagónica</p>
+      <p style="margin-top:10px;" class="dorado">✨ Cupos limitados</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    © 2025 <span>Ph. Rinascere Fotografías</span> · by Verónica Gambino · Todos los derechos reservados
+  </div>
+</footer>
+
+<!-- ══ BOT LUZ ══ -->
+<button class="bot-btn" onclick="toggleBot()" title="Hablar con Luz">✨</button>
+
+<div class="bot-ventana" id="bot-ventana">
+  <div class="bot-header">
+    <div class="bot-avatar">💛</div>
+    <div class="bot-header-txt">
+      <strong>Luz Rinascere</strong>
+      <span>Asistente · en línea ahora</span>
+    </div>
+    <button class="bot-cerrar" onclick="toggleBot()">✕</button>
+  </div>
+  <div class="bot-mensajes" id="bot-msgs"></div>
+  <div class="bot-opciones" id="bot-ops"></div>
+  <div class="bot-input-wrap">
+    <input class="bot-input" id="bot-input" placeholder="Escribí tu mensaje..." onkeydown="if(event.key==='Enter')enviarMsg()"/>
+    <button class="bot-send" onclick="enviarMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+  // ── Protección ──────────────────────────────────────────
+  document.addEventListener('contextmenu',e=>e.preventDefault());
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&['s','p','u','a'].includes(e.key.toLowerCase()))e.preventDefault();
+    if(e.key==='F12'||e.key==='PrintScreen')e.preventDefault();
+  });
+
+  // ── Nav mobile ─────────────────────────────────────────
+  function toggleMenu(){
+    const nl = document.querySelector('.nav-links');
+    nl.style.display = nl.style.display === 'flex' ? 'none' : 'flex';
+    nl.style.flexDirection = 'column';
+    nl.style.position = 'absolute';
+    nl.style.top = '64px';
+    nl.style.left = '0';
+    nl.style.right = '0';
+    nl.style.background = '#fff';
+    nl.style.padding = '20px';
+    nl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+  }
+
+  // ── Álbumes de ejemplo ──────────────────────────────────
+  const albumsEj = [
+    {id:'1',nombre:"Maratón Ciudad de Río Gallegos",fecha:"15 Jun 2025",lugar:"Río Gallegos",cantidadFotos:348,precio:"$2.500",publico:true,imagenUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80"},
+    {id:'2',nombre:"Trail Patagonia Extrema",fecha:"28 Jul 2025",lugar:"El Calafate",cantidadFotos:512,precio:"$2.500",publico:true,imagenUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80"},
+    {id:'3',nombre:"Evento Privado",fecha:"10 Ago 2025",lugar:"Río Gallegos",cantidadFotos:120,precio:"$1.800",publico:false,imagenUrl:"https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=80"},
+  ];
+
+  function renderAlbums(lista){
+    const g = document.getElementById('grilla');
+    g.innerHTML = lista.length === 0
+      ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
+      : lista.map(a=>`
+        <a class="tarjeta" href="album.html?id=${a.id}">
+          <div class="tarjeta-img">
+            <img src="${a.imagenUrl||''}" alt="${a.nombre}" loading="lazy"/>
+            <div class="t-badge">📷 ${a.cantidadFotos} fotos</div>
+            ${!a.publico?'<div class="t-priv">🔒 Privado</div>':''}
+          </div>
+          <div class="tarjeta-info">
+            <div class="t-fecha">${a.fecha}</div>
+            <div class="t-nombre">${a.nombre}</div>
+            <div class="t-lugar">📍 ${a.lugar}</div>
+          </div>
+          <div class="tarjeta-pie">
+            <span class="t-precio">Desde ${a.precio}</span>
+            <span class="t-cta">Ver fotos →</span>
+          </div>
+        </a>`).join('');
+  }
+  renderAlbums(albumsEj);
+
+  function buscarDorsal(){
+    const d=document.getElementById('inputDorsal').value.trim();
+    if(!d){alert('Ingresá tu número de dorsal');return;}
+    window.location.href=`buscar.html?dorsal=${d}`;
+  }
+
+  // ══════════════════════════════════════════════════════
+  // BOT LUZ RINASCERE
+  // ══════════════════════════════════════════════════════
+  let botAbierto = false;
+  let etapa = 0;
+  let tipoConsulta = null; // 'sesion' o 'fotos'
+
+  const WA_NUMBER = "542966346212";
+
+  // Flujos completos de Luz
+  const flujoSesion = [
+    { bot: "Qué lindo lo que me contás ✨\nCada sesión es única, pensada para reflejar tu esencia y que te sientas cómoda en todo momento 🤍\n¿Es para vos, pareja, familia o algo especial?", ops: ["Para mí sola", "En pareja", "Familia", "Algo especial"] },
+    { bot: "Trabajo con sesiones personalizadas 💛\nIncluyen: ✨ acompañamiento previo · ✨ guía durante la sesión · ✨ edición cuidada\nLa idea es que disfrutes el proceso y no solo el resultado ✨", ops: ["¿Cuánto cuesta?", "¿Dónde son las sesiones?", "Quiero reservar"] },
+    { bot: "Podemos coordinar una fecha que te quede cómoda 🤍\nTrabajo con cupos limitados para mantener la calidad de cada sesión ✨\n¿Querés que te pase disponibilidad?", ops: ["Sí, ver fechas 📅", "Prefiero escribir por WhatsApp 💬"] },
+    { bot: "Va a ser un momento muy especial 💛\nTe redirijo a WhatsApp para coordinar todos los detalles con Verónica ✨", ops: [], accion: "wa" }
+  ];
+
+  const flujoFotos = [
+    { bot: "Tus fotos ya están listas ✨\nPodés verlas con tranquilidad y elegir las que más conecten con vos 💛\n¿Ya buscaste tus imágenes por dorsal?", ops: ["Buscar por dorsal 🔍", "Buscar por selfie 📸", "Necesito ayuda"] },
+    { bot: "Tomate tu tiempo 🤍\nCada imagen fue pensada para reflejar un momento real ✨\nSi querés, puedo ayudarte a elegir o armar una selección 💛", ops: ["¿Cómo compro?", "¿Cuánto cuestan?", "Hablar con Verónica"] },
+    { bot: "Cuando tengas tus favoritas 💛\nPodés avanzar con la compra directamente desde la plataforma.\nEl proceso es simple y podés hacerlo a tu ritmo ✨", ops: ["Ir a los álbumes 📷", "Hablar por WhatsApp 💬"] },
+  ];
+
+  function toggleBot(){
+    botAbierto = !botAbierto;
+    document.getElementById('bot-ventana').classList.toggle('abierto', botAbierto);
+    if(botAbierto && document.getElementById('bot-msgs').children.length === 0) iniciarBot();
+  }
+
+  function iniciarBot(){
+    etapa = 0; tipoConsulta = null;
+    setTimeout(()=>{
+      agregarMsg('bot', "Hola 🤍 soy Luz Rinascere\nGracias por escribir ✨ Estoy para acompañarte en una experiencia fotográfica pensada desde lo natural, lo auténtico y lo emocional\n¿En qué puedo ayudarte hoy? 💛");
+      mostrarOps(["📸 Quiero una sesión fotográfica", "🖼 Buscar mis fotos de un evento", "💬 Consulta general"]);
+    }, 400);
+  }
+
+  function agregarMsg(quien, texto){
+    const div = document.createElement('div');
+    div.className = `msg msg-${quien}`;
+    div.style.whiteSpace = 'pre-line';
+    div.textContent = texto;
+    const msgs = document.getElementById('bot-msgs');
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function mostrarOps(lista){
+    const ops = document.getElementById('bot-ops');
+    ops.innerHTML = lista.map(o=>`<button class="bot-op" onclick="clickOp('${o}')">${o}</button>`).join('');
+  }
+
+  function clickOp(op){
+    document.getElementById('bot-ops').innerHTML = '';
+    agregarMsg('user', op);
+
+    // Primera elección
+    if(!tipoConsulta){
+      if(op.includes('sesión')){
+        tipoConsulta = 'sesion'; etapa = 0;
+        setTimeout(()=>{ agregarMsg('bot', flujoSesion[0].bot); mostrarOps(flujoSesion[0].ops); }, 600);
+      } else if(op.includes('fotos')){
+        tipoConsulta = 'fotos'; etapa = 0;
+        setTimeout(()=>{ agregarMsg('bot', flujoFotos[0].bot); mostrarOps(flujoFotos[0].ops); }, 600);
+      } else {
+        setTimeout(()=>{
+          agregarMsg('bot', "Con gusto te ayudo 🤍\n¿Preferís que Verónica te contacte por WhatsApp o tenés alguna pregunta concreta? 💛");
+          mostrarOps(["Escribir por WhatsApp 💬", "Tengo una pregunta"]);
+        }, 600);
+      }
+      return;
+    }
+
+    // Acciones especiales
+    if(op.includes('WhatsApp') || op.includes('wa') || op.includes('Escribir')){
+      setTimeout(()=>{
+        agregarMsg('bot', "¡Perfecto! 💛\nTe llevo directo a WhatsApp con Verónica ✨\nNos vemos del otro lado 🤍");
+        setTimeout(()=>{ window.open(`https://wa.me/${WA_NUMBER}?text=Hola%20Luz%2C%20vi%20tu%20sitio%20y%20quiero%20consultar%20%F0%9F%93%B8`, '_blank'); notificarWA(op); }, 1200);
+      }, 600);
+      return;
+    }
+    if(op.includes('fechas') || op.includes('reservar') || op.includes('Reservar')){
+      setTimeout(()=>{
+        agregarMsg('bot', "Te llevo al calendario de reservas 📅\nPodés elegir la fecha y hora que mejor te quede 🤍");
+        setTimeout(()=>document.getElementById('reservas').scrollIntoView({behavior:'smooth'}), 1000);
+      }, 600);
+      return;
+    }
+    if(op.includes('álbumes') || op.includes('Buscar')){
+      setTimeout(()=>{
+        agregarMsg('bot', "¡Vamos! 📷\nTe llevo a los álbumes ✨");
+        setTimeout(()=>document.getElementById('albumes').scrollIntoView({behavior:'smooth'}), 1000);
+      }, 600);
+      return;
+    }
+
+    // Avanzar en el flujo
+    const flujo = tipoConsulta === 'sesion' ? flujoSesion : flujoFotos;
+    etapa = Math.min(etapa + 1, flujo.length - 1);
+    const paso = flujo[etapa];
+    setTimeout(()=>{
+      agregarMsg('bot', paso.bot);
+      if(paso.accion === 'wa'){
+        setTimeout(()=>window.open(`https://wa.me/${WA_NUMBER}?text=Hola%20Ver%C3%B3nica%2C%20quiero%20reservar%20una%20sesi%C3%B3n%20%F0%9F%93%B8`, '_blank'), 1200);
+      } else {
+        mostrarOps(paso.ops || []);
+      }
+    }, 600);
+  }
+
+  function enviarMsg(){
+    const inp = document.getElementById('bot-input');
+    const txt = inp.value.trim();
+    if(!txt) return;
+    inp.value = '';
+    agregarMsg('user', txt);
+    document.getElementById('bot-ops').innerHTML = '';
+    // Respuesta genérica + redirige a WA
+    setTimeout(()=>{
+      agregarMsg('bot', "Gracias por escribir 🤍\nVoy a pasarle tu consulta a Verónica para que te responda con toda la atención que merecés ✨\n💛 Te conecto ahora mismo por WhatsApp");
+      setTimeout(()=>{
+        const msg = encodeURIComponent(`Hola Verónica! Un cliente escribió en el bot de tu sitio: "${txt}"`);
+        window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank');
+        notificarWA(txt);
+      }, 1500);
+    }, 700);
+  }
+
+  // Notificación a WA de Verónica (abre WhatsApp con el mensaje del cliente)
+  function notificarWA(contexto){
+    console.log("📱 Notificación enviada a Verónica:", contexto);
+    // En producción esto se conectaría a un webhook de WhatsApp Business API
+    // para enviar una notificación automática sin que el cliente lo vea
+  }
+</script>
+</body>
+</html>
