@@ -9,7 +9,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script>
-    firebase.initializeApp(...){
+    firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
       apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
       authDomain: "rinascere-fotografias.firebaseapp.com",
       projectId: "rinascere-fotografias",
@@ -312,11 +313,11 @@ function urlProtegida(publicId, w=600) {
   }
 
   // ── Cargar álbum ────────────────────────────────────────
-  async function cargarAlbum(){
+  async function cargarAlbum();console.log("Album encontrado:", album);
     await verificarPago();
 
-    const slug = getSlug();
-    if(!slug){
+const slug = window.location.pathname.split("/").pop();   
+console.log("SLUG:", slug);      
       document.getElementById('grilla').innerHTML = '<div class="loading">Álbum no encontrado.</div>';
       return;
     }
@@ -325,7 +326,10 @@ function urlProtegida(publicId, w=600) {
       if(snap.empty){ document.getElementById('grilla').innerHTML = '<div class="loading">Este álbum no existe.</div>'; return; }
 
       album = { id: snap.docs[0].id, ...snap.docs[0].data() };
-todasFotos = album.fotos.map(f => f.id);
+todasFotos = album.fotos.map(f => {
+  return typeof f === "string" ? f : f.id;
+});
+console.log("Fotos:", album.fotos);
       document.getElementById('album-nombre').textContent = album.nombre;
       document.title = album.nombre + ' — Ph. Rinascere';
       document.getElementById('album-meta').textContent = `📍 ${album.lugar||''} · 📅 ${album.fecha||''}`;
