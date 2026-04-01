@@ -21,8 +21,8 @@
       appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    firebase.initializeApp(...){
+    const db = firebase.firestore();
 
     // ── Cloudinary config ──────────────────────────────────
     const CLOUD_NAME   = "dwqvqpkbe";
@@ -470,8 +470,8 @@
     btn.disabled = true;
 
     // Subir fotos a Cloudinary si hay archivos seleccionados
-    let portadaUrl = null;
-    let fotosSubidas = [];
+    let portadaUrl = null;fd.append("folder", `albumes/${carpeta}`);
+    let fotosSubidas = [];fd.append("public_id", archivo.name);
 
     if (archivosSeleccionados.length > 0) {
       const progWrap = document.getElementById('prog-wrap');
@@ -498,15 +498,10 @@
               document.getElementById(`fill-${i}`).style.width = pct + '%';
             }
           );
-          fotosSubidas.push(publicId);
-          if (i === 0) {
-            // La primera foto es la portada, con marca de agua
-            portadaUrl = window.urlMarcaAgua(publicId, 400);
-          }
-          document.getElementById(`pct-${i}`).textContent = '✓';
-        } catch(err) {
-          document.getElementById(`pct-${i}`).textContent = '✗ Error';
-          console.error("Error subiendo foto:", err);
+fotosSubidas.push({
+  id: publicId,
+  url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${publicId}`
+});
         }
       }
     }

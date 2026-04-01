@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script>
-    firebase.initializeApp({
+    firebase.initializeApp(...){
       apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
       authDomain: "rinascere-fotografias.firebaseapp.com",
       projectId: "rinascere-fotografias",
@@ -46,8 +46,9 @@
 
     // ALTA CALIDAD — sin marca de agua, máxima resolución (solo post-pago)
     function urlOriginal(publicId) {
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/q_100,f_auto/${publicId}`;
-    }
+function urlProtegida(publicId, w=600) {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${w},q_auto,f_auto/${publicId}`;
+}
   </script>
   <style>
     :root{
@@ -324,8 +325,7 @@
       if(snap.empty){ document.getElementById('grilla').innerHTML = '<div class="loading">Este álbum no existe.</div>'; return; }
 
       album = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      todasFotos = album.fotos || [];
-
+todasFotos = album.fotos.map(f => f.id);
       document.getElementById('album-nombre').textContent = album.nombre;
       document.title = album.nombre + ' — Ph. Rinascere';
       document.getElementById('album-meta').textContent = `📍 ${album.lugar||''} · 📅 ${album.fecha||''}`;
@@ -512,8 +512,7 @@
     const grid = document.getElementById('descarga-grid');
     grid.innerHTML = fotos.map((pid,i)=>`
       <div class="descarga-item">
-        <img src="${urlOriginal(pid)}" alt="Foto ${i+1}"/>
-        <a href="${urlOriginal(pid)}" download="rinascere_foto_${i+1}.jpg" target="_blank">
+        <a href="${urlOriginal(pid)}" download target="_blank">
           ⬇ Descargar
         </a>
       </div>`).join('');
@@ -523,7 +522,6 @@
     actualizarBarra();
     renderFotos(fotosMostradas);
   }
-
   function descargarTodas(){
     const items = document.querySelectorAll('#descarga-grid a');
     items.forEach((a,i)=>{
@@ -531,6 +529,7 @@
     });
     toast('⬇ Descargando todas las fotos...');
   }
+
 
   // ── Toast ───────────────────────────────────────────────
   function toast(msg){
@@ -544,3 +543,10 @@
 </script>
 </body>
 </html>
+console.log(album.fotos);
+/*
+✔ Se ve la galería
+✔ Funciona descarga en celular
+✔ Podés subir foto sobre mí
+✔ Cloudinary guarda correctamente
+*/

@@ -258,6 +258,23 @@
     <div class="sobre-foto-wrap">
       <div class="sobre-foto">
         <!--
+<img id="img-sobre-mi" src="" alt="Sobre mí" style="width:200px;border-radius:12px;">
+<input type="file" id="input-sobre-mi">
+<script>
+document.getElementById('input-sobre-mi').addEventListener('change', async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", "rinascere_upload");
+const res = await fetch(`https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload`, {
+    method: "POST",
+    body: fd
+  });
+const data = await res.json();
+  document.getElementById('img-sobre-mi').src = data.secure_url;
+});
+</script>
           CUANDO TENGAS TU FOTO PERSONAL:
           1. Subila a Cloudinary → Media Library
           2. Copiá el Public ID
@@ -289,6 +306,7 @@
     </div>
   </div>
 </section>
+
 
 <!-- RESERVAS -->
 <section class="reservas-sec" id="reservas">
@@ -569,3 +587,20 @@
 </script>
 </body>
 </html>
+document.getElementById('input-sobre-mi').addEventListener('change', async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", "rinascere_upload");
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload`, {
+    method: "POST",
+    body: fd
+  });
+
+  const data = await res.json();
+
+  document.getElementById('img-sobre-mi').src = data.secure_url;
+});
