@@ -904,19 +904,24 @@ async function comprar(){
 
   window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
 }
-</script>
+<script>
 
-function renderFotos(album){
+document.addEventListener("DOMContentLoaded", async () => {
 
-  <script>
+  // 🔹 Obtener slug
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
 
-const params = new URLSearchParams(window.location.search);
-const slug = params.get("slug");
-console.log("SLUG:", slug);
+  console.log("SLUG:", slug);
 
-const contenedor = document.getElementById("contenedor-fotos");
+  const contenedor = document.getElementById("contenedor-fotos");
 
-async function cargarAlbum(){
+  if(!contenedor){
+    console.error("No existe contenedor-fotos");
+    return;
+  }
+
+  contenedor.innerHTML = "<p>Cargando fotos...</p>";
 
   try{
 
@@ -940,9 +945,13 @@ async function cargarAlbum(){
     contenedor.innerHTML = "<p>Error al cargar fotos</p>";
   }
 
-}
+});
 
+
+// 🔥 FUNCIÓN LIMPIA (FUERA DEL DOMContentLoaded)
 function renderFotos(album){
+
+  const contenedor = document.getElementById("contenedor-fotos");
 
   contenedor.innerHTML = "";
 
@@ -951,7 +960,7 @@ function renderFotos(album){
     : (album.fotos || "").split(",");
 
   if(!fotos || fotos.length === 0){
-    contenedor.innerHTML = "<p>No hay fotos disponibles</p>";
+    contenedor.innerHTML = "<p>No hay fotos</p>";
     return;
   }
 
@@ -979,6 +988,7 @@ function renderFotos(album){
 
 }
 
+</script>
 // 🚀 INICIAR
 cargarAlbum();
 
