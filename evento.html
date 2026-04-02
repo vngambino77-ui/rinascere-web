@@ -9,8 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script>
-    firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    firebase.initializeApp(...){
       apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
       authDomain: "rinascere-fotografias.firebaseapp.com",
       projectId: "rinascere-fotografias",
@@ -313,11 +312,11 @@ function urlProtegida(publicId, w=600) {
   }
 
   // ── Cargar álbum ────────────────────────────────────────
-  async function cargarAlbum();console.log("Album encontrado:", album);
+  async function cargarAlbum(){
     await verificarPago();
 
-const slug = window.location.pathname.split("/").pop();   
-console.log("SLUG:", slug);      
+    const slug = getSlug();
+    if(!slug){
       document.getElementById('grilla').innerHTML = '<div class="loading">Álbum no encontrado.</div>';
       return;
     }
@@ -326,10 +325,7 @@ console.log("SLUG:", slug);
       if(snap.empty){ document.getElementById('grilla').innerHTML = '<div class="loading">Este álbum no existe.</div>'; return; }
 
       album = { id: snap.docs[0].id, ...snap.docs[0].data() };
-todasFotos = album.fotos.map(f => {
-  return typeof f === "string" ? f : f.id;
-});
-console.log("Fotos:", album.fotos);
+todasFotos = album.fotos.map(f => f.id);
       document.getElementById('album-nombre').textContent = album.nombre;
       document.title = album.nombre + ' — Ph. Rinascere';
       document.getElementById('album-meta').textContent = `📍 ${album.lugar||''} · 📅 ${album.fecha||''}`;
@@ -547,6 +543,10 @@ console.log("Fotos:", album.fotos);
 </script>
 </body>
 </html>
+console.log(album.fotos);
+/*
 ✔ Se ve la galería
 ✔ Funciona descarga en celular
-✔ Funciona descarga en ordenador
+✔ Podés subir foto sobre mí
+✔ Cloudinary guarda correctamente
+*/
