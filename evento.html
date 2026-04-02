@@ -191,27 +191,6 @@
       .foto-card img { height:160px; }
     }
   </style>
-#barra-compra{
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #1A1A1A;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 20px;
-  align-items: center;
-  z-index: 999;
-}
-
-#barra-compra button{
-  background: gold;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-}
 </head>
 <body>
 
@@ -278,8 +257,6 @@
 </div>
 
 <!-- MODAL PAGO -->
-let seleccionadas = [];
-const precioPorFoto = 2500;
 <div class="overlay" id="overlay-pago">
   <div class="modal">
     <h2>Resumen de compra</h2>
@@ -718,9 +695,6 @@ function comprar(){
   <span id="total">$0</span>
   <button onclick="comprar()">Comprar</button>
 <function actualizarBarra(){
-
-  document.getElementById("contador").textContent =
-    seleccionadas.length + " fotos";
 
   document.getElementById("total").textContent =
     "$" + (seleccionadas.length * precioPorFoto);
