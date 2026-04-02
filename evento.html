@@ -191,6 +191,16 @@
       .foto-card img { height:160px; }
     }
   </style>
+.card-foto{
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.cafe{
+  font-size:12px;
+  color:#A07830;
+}
 </head>
 <body>
 
@@ -381,14 +391,20 @@ ${album.precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
     const doc = snap.docs[0];
     const album = doc.data();
 
-    // 👇 ACÁ ES DONDE TENÉS QUE PONERLO
+    renderFotos(album);
+    console.log("ALBUM:", album);
 
   });const album = doc.data();
 
-console.log("FOTOS DEL ÁLBUM:", album.fotos);
+  console.log("FOTOS DEL ÁLBUM:", album.fotos);
 
 // después sigue tu código
-album.fotos.forEach((foto, i) => {
+const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
+
+card.innerHTML = `
+  <img src="${url}" alt="Foto ${i+1}" 
+       onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+`;
       todasFotos = album.fotos || [];
 
       document.getElementById('album-nombre').textContent = album.nombre;
@@ -800,4 +816,46 @@ async function comprar(){
   const data = await res.json();
 
   window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+}
+</script>
+// 🔥 RENDER REAL DE FOTOS (SOLUCIÓN DEFINITIVA)
+
+function renderFotos(album){
+
+  const contenedor = document.getElementById("contenedor-fotos");
+
+  if(!contenedor){
+    console.error("NO EXISTE contenedor-fotos");
+    return;
+  }
+
+  contenedor.innerHTML = "";
+
+  const fotos = Array.isArray(album.fotos)
+    ? album.fotos
+    : (album.fotos || "").split(",");
+
+  fotos.forEach((foto, i) => {
+
+    const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
+
+    const card = document.createElement("div");
+    card.className = "card-foto";
+
+    card.innerHTML = `
+      <img src="${url}" 
+           alt="Foto ${i+1}"
+           style="width:100%; height:220px; object-fit:cover; border-radius:10px;"
+           onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+
+      <div style="padding:8px">
+        <strong>$0</strong>
+        <div class="cafe">☕ Valor colaborativo</div>
+      </div>
+    `;
+
+    contenedor.appendChild(card);
+
+  });
+
 }
