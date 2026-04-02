@@ -6,285 +6,249 @@
   <title>Admin — Ph. Rinascere Fotografías</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    firebase.initializeApp({
       apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
       authDomain: "rinascere-fotografias.firebaseapp.com",
       projectId: "rinascere-fotografias",
       storageBucket: "rinascere-fotografias.firebasestorage.app",
       messagingSenderId: "234239060454",
       appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
-    };
-
-    firebase.initializeApp(...){
+    });
     const db = firebase.firestore();
 
-    // ── Cloudinary config ──────────────────────────────────
-    const CLOUD_NAME   = "dwqvqpkbe";
+    const CLOUD        = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
     const LOGO_ID      = "My Brand/logo_png_fwpt2v";
 
-    // URL con marca de agua automática de Cloudinary
-    window.urlMarcaAgua = (publicId, w=600) => {
+    // URL con marca de agua para preview en admin
+    function urlPreview(publicId) {
       const l = encodeURIComponent(LOGO_ID);
-      return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/l_${l},o_50,w_0.35,g_center/fl_layer_apply/w_${w},q_auto,f_auto/${publicId}`;
-    };
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${l},o_45,w_0.3,g_center/fl_layer_apply/w_400,q_60,f_auto/${publicId}`;
+    }
 
-    // ── Subir foto a Cloudinary via fetch (sin SDK) ────────
-    window.subirFotoCloudinary = async function(archivo, nombreCarpeta, onProgress) {
-      const formData = new FormData();
-      formData.append("file", archivo);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", `albumes/${nombreCarpeta}`);
-
-      const xhr = new XMLHttpRequest();
+    // Subir UN archivo a Cloudinary y retornar su public_id
+    async function subirUnaFoto(archivo, carpeta, onProgress) {
       return new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append("file", archivo);
+        fd.append("upload_preset", UPLOAD_PRESET);
+        const user = "admin";
+
+fd.append("folder", `albumes/${user}/${carpeta}`);
+
+        const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = e => {
-          if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100));
+          if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
         };
         xhr.onload = () => {
-          const data = JSON.parse(xhr.responseText);
-          if (data.public_id) resolve(data.public_id);
-          else reject(new Error("Error al subir"));
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.public_id) resolve(data.public_id);
+            else reject(new Error(data.error?.message || "Error Cloudinary"));
+          } catch(e) { reject(e); }
         };
-        xhr.onerror = reject;
-        xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
-        xhr.send(formData);
+        xhr.onerror = () => reject(new Error("Error de red"));
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`);
+        xhr.send(fd);
       });
-    };
+    }
 
-    // ── CRUD Firebase ──────────────────────────────────────
-    window.fbGuardarAlbum = async (datos) => {
-      const ref = await addDoc(collection(db, "albumes"), datos);
+    // Guardar álbum en Firestore
+    async function fbGuardar(datos) {
+      const ref = await db.collection("albumes").add(datos);
       return ref.id;
-    };
+    }
 
-    window.fbCargarAlbumes = async () => {
-      const snap = await getDocs(collection(db, "albumes"));
+    // Cargar álbumes desde Firestore
+    async function fbCargar() {
+      const snap = await db.collection("albumes").orderBy("creadoEn","desc").get();
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    };
+    }
 
-    window.fbEliminarAlbum = async (id) => {
-      await deleteDoc(doc(db, "albumes", id));
-    };
-
-    window.fbActualizarAlbum = async (id, datos) => {
-      await updateDoc(doc(db, "albumes", id), datos);
-    };
-
-    // Iniciamos el panel cuando carga
-    document.addEventListener("DOMContentLoaded", () => {
-      window.iniciarPanel();
-    });
+    // Eliminar álbum
+    async function fbEliminar(id) {
+      await db.collection("albumes").doc(id).delete();
+    }
   </script>
-
   <style>
-    :root{
-      --dorado:#C9A84C;--dorado-claro:#E8C97A;--dorado-oscuro:#A07830;
-      --blanco:#fff;--gris-claro:#F5F5F0;--gris-medio:#888;--negro:#1A1A1A;
-      --verde:#27ae60;--rojo:#e74c3c;
-      --fuente-titulo:'Playfair Display',serif;--fuente-cuerpo:'Inter',sans-serif;
+    :root {
+      --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
+      --blanco:#fff; --crema:#FAF8F4; --gris-claro:#F5F5F0; --gris:#888; --negro:#1A1A1A;
+      --verde:#27ae60; --rojo:#e74c3c;
+      --fuente-t:'Playfair Display',serif; --fuente-c:'Inter',sans-serif;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:var(--fuente-cuerpo);background:#f0ede8;color:var(--negro);}
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--fuente-c); background:#f0ede8; color:var(--negro); }
 
-    /* ── LAYOUT ── */
-    .layout{display:flex;min-height:100vh;}
-    .sidebar{
-      width:230px;background:var(--negro);color:var(--blanco);
-      display:flex;flex-direction:column;padding:24px 0;
-      position:fixed;top:0;left:0;height:100vh;z-index:50;
-    }
-    .sidebar-logo{
-      padding:0 20px 24px;border-bottom:1px solid #2a2a2a;
-      display:flex;align-items:center;gap:10px;
-    }
-    .sidebar-logo img{height:44px;width:auto;mix-blend-mode:screen;}
-    .sidebar-logo-txt{font-family:var(--fuente-titulo);font-size:0.85rem;line-height:1.3;}
-    .sidebar-logo-txt span{display:block;font-size:0.65rem;color:var(--dorado);letter-spacing:2px;text-transform:uppercase;}
-    .sidebar nav{padding:16px 0;flex:1;}
-    .sidebar nav a{
-      display:flex;align-items:center;gap:12px;padding:12px 20px;
-      color:#aaa;text-decoration:none;font-size:0.85rem;
-      border-left:3px solid transparent;transition:all 0.2s;cursor:pointer;
-    }
-    .sidebar nav a:hover,.sidebar nav a.activo{color:var(--blanco);background:rgba(201,168,76,0.1);border-left-color:var(--dorado);}
-    .sidebar-footer{padding:16px 20px;font-size:0.72rem;color:#444;border-top:1px solid #2a2a2a;}
+    /* LAYOUT */
+    .layout { display:flex; min-height:100vh; }
+    .sidebar { width:230px; background:var(--negro); color:#fff; display:flex; flex-direction:column; padding:24px 0; position:fixed; top:0; left:0; height:100vh; z-index:50; overflow-y:auto; }
+    .sidebar-logo { padding:0 20px 24px; border-bottom:1px solid #2a2a2a; display:flex; align-items:center; gap:10px; }
+    .sidebar-logo img { height:44px; mix-blend-mode:screen; }
+    .sidebar-logo-txt { font-family:var(--fuente-t); font-size:0.85rem; line-height:1.3; }
+    .sidebar-logo-txt span { display:block; font-size:0.65rem; color:var(--dorado); letter-spacing:2px; text-transform:uppercase; }
+    .sidebar nav { padding:16px 0; flex:1; }
+    .sidebar nav a { display:flex; align-items:center; gap:12px; padding:12px 20px; color:#aaa; text-decoration:none; font-size:0.85rem; border-left:3px solid transparent; transition:all 0.2s; cursor:pointer; }
+    .sidebar nav a:hover, .sidebar nav a.activo { color:#fff; background:rgba(201,168,76,0.1); border-left-color:var(--dorado); }
+    .sidebar-footer { padding:16px 20px; font-size:0.72rem; color:#444; border-top:1px solid #2a2a2a; }
 
-    /* ── CONTENIDO ── */
-    .contenido{margin-left:230px;flex:1;padding:32px;}
+    /* CONTENIDO */
+    .contenido { margin-left:230px; flex:1; padding:32px; }
+    @media(max-width:768px) { .sidebar { width:100%; height:auto; position:relative; } .layout { flex-direction:column; } .contenido { margin-left:0; padding:20px; } }
 
-    /* ── STATS ── */
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px;}
-    .stat{background:var(--blanco);border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border-left:4px solid var(--dorado);}
-    .stat .num{font-size:1.9rem;font-weight:700;font-family:var(--fuente-titulo);}
-    .stat .lbl{font-size:0.72rem;color:var(--gris-medio);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-bottom:28px; }
+    .stat { background:var(--blanco); border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); border-left:4px solid var(--dorado); }
+    .stat .num { font-size:1.9rem; font-weight:700; font-family:var(--fuente-t); }
+    .stat .lbl { font-size:0.72rem; color:var(--gris); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
 
-    /* ── ENCABEZADO ── */
-    .encabezado{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
-    .encabezado h1{font-family:var(--fuente-titulo);font-size:1.7rem;}
-    .encabezado h1 span{color:var(--dorado);}
+    /* ENCABEZADO */
+    .encabezado { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .encabezado h1 { font-family:var(--fuente-t); font-size:1.7rem; }
+    .encabezado h1 span { color:var(--dorado); }
 
-    /* ── BOTONES ── */
-    .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-family:var(--fuente-cuerpo);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .btn-dorado{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);box-shadow:0 3px 12px rgba(201,168,76,0.3);}
-    .btn-dorado:hover{transform:translateY(-1px);}
-    .btn-negro{background:var(--negro);color:var(--blanco);}
-    .btn-rojo{background:var(--rojo);color:var(--blanco);}
-    .btn-verde{background:var(--verde);color:var(--blanco);}
-    .btn-sm{padding:6px 14px;font-size:0.78rem;}
+    /* BOTONES */
+    .btn { display:inline-flex; align-items:center; gap:7px; padding:10px 20px; border-radius:50px; border:none; font-family:var(--fuente-c); font-size:0.85rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none; }
+    .btn-dorado { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; box-shadow:0 3px 12px rgba(201,168,76,0.3); }
+    .btn-dorado:hover { transform:translateY(-1px); }
+    .btn-negro { background:var(--negro); color:#fff; }
+    .btn-rojo { background:var(--rojo); color:#fff; }
+    .btn-verde { background:var(--verde); color:#fff; }
+    .btn-sm { padding:6px 14px; font-size:0.78rem; }
 
-    /* ── TABLA ── */
-    .tabla-wrap{background:var(--blanco);border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,0.07);}
-    table{width:100%;border-collapse:collapse;}
-    thead{background:var(--negro);color:var(--blanco);}
-    thead th{padding:13px 16px;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;text-align:left;}
-    tbody tr{border-bottom:1px solid #f0f0f0;transition:background 0.15s;}
-    tbody tr:hover{background:#fafaf8;}
-    tbody td{padding:13px 16px;font-size:0.85rem;vertical-align:middle;}
-    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;}
-    .badge-pub{background:#e8f5e9;color:#2e7d32;}
-    .badge-priv{background:#fff8e1;color:#f57f17;}
-    .acciones{display:flex;gap:6px;flex-wrap:wrap;}
-    .thumb{width:48px;height:36px;object-fit:cover;border-radius:6px;}
+    /* TABLA */
+    .tabla-wrap { background:var(--blanco); border-radius:14px; overflow:hidden; box-shadow:0 2px 14px rgba(0,0,0,0.07); overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:600px; }
+    thead { background:var(--negro); color:#fff; }
+    thead th { padding:13px 16px; font-size:0.78rem; font-weight:600; letter-spacing:0.5px; text-align:left; }
+    tbody tr { border-bottom:1px solid #f0f0f0; transition:background 0.15s; }
+    tbody tr:hover { background:#fafaf8; }
+    tbody td { padding:13px 16px; font-size:0.85rem; vertical-align:middle; }
+    .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.7rem; font-weight:700; }
+    .badge-pub { background:#e8f5e9; color:#2e7d32; }
+    .badge-priv { background:#fff8e1; color:#f57f17; }
+    .acciones { display:flex; gap:6px; flex-wrap:wrap; }
+    .thumb { width:52px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #eee; }
 
-    /* ── MODAL ── */
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center;}
-    .overlay.open{display:flex;}
-    .modal{background:var(--blanco);border-radius:16px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
-    .modal h2{font-family:var(--fuente-titulo);font-size:1.4rem;margin-bottom:22px;}
-    .modal h2 span{color:var(--dorado);}
+    /* MODAL */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--blanco); border-radius:16px; width:600px; max-width:100%; max-height:92vh; overflow-y:auto; padding:32px; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+    .modal h2 { font-family:var(--fuente-t); font-size:1.4rem; margin-bottom:22px; }
+    .modal h2 span { color:var(--dorado); }
 
-    /* ── FORM ── */
-    .fg{margin-bottom:16px;}
-    .fg label{display:block;font-size:0.8rem;font-weight:600;color:#444;margin-bottom:5px;}
-    .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:var(--fuente-cuerpo);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
-    .fg input:focus,.fg select:focus{border-color:var(--dorado);}
-    .fila{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    /* FORM */
+    .fg { margin-bottom:16px; }
+    .fg label { display:block; font-size:0.8rem; font-weight:600; color:#444; margin-bottom:5px; }
+    .fg input, .fg select { width:100%; padding:10px 14px; border:2px solid #e0e0e0; border-radius:10px; font-family:var(--fuente-c); font-size:0.88rem; outline:none; transition:border-color 0.2s; background:var(--blanco); }
+    .fg input:focus, .fg select:focus { border-color:var(--dorado); }
+    .fila { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media(max-width:500px) { .fila { grid-template-columns:1fr; } }
 
-    /* ── TOGGLE ── */
-    .tog-wrap{display:flex;align-items:center;gap:12px;}
-    .tog{position:relative;width:46px;height:24px;}
-    .tog input{opacity:0;width:0;height:0;}
-    .tog-sl{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;}
-    .tog-sl::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
-    .tog input:checked+.tog-sl{background:var(--dorado);}
-    .tog input:checked+.tog-sl::before{transform:translateX(22px);}
+    /* TOGGLE */
+    .tog-wrap { display:flex; align-items:center; gap:12px; }
+    .tog { position:relative; width:46px; height:24px; flex-shrink:0; }
+    .tog input { opacity:0; width:0; height:0; }
+    .tog-sl { position:absolute; inset:0; background:#ccc; border-radius:24px; cursor:pointer; transition:0.3s; }
+    .tog-sl::before { content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.3s; }
+    .tog input:checked + .tog-sl { background:var(--dorado); }
+    .tog input:checked + .tog-sl::before { transform:translateX(22px); }
 
-    /* ── DROP ZONE ── */
-    .drop{border:2px dashed var(--dorado);border-radius:12px;padding:28px;text-align:center;cursor:pointer;background:rgba(201,168,76,0.03);transition:background 0.2s;}
-    .drop:hover,.drop.over{background:rgba(201,168,76,0.1);}
-    .drop .ico{font-size:2.2rem;margin-bottom:8px;}
-    .drop p{color:var(--gris-medio);font-size:0.85rem;margin-top:6px;}
-    .drop .hint{color:var(--dorado);font-size:0.78rem;margin-top:4px;}
+    /* DROP ZONE */
+    .drop { border:2px dashed var(--dorado); border-radius:12px; padding:28px; text-align:center; cursor:pointer; background:rgba(201,168,76,0.03); transition:background 0.2s; }
+    .drop:hover, .drop.over { background:rgba(201,168,76,0.1); }
+    .drop .ico { font-size:2.2rem; margin-bottom:8px; }
+    .drop strong { display:block; font-size:0.9rem; }
+    .drop p { color:var(--gris); font-size:0.82rem; margin-top:6px; }
+    .drop .hint { color:var(--dorado); font-size:0.78rem; margin-top:4px; }
 
-    /* ── PROGRESO SUBIDA ── */
-    .prog-wrap{margin-top:14px;display:none;}
-    .prog-wrap.visible{display:block;}
-    .prog-item{margin-bottom:10px;}
-    .prog-item .nombre{font-size:0.8rem;color:#444;margin-bottom:4px;display:flex;justify-content:space-between;}
-    .prog-bar{height:6px;background:#eee;border-radius:6px;overflow:hidden;}
-    .prog-fill{height:100%;background:linear-gradient(90deg,var(--dorado),var(--dorado-claro));border-radius:6px;transition:width 0.3s;width:0%;}
+    /* PROGRESO */
+    .prog-wrap { margin-top:14px; display:none; }
+    .prog-wrap.visible { display:block; }
+    .prog-item { margin-bottom:10px; background:var(--crema); border-radius:8px; padding:10px 12px; }
+    .prog-nombre { font-size:0.78rem; color:#444; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
+    .prog-bar { height:6px; background:#e0e0e0; border-radius:6px; overflow:hidden; }
+    .prog-fill { height:100%; background:linear-gradient(90deg,var(--dorado),var(--dorado-claro)); border-radius:6px; transition:width 0.3s; width:0%; }
 
-    /* ── PREVIEW FOTOS ── */
-    .preview-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-    .preview-grid img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--dorado-claro);}
+    /* PREVIEW FOTOS */
+    .preview-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .preview-item { position:relative; }
+    .preview-item img { width:72px; height:72px; object-fit:cover; border-radius:8px; border:2px solid var(--dorado-claro); display:block; }
+    .preview-item .preview-ok { position:absolute; top:-4px; right:-4px; background:var(--verde); color:#fff; border-radius:50%; width:18px; height:18px; font-size:0.65rem; display:none; align-items:center; justify-content:center; }
+    .preview-item.subida .preview-ok { display:flex; }
 
-    /* ── QR ── */
-    .qr-box{background:var(--gris-claro);border-radius:12px;padding:18px;text-align:center;margin-top:18px;display:none;}
-    .qr-box.vis{display:block;}
-    .qr-box strong{display:block;font-size:0.82rem;margin-bottom:10px;}
-    .qr-box p{font-size:0.75rem;color:var(--gris-medio);margin-top:8px;word-break:break-all;}
+    /* RESUMEN FOTOS ÁLBUM */
+    .fotos-album { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .fotos-album img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #eee; cursor:pointer; }
 
-    /* ── ALERTA ── */
-    .alerta{
-      position:fixed;top:20px;right:20px;z-index:999;
-      background:var(--negro);color:var(--blanco);
-      padding:14px 22px;border-radius:12px;font-size:0.88rem;
-      box-shadow:0 6px 24px rgba(0,0,0,0.2);
-      transform:translateY(-10px);opacity:0;transition:all 0.3s;
-      border-left:4px solid var(--dorado);
-    }
-    .alerta.show{transform:translateY(0);opacity:1;}
+    /* QR */
+    .qr-box { background:var(--gris-claro); border-radius:12px; padding:18px; text-align:center; margin-top:18px; display:none; }
+    .qr-box.vis { display:block; }
+    .qr-box strong { display:block; font-size:0.82rem; margin-bottom:10px; }
+    .qr-box p { font-size:0.72rem; color:var(--gris); margin-top:8px; word-break:break-all; }
 
-    /* ── INSTRUCCIÓN CLOUDINARY ── */
-    .info-box{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 18px;font-size:0.83rem;line-height:1.6;margin-bottom:20px;}
-    .info-box strong{color:var(--dorado-oscuro);}
+    /* TOAST */
+    .toast { position:fixed; top:20px; right:20px; z-index:999; background:var(--negro); color:#fff; padding:14px 22px; border-radius:12px; font-size:0.88rem; box-shadow:0 6px 24px rgba(0,0,0,0.2); transform:translateY(-10px); opacity:0; transition:all 0.3s; border-left:4px solid var(--dorado); max-width:320px; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.error { border-left-color:var(--rojo); }
+    .toast.ok { border-left-color:var(--verde); }
   </style>
 </head>
 <body>
-
 <div class="layout">
+
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
-      <div class="sidebar-logo-txt">
-        Ph. Rinascere
-        <span>Panel admin</span>
-      </div>
+      <div class="sidebar-logo-txt">Ph. Rinascere<span>Panel admin</span></div>
     </div>
     <nav>
       <a class="activo">🗂 Álbumes</a>
       <a>📦 Pedidos</a>
       <a>📊 Estadísticas</a>
-      <a>🖼 Fondo del sitio</a>
       <a href="index.html" target="_blank">🌐 Ver sitio web</a>
     </nav>
-    <div class="sidebar-footer">
-      Sesión: Verónica Gambino<br>
-      <span style="color:var(--dorado)">● Firebase conectado</span>
-    </div>
+    <div class="sidebar-footer">Verónica Gambino<br><span style="color:var(--dorado)">● Firebase conectado</span></div>
   </aside>
 
   <!-- CONTENIDO -->
   <main class="contenido">
 
     <!-- Stats -->
-    <div class="stats" id="stats">
-      <div class="stat"><div class="num" id="st-albumes">—</div><div class="lbl">Álbumes</div></div>
-      <div class="stat"><div class="num" id="st-publicos">—</div><div class="lbl">Públicos</div></div>
-      <div class="stat"><div class="num" id="st-privados">—</div><div class="lbl">Privados</div></div>
-      <div class="stat"><div class="num">$0</div><div class="lbl">Ventas del mes</div></div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="st-total">—</div><div class="lbl">Álbumes</div></div>
+      <div class="stat"><div class="num" id="st-pub">—</div><div class="lbl">Públicos</div></div>
+      <div class="stat"><div class="num" id="st-priv">—</div><div class="lbl">Privados</div></div>
+      <div class="stat"><div class="num" id="st-fotos">—</div><div class="lbl">Fotos totales</div></div>
     </div>
 
-    <!-- Encabezado -->
     <div class="encabezado">
       <h1>Mis <span>álbumes</span></h1>
       <button class="btn btn-dorado" onclick="abrirModal()">+ Nuevo álbum</button>
     </div>
 
-    <!-- Aviso upload preset -->
-    <div class="info-box" id="aviso-preset">
-      ⚠️ <strong>Paso previo necesario en Cloudinary:</strong>
-      Entrá a <strong>cloudinary.com → Settings → Upload → Upload presets → Add upload preset</strong>.
-      Poné el nombre exacto <strong>rinascere_upload</strong>, cambiá "Signing Mode" a <strong>Unsigned</strong> y guardá.
-      Solo necesitás hacerlo una vez. Después cerrá este aviso.
-      <button class="btn btn-sm btn-negro" style="margin-top:10px" onclick="this.parentElement.style.display='none'">✓ Ya lo hice, cerrar aviso</button>
-    </div>
-
-    <!-- Tabla de álbumes -->
     <div class="tabla-wrap">
       <table>
         <thead>
           <tr>
             <th>Portada</th>
-            <th>Nombre del evento</th>
+            <th>Nombre</th>
             <th>Fecha</th>
+            <th>Fotos</th>
             <th>Precio</th>
             <th>Visibilidad</th>
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody id="tbody"></tbody>
+        <tbody id="tbody">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">Cargando álbumes...</td></tr>
+        </tbody>
       </table>
     </div>
-
   </main>
 </div>
 
@@ -294,14 +258,13 @@
     <h2>Nuevo <span>álbum</span></h2>
 
     <div class="fila">
-      <div class="fg"><label>Nombre del evento *</label><input id="f-nombre" placeholder="Ej: Maratón 2025"/></div>
-      <div class="fg"><label>Fecha *</label><input type="date" id="f-fecha"/></div>
+      <div class="fg"><label>Nombre del evento *</label><input id="f-nombre" placeholder="Ej: Maratón Río Gallegos 2025"/></div>
+      <div class="fg"><label>Fecha del evento *</label><input type="date" id="f-fecha"/></div>
     </div>
     <div class="fila">
       <div class="fg"><label>Lugar</label><input id="f-lugar" placeholder="Ej: Río Gallegos"/></div>
-      <div class="fg"><label>Precio por foto (ARS) *</label><input type="number" id="f-precio" placeholder="2500"/></div>
+      <div class="fg"><label>Precio por foto (ARS) *</label><input type="number" id="f-precio" placeholder="2500" min="0"/></div>
     </div>
-
     <div class="fg">
       <label>¿Cómo se identifica el cliente?</label>
       <select id="f-identif">
@@ -311,143 +274,134 @@
         <option value="ninguno">Sin filtro (ven todo)</option>
       </select>
     </div>
-
     <div class="fg">
-      <label>Visibilidad</label>
+      <label>Visibilidad del álbum</label>
       <div class="tog-wrap">
         <label class="tog"><input type="checkbox" id="f-publico" checked/><span class="tog-sl"></span></label>
         <span id="lbl-vis">🌐 Público — cualquiera con el link puede verlo</span>
       </div>
     </div>
 
-    <!-- Subida de fotos -->
+    <!-- ZONA DE SUBIDA DE FOTOS -->
     <div class="fg">
       <label>Subir fotos del evento</label>
       <div class="drop" id="drop" onclick="document.getElementById('f-fotos').click()">
         <div class="ico">📁</div>
-        <strong>Arrastrá las fotos acá o hacé clic</strong>
+        <strong>Tocá acá para seleccionar fotos</strong>
+        <p>Funciona desde el celular y la computadora</p>
         <p>Podés seleccionar múltiples fotos a la vez · JPG, PNG</p>
-        <div class="hint">Tu logo se aplica automáticamente como marca de agua ✓</div>
+        <div class="hint">✓ Tu logo se aplica automáticamente como marca de agua</div>
       </div>
-      <input type="file" id="f-fotos" multiple accept="image/*" style="display:none"/>
-      <div class="preview-grid" id="preview"></div>
+      <!-- accept="image/*" permite seleccionar desde galería en celular -->
+      <input type="file" id="f-fotos" multiple accept="image/*" capture="environment" style="display:none"/>
+      <div id="contador-sel" style="font-size:0.8rem;color:var(--gris);margin-top:8px;"></div>
+      <div class="preview-grid" id="preview-grid"></div>
       <div class="prog-wrap" id="prog-wrap"></div>
     </div>
 
     <!-- QR -->
     <div class="qr-box" id="qr-box">
-      <strong>🔗 Link y QR del álbum</strong>
+      <strong>🔗 Link y QR del álbum (listo para compartir)</strong>
       <div id="qr-div"></div>
-      <p id="qr-txt"></p>
-      <button class="btn btn-negro btn-sm" style="margin-top:10px" onclick="descargarQR()">⬇ Descargar QR</button>
+      <p id="qr-link"></p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-negro btn-sm" onclick="descargarQR()">⬇ Descargar QR</button>
+        <button class="btn btn-dorado btn-sm" onclick="copiarLink()">📋 Copiar link</button>
+      </div>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap;">
       <button class="btn btn-negro" onclick="cerrarModal()">Cancelar</button>
       <button class="btn btn-dorado" onclick="guardarAlbum()" id="btn-guardar">✓ Crear álbum y generar QR</button>
     </div>
   </div>
 </div>
 
-<!-- ALERTA TOAST -->
-<div class="alerta" id="alerta"></div>
+<!-- MODAL VER FOTOS DEL ÁLBUM -->
+<div class="overlay" id="overlay-fotos">
+  <div class="modal">
+    <h2>Fotos del <span>álbum</span></h2>
+    <p id="fotos-album-titulo" style="color:var(--gris);font-size:0.85rem;margin-bottom:16px;"></p>
+    <div class="fotos-album" id="fotos-album-grid"></div>
+    <div style="margin-top:20px;text-align:right;">
+      <button class="btn btn-negro" onclick="document.getElementById('overlay-fotos').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-  // ── Protección ──────────────────────────────────────────
-  document.addEventListener('contextmenu', e => e.preventDefault());
-
   let albumesCache = [];
   let archivosSeleccionados = [];
+  let slugActual = '';
 
-  // ── Toggle visibilidad ──────────────────────────────────
+  // Toggle visibilidad
   document.getElementById('f-publico').addEventListener('change', function() {
     document.getElementById('lbl-vis').textContent = this.checked
       ? '🌐 Público — cualquiera con el link puede verlo'
-      : '🔒 Privado — solo quien tenga el link y se identifique';
+      : '🔒 Privado — solo quien tenga el link';
   });
 
-  // ── Drag & drop ─────────────────────────────────────────
-  const drop = document.getElementById('drop');
-  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
-  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); procesarArchivos(e.dataTransfer.files); });
-  document.getElementById('f-fotos').addEventListener('change', function() { procesarArchivos(this.files); });
+  // Drag & drop en desktop
+  const dropEl = document.getElementById('drop');
+  dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('over'); });
+  dropEl.addEventListener('dragleave', () => dropEl.classList.remove('over'));
+  dropEl.addEventListener('drop', e => { e.preventDefault(); dropEl.classList.remove('over'); procesarArchivos(e.dataTransfer.files); });
+
+  // Selección normal (desktop y celular)
+  document.getElementById('f-fotos').addEventListener('change', function() {
+    procesarArchivos(this.files);
+  });
 
   function procesarArchivos(files) {
     archivosSeleccionados = Array.from(files);
-    const prev = document.getElementById('preview');
-    prev.innerHTML = '';
-    archivosSeleccionados.slice(0,16).forEach(f => {
+    const grid = document.getElementById('preview-grid');
+    const contador = document.getElementById('contador-sel');
+    grid.innerHTML = '';
+    contador.textContent = `${archivosSeleccionados.length} foto${archivosSeleccionados.length !== 1 ? 's' : ''} seleccionada${archivosSeleccionados.length !== 1 ? 's' : ''}`;
+
+    archivosSeleccionados.forEach((f, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'preview-item';
+      wrap.id = `prev-${i}`;
       const img = document.createElement('img');
       img.src = URL.createObjectURL(f);
-      prev.appendChild(img);
+      const ok = document.createElement('div');
+      ok.className = 'preview-ok';
+      ok.textContent = '✓';
+      wrap.appendChild(img);
+      wrap.appendChild(ok);
+      grid.appendChild(wrap);
     });
-    if (archivosSeleccionados.length > 16) {
-      const más = document.createElement('div');
-      más.style.cssText = 'width:64px;height:64px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#888;text-align:center;';
-      más.textContent = `+${archivosSeleccionados.length - 16} más`;
-      prev.appendChild(más);
-    }
   }
 
-  // ── Iniciar panel ────────────────────────────────────────
-  window.iniciarPanel = async function() {
-    try {
-      albumesCache = await window.fbCargarAlbumes();
-      renderTabla(albumesCache);
-      actualizarStats(albumesCache);
-    } catch(e) {
-      console.warn("Error cargando Firebase:", e);
-      renderTabla([]);
-    }
-  };
-
-  // ── Render tabla ─────────────────────────────────────────
-  function renderTabla(lista) {
-    const tbody = document.getElementById('tbody');
-    if (lista.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa">
-        Todavía no hay álbumes. ¡Creá el primero! 👆</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = lista.map(a => `
-      <tr>
-        <td>${a.portadaUrl ? `<img class="thumb" src="${a.portadaUrl}"/>` : '📷'}</td>
-        <td><strong>${a.nombre}</strong></td>
-        <td>${a.fecha || '—'}</td>
-        <td>$${Number(a.precio||0).toLocaleString('es-AR')}</td>
-        <td><span class="badge ${a.publico ? 'badge-pub':'badge-priv'}">${a.publico ? '🌐 Público':'🔒 Privado'}</span></td>
-        <td>
-          <div class="acciones">
-            <button class="btn btn-negro btn-sm" onclick="verQR('${a.slug}','${a.nombre}')">📱 QR</button>
-            <button class="btn btn-rojo btn-sm" onclick="eliminarAlbum('${a.id}','${a.nombre}')">🗑</button>
-          </div>
-        </td>
-      </tr>`).join('');
-  }
-
-  function actualizarStats(lista) {
-    document.getElementById('st-albumes').textContent  = lista.length;
-    document.getElementById('st-publicos').textContent = lista.filter(a=>a.publico).length;
-    document.getElementById('st-privados').textContent = lista.filter(a=>!a.publico).length;
-  }
-
-  // ── Modal ────────────────────────────────────────────────
-  function abrirModal()  { document.getElementById('overlay').classList.add('open'); }
-  function cerrarModal() {
-    document.getElementById('overlay').classList.remove('open');
+  // ── Modal ──────────────────────────────────────────────
+  function abrirModal() {
+    document.getElementById('overlay').classList.add('open');
     document.getElementById('qr-box').classList.remove('vis');
-    document.getElementById('preview').innerHTML = '';
+    document.getElementById('preview-grid').innerHTML = '';
     document.getElementById('prog-wrap').innerHTML = '';
     document.getElementById('prog-wrap').classList.remove('visible');
+    document.getElementById('contador-sel').textContent = '';
     archivosSeleccionados = [];
+    document.getElementById('f-nombre').value = '';
+    document.getElementById('f-fecha').value = '';
+    document.getElementById('f-lugar').value = '';
+    document.getElementById('f-precio').value = '';
+    document.getElementById('f-fotos').value = '';
   }
+
+  function cerrarModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
   document.getElementById('overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) cerrarModal();
   });
 
-  // ── Guardar álbum ────────────────────────────────────────
-  window.guardarAlbum = async function() {
+  // ── Guardar álbum ──────────────────────────────────────
+  async function guardarAlbum() {
     const nombre  = document.getElementById('f-nombre').value.trim();
     const fecha   = document.getElementById('f-fecha').value;
     const precio  = document.getElementById('f-precio').value;
@@ -456,93 +410,120 @@
     const identif = document.getElementById('f-identif').value;
 
     if (!nombre || !fecha || !precio) {
-      toast('⚠️ Completá nombre, fecha y precio'); return;
+      toast('⚠️ Completá nombre, fecha y precio', 'error'); return;
     }
 
-    // Generar slug único para el link y QR
+    // Generar slug único
     const slug = nombre.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
-      + '-' + Math.random().toString(36).slice(2,6);
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      + '-' + Date.now().toString(36);
+
+    slugActual = slug;
 
     const btn = document.getElementById('btn-guardar');
-    btn.textContent = 'Guardando...';
+    btn.textContent = '⏳ Guardando...';
     btn.disabled = true;
 
-    // Subir fotos a Cloudinary si hay archivos seleccionados
-    let portadaUrl = null;fd.append("folder", `albumes/${carpeta}`);
-    let fotosSubidas = [];fd.append("public_id", archivo.name);
+    let portadaUrl = null;
+    let fotosIds = []; // public_ids de Cloudinary
 
+    // ── Subir fotos a Cloudinary ────────────────────────
     if (archivosSeleccionados.length > 0) {
-      const progWrap = document.getElementById('prog-wrap');
-      progWrap.innerHTML = '';
-      progWrap.classList.add('visible');
+      const pw = document.getElementById('prog-wrap');
+      pw.innerHTML = '';
+      pw.classList.add('visible');
 
       for (let i = 0; i < archivosSeleccionados.length; i++) {
         const archivo = archivosSeleccionados[i];
-        const nombre_corto = archivo.name.length > 25 ? archivo.name.slice(0,22)+'...' : archivo.name;
+        const nomCorto = archivo.name.length > 28 ? archivo.name.slice(0, 25) + '...' : archivo.name;
 
-        // Crear barra de progreso para esta foto
+        // Crear barra de progreso
         const item = document.createElement('div');
         item.className = 'prog-item';
         item.innerHTML = `
-          <div class="nombre"><span>${nombre_corto}</span><span id="pct-${i}">0%</span></div>
+          <div class="prog-nombre">
+            <span>${nomCorto}</span>
+            <span id="pct-${i}">0%</span>
+          </div>
           <div class="prog-bar"><div class="prog-fill" id="fill-${i}"></div></div>`;
-        progWrap.appendChild(item);
+        pw.appendChild(item);
 
         try {
-          const publicId = await window.subirFotoCloudinary(
-            archivo, slug,
+          const publicId = await subirUnaFoto(
+            archivo,
+            slug,
             pct => {
-              document.getElementById(`pct-${i}`).textContent = pct + '%';
-              document.getElementById(`fill-${i}`).style.width = pct + '%';
+              const el = document.getElementById(`pct-${i}`);
+              const fill = document.getElementById(`fill-${i}`);
+              if (el) el.textContent = pct + '%';
+              if (fill) fill.style.width = pct + '%';
             }
           );
-fotosSubidas.push({
-  id: publicId,
-  url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${publicId}`
-});
+          fotosIds.push(publicId);
+          if (i === 0) portadaUrl = urlPreview(publicId);
+
+          // Marcar preview como subida
+          const prevItem = document.getElementById(`prev-${i}`);
+          if (prevItem) prevItem.classList.add('subida');
+
+          const el = document.getElementById(`pct-${i}`);
+          if (el) el.textContent = '✓ Listo';
+
+        } catch (err) {
+          const el = document.getElementById(`pct-${i}`);
+          if (el) el.textContent = '✗ Error';
+          console.error(`Error subiendo foto ${i}:`, err);
+          toast(`❌ Error al subir ${nomCorto}`, 'error');
         }
       }
     }
 
-    // Guardar en Firebase
+    // ── Guardar en Firebase ─────────────────────────────
     try {
       const datos = {
-        nombre, fecha, precio: Number(precio), lugar, publico,
-        identificacion: identif, slug,
-        portadaUrl, fotos: fotosSubidas,
-        cantidadFotos: fotosSubidas.length,
+        nombre,
+        fecha,
+        precio: Number(precio),
+        lugar,
+        publico,
+        identificacion: identif,
+        slug,
+        portadaUrl,
+        fotos: fotosIds,           // array de public_ids de Cloudinary
+        cantidadFotos: fotosIds.length,
         creadoEn: new Date().toISOString()
       };
-      const id = await window.fbGuardarAlbumFirebase(datos);
+
+      const id = await fbGuardar(datos);
       albumesCache.unshift({ id, ...datos });
       renderTabla(albumesCache);
       actualizarStats(albumesCache);
-      generarQR(slug, nombre);
-      toast('✅ Álbum creado y guardado en Firebase');
-    } catch(err) {
-      toast('❌ Error guardando en Firebase: ' + err.message);
+      generarQR(slug);
+      toast(`✅ Álbum creado con ${fotosIds.length} foto${fotosIds.length !== 1 ? 's' : ''}`, 'ok');
+
+    } catch (err) {
+      console.error('Error Firebase:', err);
+      toast('❌ Error guardando en Firebase: ' + err.message, 'error');
     }
 
     btn.textContent = '✓ Crear álbum y generar QR';
     btn.disabled = false;
-  };
-
-  // ── Generar QR ───────────────────────────────────────────
-  function generarQR(slug, nombre) {
-    const link = `https://rinascerefotografias.com.ar/evento/${slug}`;
-    const div = document.getElementById('qr-div');
-    div.innerHTML = '';
-    new QRCode(div, { text: link, width: 150, height: 150, colorDark:'#1A1A1A', correctLevel: QRCode.CorrectLevel.H });
-    document.getElementById('qr-txt').textContent = link;
-    document.getElementById('qr-box').classList.add('vis');
   }
 
-  function verQR(slug, nombre) {
-    abrirModal();
-    document.getElementById('f-nombre').value = nombre;
-    setTimeout(() => generarQR(slug, nombre), 100);
+  // ── QR ─────────────────────────────────────────────────
+  function generarQR(slug) {
+    const link = `https://rinascere-web.vercel.app/evento.html?slug=${slug}`;
+    const div = document.getElementById('qr-div');
+    div.innerHTML = '';
+    new QRCode(div, {
+      text: link,
+      width: 160, height: 160,
+      colorDark: '#1A1A1A', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('qr-link').textContent = link;
+    document.getElementById('qr-box').classList.add('vis');
   }
 
   function descargarQR() {
@@ -550,31 +531,109 @@ fotosSubidas.push({
     if (!img) return;
     const a = document.createElement('a');
     a.href = img.src;
-    a.download = 'qr-rinascere.png';
+    a.download = `qr-${slugActual}.png`;
     a.click();
   }
 
-  // ── Eliminar álbum ───────────────────────────────────────
-  window.eliminarAlbum = async function(id, nombre) {
-    if (!confirm(`¿Eliminás el álbum "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  function copiarLink() {
+    const txt = document.getElementById('qr-link').textContent;
+    navigator.clipboard.writeText(txt).then(() => toast('📋 Link copiado', 'ok'));
+  }
+
+  // ── Tabla ───────────────────────────────────────────────
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tbody');
+    if (lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">Todavía no hay álbumes. ¡Creá el primero! 👆</td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(a => `
+      <tr>
+        <td>${a.portadaUrl ? `<img class="thumb" src="${a.portadaUrl}" alt="portada"/>` : '📷'}</td>
+        <td><strong>${a.nombre}</strong></td>
+        <td>${a.fecha || '—'}</td>
+        <td>${a.cantidadFotos || 0}</td>
+        <td>$${Number(a.precio || 0).toLocaleString('es-AR')}</td>
+        <td><span class="badge ${a.publico ? 'badge-pub' : 'badge-priv'}">${a.publico ? '🌐 Público' : '🔒 Privado'}</span></td>
+        <td>
+          <div class="acciones">
+            <button class="btn btn-negro btn-sm" onclick="verFotos('${a.id}','${a.nombre}')">🖼 Ver fotos</button>
+            <button class="btn btn-negro btn-sm" onclick="verQR('${a.slug}')">📱 QR</button>
+            <button class="btn btn-rojo btn-sm" onclick="eliminar('${a.id}','${a.nombre}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function actualizarStats(lista) {
+    document.getElementById('st-total').textContent  = lista.length;
+    document.getElementById('st-pub').textContent    = lista.filter(a => a.publico).length;
+    document.getElementById('st-priv').textContent   = lista.filter(a => !a.publico).length;
+    document.getElementById('st-fotos').textContent  = lista.reduce((s, a) => s + (a.cantidadFotos || 0), 0);
+  }
+
+  // ── Ver fotos del álbum ─────────────────────────────────
+  function verFotos(albumId, nombre) {
+    const album = albumesCache.find(a => a.id === albumId);
+    if (!album) return;
+    const fotos = album.fotos || [];
+    document.getElementById('fotos-album-titulo').textContent = `${nombre} · ${fotos.length} fotos`;
+    const grid = document.getElementById('fotos-album-grid');
+    if (fotos.length === 0) {
+      grid.innerHTML = '<p style="color:#aaa;padding:20px;">Este álbum no tiene fotos todavía.</p>';
+    } else {
+      grid.innerHTML = fotos.map(pid => `
+        <img src="${urlPreview(pid)}" alt="foto" title="${pid}"
+          onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'64\' height=\'64\'><rect width=\'64\' height=\'64\' fill=\'%23eee\'/><text x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'10\'>Error</text></svg>'"/>`).join('');
+    }
+    document.getElementById('overlay-fotos').classList.add('open');
+  }
+
+  function verQR(slug) {
+    abrirModal();
+    setTimeout(() => generarQR(slug), 100);
+  }
+
+  // ── Eliminar álbum ──────────────────────────────────────
+  async function eliminar(id, nombre) {
+    if (!confirm(`¿Eliminás el álbum "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
     try {
-      await window.fbEliminarAlbum(id);
+      await fbEliminar(id);
       albumesCache = albumesCache.filter(a => a.id !== id);
       renderTabla(albumesCache);
       actualizarStats(albumesCache);
-      toast('🗑 Álbum eliminado');
-    } catch(e) {
-      toast('❌ Error al eliminar');
+      toast('🗑 Álbum eliminado', 'ok');
+    } catch (e) {
+      toast('❌ Error al eliminar', 'error');
     }
-  };
-
-  // ── Toast de notificación ────────────────────────────────
-  function toast(msg) {
-    const el = document.getElementById('alerta');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3500);
   }
+
+  // ── Toast ───────────────────────────────────────────────
+  function toast(msg, tipo = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (tipo ? ' ' + tipo : '');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // ── Cargar álbumes al inicio ────────────────────────────
+  async function iniciar() {
+    try {
+      albumesCache = await fbCargar();
+      renderTabla(albumesCache);
+      actualizarStats(albumesCache);
+    } catch (e) {
+      console.error(e);
+      toast('⚠️ Error conectando con Firebase. Revisá las reglas.', 'error');
+      renderTabla([]);
+    }
+  }
+  iniciar();
 </script>
+<input id="f-clientes" placeholder="Emails separados por coma">
+const clientes = document.getElementById('f-clientes').value.split(',');
+
+datos.clientes = clientes;
 </body>
 </html>
