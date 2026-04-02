@@ -17,177 +17,264 @@
       appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
     });
     const db = firebase.firestore();
+    const CLOUD = "dwqvqpkbe";
+    const UPLOAD_PRESET = "rinascere_upload";
   </script>
   <style>
-    :root{
-      --dorado:#C9A84C;--dorado-claro:#E8C97A;--dorado-oscuro:#A07830;
-      --blanco:#fff;--crema:#FAF8F4;--gris-claro:#F5F5F0;--gris:#888;--negro:#1A1A1A;
-      --fuente-t:'Playfair Display',serif;--fuente-c:'Inter',sans-serif;
+    :root {
+      --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
+      --blanco:#fff; --crema:#FAF8F4; --gris-claro:#F5F5F0; --gris:#888; --negro:#1A1A1A;
+      --fuente-t:'Playfair Display',serif; --fuente-c:'Inter',sans-serif;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    html{scroll-behavior:smooth;}
-    body{font-family:var(--fuente-c);background:var(--blanco);color:var(--negro);user-select:none;}
-    img{pointer-events:none;-webkit-user-drag:none;}
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:var(--fuente-c); background:var(--blanco); color:var(--negro); user-select:none; }
+    img { pointer-events:none; -webkit-user-drag:none; }
 
-    /* ── NAV ── */
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);border-bottom:1px solid #eee;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
-    .nav-links{display:flex;gap:24px;align-items:center;}
-    .nav-links a{text-decoration:none;color:var(--negro);font-size:0.85rem;font-weight:400;transition:color 0.2s;}
-    .nav-links a:hover{color:var(--dorado);}
-    .nav-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:var(--blanco)!important;padding:8px 16px;border-radius:50px;font-weight:600!important;font-size:0.8rem!important;}
-    .nav-admin{background:var(--negro);color:var(--blanco)!important;padding:8px 14px;border-radius:50px;font-weight:600!important;font-size:0.8rem!important;}
-    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
-    .hamburger span{width:24px;height:2px;background:var(--negro);border-radius:2px;display:block;}
+    /* NAV */
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(255,255,255,0.97); backdrop-filter:blur(10px); border-bottom:1px solid #eee; padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+    .nav-logo { display:flex; align-items:center; text-decoration:none; }
+    .nav-logo img { height:42px; mix-blend-mode:multiply; }
+    .nav-links { display:flex; gap:22px; align-items:center; }
+    .nav-links a { text-decoration:none; color:var(--negro); font-size:0.84rem; transition:color 0.2s; }
+    .nav-links a:hover { color:var(--dorado); }
+    .nav-wa { background:linear-gradient(135deg,#25D366,#128C7E); color:#fff!important; padding:7px 16px; border-radius:50px; font-weight:600!important; }
+    .nav-admin { background:var(--negro); color:#fff!important; padding:7px 14px; border-radius:50px; font-weight:600!important; font-size:0.78rem!important; }
+    .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:4px; }
+    .hamburger span { width:24px; height:2px; background:var(--negro); border-radius:2px; display:block; }
 
-    /* ── HERO ── */
-    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 40px 60px;background:var(--crema);position:relative;overflow:hidden;}
-    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.1) 0%,transparent 70%);}
-    .hero-contenido{position:relative;z-index:2;max-width:700px;}
-    .hero-logo{width:260px;height:auto;margin:0 auto 8px;mix-blend-mode:multiply;filter:contrast(1.05);animation:fadeDown 0.8s ease both;}
-    @keyframes fadeDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
-    .hero-nombre{font-family:var(--fuente-t);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--negro);letter-spacing:1px;animation:fadeUp 0.9s ease 0.2s both;}
-    .hero-sub{font-size:0.78rem;color:var(--dorado-oscuro);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:8px;animation:fadeUp 0.9s ease 0.3s both;}
-    .separador{width:60px;height:2px;background:linear-gradient(90deg,var(--dorado),var(--dorado-claro));margin:14px auto;border-radius:2px;animation:fadeUp 0.9s ease 0.35s both;}
-    .hero-bienvenida{font-family:var(--fuente-t);font-style:italic;font-size:clamp(1rem,2.5vw,1.25rem);color:#444;line-height:1.8;max-width:580px;margin:0 auto 10px;animation:fadeUp 0.9s ease 0.4s both;}
-    .hero-bienvenida span{color:var(--dorado);}
-    .hero-tagline{font-size:0.88rem;color:var(--gris);margin-bottom:36px;line-height:1.7;animation:fadeUp 0.9s ease 0.45s both;}
-    .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.9s ease 0.5s both;}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    /* HERO */
+    .hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:100px 32px 60px; background:var(--crema); position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.1) 0%,transparent 70%); }
+    .hero-con { position:relative; z-index:2; max-width:700px; }
+    .hero-logo { width:260px; height:auto; margin:0 auto 8px; mix-blend-mode:multiply; animation:fadeDown 0.8s ease both; }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);} }
+    .hero-nombre { font-family:var(--fuente-t); font-size:clamp(1.6rem,4vw,2.4rem); font-weight:700; letter-spacing:1px; animation:fadeUp 0.9s ease 0.2s both; }
+    .hero-sub { font-size:0.76rem; color:var(--dorado-oscuro); letter-spacing:3px; text-transform:uppercase; font-weight:600; margin-bottom:8px; animation:fadeUp 0.9s ease 0.3s both; }
+    .sep { width:60px; height:2px; background:linear-gradient(90deg,var(--dorado),var(--dorado-claro)); margin:14px auto; border-radius:2px; animation:fadeUp 0.9s ease 0.35s both; }
+    .hero-bienvenida { font-family:var(--fuente-t); font-style:italic; font-size:clamp(1rem,2.5vw,1.25rem); color:#444; line-height:1.8; margin:0 auto 10px; animation:fadeUp 0.9s ease 0.4s both; }
+    .hero-bienvenida span { color:var(--dorado); }
+    .hero-tagline { font-size:0.87rem; color:var(--gris); margin-bottom:36px; line-height:1.7; animation:fadeUp 0.9s ease 0.45s both; }
+    .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; animation:fadeUp 0.9s ease 0.5s both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
 
-    /* ── BOTONES ── */
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:50px;border:none;font-family:var(--fuente-c);font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.25s;text-decoration:none;}
-    .btn-dorado{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);box-shadow:0 4px 18px rgba(201,168,76,0.35);}
-    .btn-dorado:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(201,168,76,0.45);}
-    .btn-outline{background:transparent;color:var(--negro);border:2px solid var(--dorado);}
-    .btn-outline:hover{background:var(--dorado);color:var(--blanco);}
-    .btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:var(--blanco);}
-    .btn-wa:hover{transform:translateY(-2px);}
+    /* BOTONES */
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:50px; border:none; font-family:var(--fuente-c); font-size:0.87rem; font-weight:600; cursor:pointer; transition:all 0.25s; text-decoration:none; }
+    .btn-dorado { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; box-shadow:0 4px 18px rgba(201,168,76,0.35); }
+    .btn-dorado:hover { transform:translateY(-2px); }
+    .btn-outline { background:transparent; color:var(--negro); border:2px solid var(--dorado); }
+    .btn-outline:hover { background:var(--dorado); color:#fff; }
+    .btn-wa { background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
+    .btn-wa:hover { transform:translateY(-2px); }
 
-    /* ── SECCIONES ── */
-    section{padding:80px 40px;}
-    .sec-titulo{text-align:center;margin-bottom:50px;}
-    .sec-titulo h2{font-family:var(--fuente-t);font-size:2rem;margin-bottom:10px;}
-    .sec-titulo h2::after{content:'';display:block;width:50px;height:2px;background:var(--dorado);margin:12px auto 0;}
-    .sec-titulo p{color:var(--gris);font-size:0.95rem;max-width:500px;margin:0 auto;}
+    /* SECCIONES */
+    section { padding:80px 32px; }
+    .sec-titulo { text-align:center; margin-bottom:48px; }
+    .sec-titulo h2 { font-family:var(--fuente-t); font-size:2rem; margin-bottom:10px; }
+    .sec-titulo h2::after { content:''; display:block; width:50px; height:2px; background:var(--dorado); margin:12px auto 0; }
+    .sec-titulo p { color:var(--gris); font-size:0.93rem; max-width:500px; margin:0 auto; }
 
-    /* ── BUSCADOR ── */
-    .buscador-sec{background:var(--blanco);padding:50px 40px;}
-    .buscador-box{max-width:600px;margin:0 auto;text-align:center;}
-    .buscador-inputs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
-    .buscador-inputs input{border:2px solid #ddd;border-radius:50px;padding:12px 22px;font-size:0.92rem;outline:none;width:220px;transition:border-color 0.2s;font-family:var(--fuente-c);}
-    .buscador-inputs input:focus{border-color:var(--dorado);}
+    /* BUSCADOR */
+    .buscador-sec { background:var(--blanco); padding:50px 32px; }
+    .buscador-box { max-width:580px; margin:0 auto; text-align:center; }
+    .buscador-inputs { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:14px; }
+    .buscador-inputs input { border:2px solid #ddd; border-radius:50px; padding:11px 20px; font-size:0.9rem; outline:none; width:210px; transition:border-color 0.2s; font-family:var(--fuente-c); }
+    .buscador-inputs input:focus { border-color:var(--dorado); }
 
-    /* ── ÁLBUMES ── */
-    .albumes-sec{background:var(--crema);}
-    .grilla-albumes{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;max-width:1100px;margin:0 auto;}
-    .tarjeta{border-radius:14px;overflow:hidden;background:var(--blanco);box-shadow:0 2px 16px rgba(0,0,0,0.07);transition:transform 0.25s,box-shadow 0.25s;text-decoration:none;color:inherit;display:block;}
-    .tarjeta:hover{transform:translateY(-5px);box-shadow:0 14px 36px rgba(0,0,0,0.13);}
-    .tarjeta-img{height:190px;background:#ddd;position:relative;overflow:hidden;}
-    .tarjeta-img img{width:100%;height:100%;object-fit:cover;filter:brightness(0.92);}
-    .t-badge{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.72rem;padding:3px 10px;border-radius:20px;}
-    .t-priv{position:absolute;top:10px;left:10px;background:rgba(201,168,76,0.85);color:#fff;font-size:0.7rem;padding:3px 10px;border-radius:20px;font-weight:600;}
-    .tarjeta-info{padding:16px 18px;}
-    .t-fecha{font-size:0.72rem;color:var(--dorado-oscuro);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-    .t-nombre{font-family:var(--fuente-t);font-size:1rem;font-weight:700;margin-bottom:4px;}
-    .t-lugar{font-size:0.82rem;color:var(--gris);}
-    .tarjeta-pie{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--gris-claro);border-top:1px solid #eee;}
-    .t-precio{font-weight:700;font-size:0.9rem;color:var(--dorado-oscuro);}
-    .t-cta{font-size:0.75rem;color:var(--dorado);font-weight:600;}
+    /* ÁLBUMES */
+    .albumes-sec { background:var(--crema); }
+    .grilla-albumes { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:22px; max-width:1100px; margin:0 auto; }
+    .tarjeta { border-radius:14px; overflow:hidden; background:var(--blanco); box-shadow:0 2px 16px rgba(0,0,0,0.07); transition:transform 0.25s,box-shadow 0.25s; text-decoration:none; color:inherit; display:block; }
+    .tarjeta:hover { transform:translateY(-5px); box-shadow:0 14px 36px rgba(0,0,0,0.13); }
+    .t-img { height:185px; background:#ddd; position:relative; overflow:hidden; }
+    .t-img img { width:100%; height:100%; object-fit:cover; }
+    .t-badge { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:#fff; font-size:0.7rem; padding:3px 10px; border-radius:20px; }
+    .t-priv { position:absolute; top:10px; left:10px; background:rgba(201,168,76,0.85); color:#fff; font-size:0.68rem; padding:3px 10px; border-radius:20px; font-weight:600; }
+    .t-info { padding:15px 18px; }
+    .t-fecha { font-size:0.7rem; color:var(--dorado-oscuro); font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+    .t-nombre { font-family:var(--fuente-t); font-size:1rem; font-weight:700; margin-bottom:4px; }
+    .t-lugar { font-size:0.8rem; color:var(--gris); }
+    .t-pie { display:flex; justify-content:space-between; align-items:center; padding:10px 18px; background:var(--gris-claro); border-top:1px solid #eee; }
+    .t-precio { font-weight:700; font-size:0.88rem; color:var(--dorado-oscuro); }
+    .t-cta { font-size:0.74rem; color:var(--dorado); font-weight:600; }
 
-    /* ── SOBRE MÍ ── */
-    .sobre-mi{background:var(--blanco);}
-    .sobre-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;max-width:1000px;margin:0 auto;}
-    .sobre-foto-wrap{position:relative;}
-    .sobre-foto{aspect-ratio:4/5;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,#f0ede8,#ddd);box-shadow:0 12px 40px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
-    .sobre-foto img.foto-personal{width:100%;height:100%;object-fit:cover;display:block;}
-    .sobre-placeholder{text-align:center;padding:40px 20px;}
-    .sobre-placeholder .pl-logo{width:160px;opacity:0.2;mix-blend-mode:multiply;}
-    .sobre-placeholder p{font-size:0.82rem;color:#bbb;margin-top:12px;font-style:italic;}
-    /* Detalle dorado decorativo */
-    .sobre-foto-wrap::before{content:'';position:absolute;width:100%;height:100%;border:2px solid var(--dorado-claro);border-radius:20px;top:12px;left:12px;z-index:-1;}
-    .sobre-eyebrow{font-size:0.75rem;color:var(--dorado);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
-    .sobre-h2{font-family:var(--fuente-t);font-size:2rem;margin-bottom:6px;}
-    .sobre-h2 span{color:var(--dorado);}
-    .sobre-sep{width:50px;height:2px;background:var(--dorado);margin:14px 0;border-radius:2px;}
-    .sobre-p{color:#555;line-height:1.85;font-size:0.95rem;margin-bottom:14px;font-weight:300;}
-    .sobre-p em{color:var(--negro);font-style:italic;font-weight:500;}
-    .sobre-datos{display:flex;flex-direction:column;gap:8px;margin-top:20px;}
-    .sobre-dato{display:flex;align-items:center;gap:10px;font-size:0.88rem;color:#444;}
+    /* ══ SOBRE MÍ — FOTO OCUPA TODO EL ESPACIO ══ */
+    .sobre-mi { background:var(--blanco); padding:0; }
+    .sobre-grid { display:grid; grid-template-columns:1fr 1fr; min-height:600px; }
 
-    /* ── RESERVAS ── */
-    .reservas-sec{background:var(--crema);}
-    .reservas-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;max-width:900px;margin:0 auto;}
-    .res-info h3{font-family:var(--fuente-t);font-size:1.5rem;margin-bottom:14px;}
-    .res-info p{color:#555;line-height:1.8;font-size:0.93rem;margin-bottom:20px;font-weight:300;}
-    .res-items{display:flex;flex-direction:column;gap:10px;}
-    .res-item{display:flex;align-items:flex-start;gap:12px;font-size:0.88rem;color:#444;}
-    .res-item .ico{font-size:1.1rem;}
-    .cal-box{background:var(--blanco);border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,0.08);text-align:center;}
-    .cal-box .ico-cal{font-size:2.5rem;margin-bottom:12px;}
-    .cal-box h3{font-family:var(--fuente-t);font-size:1.2rem;margin-bottom:8px;}
-    .cal-box p{color:var(--gris);font-size:0.85rem;margin-bottom:18px;}
-    .cal-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);border:none;border-radius:12px;font-family:var(--fuente-c);font-size:0.95rem;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;transition:all 0.2s;box-shadow:0 4px 16px rgba(201,168,76,0.3);}
-    .cal-btn:hover{transform:translateY(-2px);}
-    .cal-nota{font-size:0.75rem;color:var(--gris);margin-top:10px;}
+    /* Columna izquierda: foto a pantalla completa */
+    .sobre-foto-col {
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(135deg,#1a1a1a,#2a2a2a);
+      min-height:500px;
+    }
+    .sobre-foto-col img.foto-personal {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center top;
+      display:block;
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    /* Placeholder cuando no hay foto */
+    .sobre-placeholder {
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      padding:40px;
+    }
+    .sobre-placeholder img { width:140px; opacity:0.15; mix-blend-mode:screen; }
+    .sobre-placeholder p { color:rgba(255,255,255,0.4); font-size:0.85rem; text-align:center; font-style:italic; }
 
-    /* ── PORTFOLIO ── */
-    .portfolio-sec{background:var(--blanco);}
-    .portfolio-box{max-width:750px;margin:0 auto;text-align:center;background:var(--crema);border-radius:20px;padding:50px 40px;border:1px solid #ede8dc;}
-    .portfolio-logo{width:120px;margin:0 auto 20px;mix-blend-mode:multiply;}
-    .portfolio-box h3{font-family:var(--fuente-t);font-size:1.6rem;margin-bottom:12px;}
-    .portfolio-box p{color:#555;line-height:1.8;max-width:460px;margin:0 auto 28px;font-size:0.93rem;}
+    /* Botón para subir foto (solo visible para vos) */
+    .btn-subir-foto {
+      position:absolute;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(201,168,76,0.9);
+      color:#fff;
+      border:none;
+      padding:10px 20px;
+      border-radius:50px;
+      font-size:0.82rem;
+      font-weight:600;
+      cursor:pointer;
+      font-family:var(--fuente-c);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      white-space:nowrap;
+      z-index:10;
+      transition:background 0.2s;
+    }
+    .btn-subir-foto:hover { background:var(--dorado); }
+    .subir-progreso {
+      position:absolute;
+      bottom:0;
+      left:0;
+      height:4px;
+      background:var(--dorado);
+      border-radius:0;
+      width:0%;
+      transition:width 0.3s;
+      z-index:11;
+    }
 
-    /* ── FOOTER ── */
-    footer{background:var(--negro);color:#aaa;padding:48px 40px 28px;}
-    .footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;max-width:1000px;margin:0 auto 32px;}
-    .footer-col h4{font-family:var(--fuente-t);color:var(--blanco);font-size:1rem;margin-bottom:14px;}
-    .footer-col p,.footer-col a{font-size:0.83rem;line-height:1.9;color:#888;text-decoration:none;display:block;}
-    .footer-col a:hover{color:var(--dorado);}
-    .footer-bottom{text-align:center;border-top:1px solid #2a2a2a;padding-top:20px;font-size:0.78rem;color:#555;}
-    .footer-bottom span{color:var(--dorado);}
+    /* Columna derecha: texto */
+    .sobre-texto-col {
+      padding:70px 56px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      background:var(--blanco);
+    }
+    .sobre-eyebrow { font-size:0.72rem; color:var(--dorado); letter-spacing:3px; text-transform:uppercase; font-weight:600; margin-bottom:12px; }
+    .sobre-h2 { font-family:var(--fuente-t); font-size:2.2rem; margin-bottom:6px; line-height:1.2; }
+    .sobre-h2 span { color:var(--dorado); }
+    .sobre-sep { width:50px; height:2px; background:var(--dorado); margin:16px 0; border-radius:2px; }
+    .sobre-p { color:#555; line-height:1.9; font-size:0.94rem; margin-bottom:14px; font-weight:300; }
+    .sobre-p em { color:var(--negro); font-style:italic; font-weight:500; }
+    .sobre-datos { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+    .sobre-dato { display:flex; align-items:center; gap:10px; font-size:0.87rem; color:#444; }
+    .sobre-dato a { color:var(--dorado); text-decoration:none; font-size:0.87rem; }
+    .sobre-dato a:hover { text-decoration:underline; }
+    .sobre-btns { display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; }
 
-    /* ── BOT LUZ ── */
-    .bot-btn{position:fixed;bottom:24px;right:24px;z-index:500;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform 0.2s;animation:pulse 2.5s infinite;}
-    .bot-btn:hover{transform:scale(1.1);}
-    @keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(201,168,76,0.5);}50%{box-shadow:0 4px 32px rgba(201,168,76,0.75);}}
-    .bot-ventana{position:fixed;bottom:96px;right:24px;z-index:500;width:340px;max-height:520px;background:var(--blanco);border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.18);display:flex;flex-direction:column;overflow:hidden;transform:scale(0.9) translateY(10px);opacity:0;pointer-events:none;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);}
-    .bot-ventana.abierto{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
-    .bot-header{background:linear-gradient(135deg,var(--negro),#2a2a2a);padding:14px 16px;display:flex;align-items:center;gap:10px;}
-    .bot-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-    .bot-header-txt{flex:1;}
-    .bot-header-txt strong{color:var(--blanco);font-size:0.86rem;display:block;}
-    .bot-header-txt span{color:var(--dorado-claro);font-size:0.7rem;}
-    .bot-x{background:none;border:none;color:#aaa;cursor:pointer;font-size:1rem;padding:4px;}
-    .bot-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fafaf8;max-height:300px;}
-    .msg{max-width:84%;padding:9px 13px;border-radius:16px;font-size:0.83rem;line-height:1.55;animation:msgIn 0.25s ease;white-space:pre-line;}
-    @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-    .msg-bot{background:var(--blanco);color:var(--negro);border-radius:4px 16px 16px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.07);align-self:flex-start;}
-    .msg-user{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:var(--blanco);border-radius:16px 16px 4px 16px;align-self:flex-end;}
-    .bot-typing{align-self:flex-start;background:var(--blanco);padding:10px 14px;border-radius:4px 16px 16px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.07);}
-    .dot{display:inline-block;width:6px;height:6px;background:#ccc;border-radius:50%;margin:0 2px;animation:typing 1.2s infinite;}
-    .dot:nth-child(2){animation-delay:0.2s;}
-    .dot:nth-child(3){animation-delay:0.4s;}
-    @keyframes typing{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
-    .bot-ops{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px;}
-    .bot-op{background:var(--blanco);border:1.5px solid var(--dorado);color:var(--dorado-oscuro);border-radius:20px;padding:5px 11px;font-size:0.76rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:var(--fuente-c);}
-    .bot-op:hover{background:var(--dorado);color:var(--blanco);}
-    .bot-input-wrap{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eee;background:var(--blanco);}
-    .bot-input{flex:1;border:1.5px solid #eee;border-radius:20px;padding:8px 13px;font-size:0.82rem;outline:none;font-family:var(--fuente-c);}
-    .bot-input:focus{border-color:var(--dorado);}
-    .bot-send{background:var(--dorado);color:var(--blanco);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    /* RESERVAS */
+    .reservas-sec { background:var(--crema); }
+    .reservas-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; max-width:900px; margin:0 auto; }
+    .res-info h3 { font-family:var(--fuente-t); font-size:1.5rem; margin-bottom:14px; }
+    .res-info p { color:#555; line-height:1.8; font-size:0.92rem; margin-bottom:20px; font-weight:300; }
+    .res-items { display:flex; flex-direction:column; gap:10px; }
+    .res-item { display:flex; align-items:flex-start; gap:12px; font-size:0.88rem; color:#444; }
+    .cal-box { background:var(--blanco); border-radius:16px; padding:28px; box-shadow:0 4px 20px rgba(0,0,0,0.08); text-align:center; }
+    .cal-box .ico { font-size:2.5rem; margin-bottom:12px; }
+    .cal-box h3 { font-family:var(--fuente-t); font-size:1.2rem; margin-bottom:8px; }
+    .cal-box p { color:var(--gris); font-size:0.84rem; margin-bottom:18px; }
+    .cal-btn { display:block; width:100%; padding:14px; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; border:none; border-radius:12px; font-family:var(--fuente-c); font-size:0.93rem; font-weight:600; cursor:pointer; text-decoration:none; text-align:center; transition:all 0.2s; box-shadow:0 4px 16px rgba(201,168,76,0.3); }
+    .cal-btn:hover { transform:translateY(-1px); }
+    .cal-nota { font-size:0.74rem; color:var(--gris); margin-top:10px; }
 
-    /* ── RESPONSIVE ── */
-    @media(max-width:768px){
-      nav{padding:0 20px;}
-      .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:#fff;flex-direction:column;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.1);gap:16px;}
-      .nav-links.open{display:flex;}
-      .hamburger{display:flex;}
-      section{padding:60px 20px;}
-      .sobre-grid,.reservas-grid,.footer-grid{grid-template-columns:1fr;}
-      .sobre-foto{aspect-ratio:1/1;max-width:300px;margin:0 auto;}
-      .hero{padding:90px 24px 50px;}
-      .hero-logo{width:180px;}
-      .bot-ventana{width:300px;right:12px;}
+    /* PORTFOLIO */
+    .portfolio-sec { background:var(--blanco); }
+    .portfolio-box { max-width:720px; margin:0 auto; text-align:center; background:var(--crema); border-radius:20px; padding:50px 40px; border:1px solid #ede8dc; }
+    .portfolio-logo { width:110px; margin:0 auto 18px; mix-blend-mode:multiply; }
+    .portfolio-box h3 { font-family:var(--fuente-t); font-size:1.6rem; margin-bottom:10px; }
+    .portfolio-box p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 26px; font-size:0.92rem; }
+
+    /* FOOTER */
+    footer { background:var(--negro); color:#aaa; padding:48px 32px 28px; }
+    .footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:40px; max-width:1000px; margin:0 auto 32px; }
+    .footer-col h4 { font-family:var(--fuente-t); color:#fff; font-size:1rem; margin-bottom:14px; }
+    .footer-col p, .footer-col a { font-size:0.82rem; line-height:1.9; color:#888; text-decoration:none; display:block; }
+    .footer-col a:hover { color:var(--dorado); }
+    .footer-bottom { text-align:center; border-top:1px solid #2a2a2a; padding-top:20px; font-size:0.77rem; color:#555; }
+    .footer-bottom span { color:var(--dorado); }
+
+    /* BOT LUZ */
+    .bot-btn { position:fixed; bottom:24px; right:24px; z-index:500; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(201,168,76,0.5); display:flex; align-items:center; justify-content:center; font-size:1.4rem; transition:transform 0.2s; animation:pulse 2.5s infinite; }
+    .bot-btn:hover { transform:scale(1.1); }
+    @keyframes pulse { 0%,100%{box-shadow:0 4px 20px rgba(201,168,76,0.5);}50%{box-shadow:0 4px 32px rgba(201,168,76,0.75);} }
+    .bot-ventana { position:fixed; bottom:92px; right:24px; z-index:500; width:330px; max-height:500px; background:#fff; border-radius:20px; box-shadow:0 12px 48px rgba(0,0,0,0.18); display:flex; flex-direction:column; overflow:hidden; transform:scale(0.9) translateY(10px); opacity:0; pointer-events:none; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .bot-ventana.abierto { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    .bot-header { background:linear-gradient(135deg,var(--negro),#2a2a2a); padding:14px 16px; display:flex; align-items:center; gap:10px; }
+    .bot-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+    .bot-htxt { flex:1; }
+    .bot-htxt strong { color:#fff; font-size:0.85rem; display:block; }
+    .bot-htxt span { color:var(--dorado-claro); font-size:0.7rem; }
+    .bot-x { background:none; border:none; color:#aaa; cursor:pointer; font-size:1rem; }
+    .bot-msgs { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:8px; background:#fafaf8; max-height:280px; }
+    .msg { max-width:85%; padding:9px 13px; border-radius:16px; font-size:0.82rem; line-height:1.55; animation:msgIn 0.25s ease; white-space:pre-line; }
+    @keyframes msgIn { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
+    .msg-bot { background:#fff; color:var(--negro); border-radius:4px 16px 16px 16px; box-shadow:0 1px 6px rgba(0,0,0,0.07); align-self:flex-start; }
+    .msg-user { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
+    .bot-typing { align-self:flex-start; background:#fff; padding:10px 14px; border-radius:4px 16px 16px 16px; box-shadow:0 1px 6px rgba(0,0,0,0.07); }
+    .dot { display:inline-block; width:6px; height:6px; background:#ccc; border-radius:50%; margin:0 2px; animation:typing 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay:0.2s; }
+    .dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);} }
+    .bot-ops { display:flex; flex-wrap:wrap; gap:5px; padding:0 12px 8px; }
+    .bot-op { background:#fff; border:1.5px solid var(--dorado); color:var(--dorado-oscuro); border-radius:20px; padding:5px 11px; font-size:0.75rem; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:var(--fuente-c); }
+    .bot-op:hover { background:var(--dorado); color:#fff; }
+    .bot-inp-wrap { display:flex; gap:7px; padding:10px 12px; border-top:1px solid #eee; background:#fff; }
+    .bot-inp { flex:1; border:1.5px solid #eee; border-radius:20px; padding:8px 12px; font-size:0.81rem; outline:none; font-family:var(--fuente-c); }
+    .bot-inp:focus { border-color:var(--dorado); }
+    .bot-send { background:var(--dorado); color:#fff; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+    /* TOAST */
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:999; background:var(--negro); color:#fff; padding:11px 20px; border-radius:50px; font-size:0.83rem; opacity:0; transition:all 0.3s; border-left:4px solid var(--dorado); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.ok { border-left-color:#27ae60; }
+
+    /* RESPONSIVE */
+    @media(max-width:900px) {
+      .sobre-grid { grid-template-columns:1fr; }
+      .sobre-foto-col { min-height:400px; }
+      .sobre-texto-col { padding:40px 28px; }
+      .reservas-grid { grid-template-columns:1fr; }
+      .footer-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-width:640px) {
+      nav { padding:0 16px; }
+      .nav-links { display:none; position:absolute; top:64px; left:0; right:0; background:#fff; flex-direction:column; padding:20px; box-shadow:0 8px 24px rgba(0,0,0,0.1); gap:16px; }
+      .nav-links.open { display:flex; }
+      .hamburger { display:flex; }
+      section { padding:60px 16px; }
+      .hero { padding:90px 20px 50px; }
+      .hero-logo { width:180px; }
+      .sobre-foto-col { min-height:320px; }
+      .sobre-texto-col { padding:32px 20px; }
+      .footer-grid { grid-template-columns:1fr; gap:28px; }
+      .bot-ventana { width:calc(100vw - 32px); right:16px; }
+      .portfolio-box { padding:36px 20px; }
     }
   </style>
 </head>
@@ -195,8 +282,8 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#inicio" style="display:flex;align-items:center;text-decoration:none;">
-    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" style="height:40px;mix-blend-mode:multiply;" alt="Logo"/>
+  <a href="#inicio" class="nav-logo">
+    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Ph. Rinascere Fotografías"/>
   </a>
   <div class="nav-links" id="nav-links">
     <a href="#albumes">Álbumes</a>
@@ -213,11 +300,11 @@
 
 <!-- HERO -->
 <section class="hero" id="inicio">
-  <div class="hero-contenido">
+  <div class="hero-con">
     <img class="hero-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Ph. Rinascere Fotografías"/>
     <div class="hero-nombre">Ph. Rinascere Fotografías</div>
     <div class="hero-sub">by Verónica Gambino</div>
-    <div class="separador"></div>
+    <div class="sep"></div>
     <p class="hero-bienvenida">Hay momentos que no vuelven…<br><span>pero pueden quedarse para siempre</span></p>
     <p class="hero-tagline">En Rinascere capturo lo que es real: miradas, emociones y detalles<br>que muchas veces pasan desapercibidos. Cada imagen es una forma de volver a sentir ✨</p>
     <div class="hero-btns">
@@ -236,10 +323,10 @@
   </div>
   <div class="buscador-box">
     <div class="buscador-inputs">
-      <input type="text" id="inputDorsal" placeholder="Número de dorsal (ej: 342)" maxlength="6"/>
+      <input type="text" id="inputDorsal" placeholder="Número de dorsal (ej: 342)" maxlength="6" inputmode="numeric"/>
       <button class="btn btn-dorado" onclick="buscarDorsal()">🔍 Buscar</button>
     </div>
-    <button class="btn btn-outline" style="margin:0 auto;display:flex;" onclick="alert('📸 Próximamente: búsqueda por selfie con reconocimiento facial')">📸 Buscarme por selfie</button>
+    <button class="btn btn-outline" style="margin:0 auto;display:flex;" onclick="alert('📸 Próximamente: búsqueda por selfie')">📸 Buscarme por selfie</button>
   </div>
 </section>
 
@@ -255,39 +342,32 @@
 <!-- SOBRE MÍ -->
 <section class="sobre-mi" id="sobre-mi">
   <div class="sobre-grid">
-    <div class="sobre-foto-wrap">
-      <div class="sobre-foto">
-        <!--
-<img id="img-sobre-mi" src="" alt="Sobre mí" style="width:200px;border-radius:12px;">
-<input type="file" id="input-sobre-mi">
-<script>
-document.getElementById('input-sobre-mi').addEventListener('change', async function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-const fd = new FormData();
-  fd.append("file", file);
-  fd.append("upload_preset", "rinascere_upload");
-const res = await fetch(`https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload`, {
-    method: "POST",
-    body: fd
-  });
-const data = await res.json();
-  document.getElementById('img-sobre-mi').src = data.secure_url;
-});
-</script>
-          CUANDO TENGAS TU FOTO PERSONAL:
-          1. Subila a Cloudinary → Media Library
-          2. Copiá el Public ID
-          3. Reemplazá el div .sobre-placeholder por:
-          <img class="foto-personal" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/TU_PUBLIC_ID" alt="Verónica Gambino"/>
-        -->
-        <div class="sobre-placeholder">
-          <img class="pl-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
-          <p>Próximamente<br>mi foto personal ✨</p>
-        </div>
+
+    <!-- COLUMNA FOTO — ocupa todo el espacio disponible -->
+    <div class="sobre-foto-col" id="sobre-foto-col">
+
+      <!-- Imagen personal (oculta hasta que se suba una) -->
+      <img class="foto-personal" id="foto-personal-img" src="" alt="Verónica Gambino" style="display:none"/>
+
+      <!-- Placeholder mientras no hay foto -->
+      <div class="sobre-placeholder" id="sobre-placeholder">
+        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
+        <p>Tu foto personal<br>va a aparecer acá ✨</p>
       </div>
+
+      <!-- Botón para subir foto (tocá acá desde el celular o desktop) -->
+      <button class="btn-subir-foto" onclick="document.getElementById('input-foto-personal').click()">
+        📷 Subir mi foto
+      </button>
+      <div class="subir-progreso" id="subir-prog"></div>
+
+      <!-- Input de archivo — acepta cámara en celular y archivos en desktop -->
+      <input type="file" id="input-foto-personal" accept="image/*" style="display:none"
+        onchange="subirFotoPersonal(this.files[0])"/>
     </div>
-    <div>
+
+    <!-- COLUMNA TEXTO -->
+    <div class="sobre-texto-col">
       <div class="sobre-eyebrow">Sobre mí</div>
       <h2 class="sobre-h2">Verónica <span>Gambino</span></h2>
       <div class="sobre-sep"></div>
@@ -296,17 +376,16 @@ const data = await res.json();
       <p class="sobre-p"><em>No busco fotos perfectas, busco momentos honestos</em> — miradas que dicen algo, gestos que se sienten y recuerdos que perduran. ✨📸</p>
       <div class="sobre-datos">
         <div class="sobre-dato"><span>📍</span><span>Río Gallegos, Santa Cruz · Toda la región patagónica</span></div>
-        <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank" style="color:var(--dorado);text-decoration:none;font-size:0.88rem;">+54 9 2966 346212</a></div>
+        <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank">+54 9 2966 346212</a></div>
         <div class="sobre-dato"><span>🌐</span><span>Cobertura en toda Argentina</span></div>
       </div>
-      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="sobre-btns">
         <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 Escribime</a>
         <a href="#reservas" class="btn btn-outline">📅 Reservar sesión</a>
       </div>
     </div>
   </div>
 </section>
-
 
 <!-- RESERVAS -->
 <section class="reservas-sec" id="reservas">
@@ -319,15 +398,15 @@ const data = await res.json();
       <h3>Una experiencia<br><span style="color:var(--dorado)">pensada para vos</span></h3>
       <p>Trabajo con sesiones personalizadas, acompañándote desde la planificación hasta la entrega. La idea es que disfrutes el proceso y no solo el resultado. ✨</p>
       <div class="res-items">
-        <div class="res-item"><span class="ico">✨</span><span>Acompañamiento previo a la sesión</span></div>
-        <div class="res-item"><span class="ico">📸</span><span>Guía y dirección durante la sesión</span></div>
-        <div class="res-item"><span class="ico">🎨</span><span>Edición cuidada con estética personal</span></div>
-        <div class="res-item"><span class="ico">💛</span><span>Entrega digital de alta resolución</span></div>
-        <div class="res-item"><span class="ico">📍</span><span>Sesiones en Río Gallegos y toda la región</span></div>
+        <div class="res-item"><span>✨</span><span>Acompañamiento previo a la sesión</span></div>
+        <div class="res-item"><span>📸</span><span>Guía y dirección durante la sesión</span></div>
+        <div class="res-item"><span>🎨</span><span>Edición cuidada con estética personal</span></div>
+        <div class="res-item"><span>💛</span><span>Entrega digital de alta resolución</span></div>
+        <div class="res-item"><span>📍</span><span>Sesiones en Río Gallegos y toda la región</span></div>
       </div>
     </div>
     <div class="cal-box">
-      <div class="ico-cal">📅</div>
+      <div class="ico">📅</div>
       <h3>Elegí tu fecha</h3>
       <p>Seleccioná el día y horario que mejor te quede. Confirmación inmediata.</p>
       <a href="https://calendar.app.google/tbUKQMJbpSDcCqs88" target="_blank" class="cal-btn">📅 Ver disponibilidad y reservar</a>
@@ -357,7 +436,7 @@ const data = await res.json();
 <footer>
   <div class="footer-grid">
     <div class="footer-col">
-      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" style="height:50px;mix-blend-mode:screen;margin-bottom:12px;" alt="Logo"/>
+      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" style="height:48px;mix-blend-mode:screen;margin-bottom:12px;" alt="Logo"/>
       <p>Fotografía profesional que captura momentos honestos y emociones reales.</p>
     </div>
     <div class="footer-col">
@@ -383,224 +462,256 @@ const data = await res.json();
 <button class="bot-btn" onclick="toggleBot()" title="Hablar con Luz">✨</button>
 <div class="bot-ventana" id="bot-ventana">
   <div class="bot-header">
-    <div class="bot-avatar">💛</div>
-    <div class="bot-header-txt">
-      <strong>Luz Rinascere</strong>
-      <span>● en línea ahora</span>
-    </div>
+    <div class="bot-av">💛</div>
+    <div class="bot-htxt"><strong>Luz Rinascere</strong><span>● en línea ahora</span></div>
     <button class="bot-x" onclick="toggleBot()">✕</button>
   </div>
   <div class="bot-msgs" id="bot-msgs"></div>
   <div class="bot-ops" id="bot-ops"></div>
-  <div class="bot-input-wrap">
-    <input class="bot-input" id="bot-input" placeholder="Escribí tu mensaje..." onkeydown="if(event.key==='Enter')enviarMsg()"/>
+  <div class="bot-inp-wrap">
+    <input class="bot-inp" id="bot-inp" placeholder="Escribí tu mensaje..." onkeydown="if(event.key==='Enter')enviarMsg()"/>
     <button class="bot-send" onclick="enviarMsg()">➤</button>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
   // Protección
-  document.addEventListener('contextmenu',e=>e.preventDefault());
-  document.addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&['s','p','u','a'].includes(e.key.toLowerCase()))e.preventDefault();
-    if(e.key==='F12'||e.key==='PrintScreen')e.preventDefault();
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey||e.metaKey) && ['s','p','u','a'].includes(e.key.toLowerCase())) e.preventDefault();
+    if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault();
   });
 
-  // Nav mobile
-  function toggleNav(){
+  function toggleNav() {
     document.getElementById('nav-links').classList.toggle('open');
   }
 
-  // ── Cargar álbumes desde Firebase ──────────────────────
-  async function cargarAlbumes(){
+  // ── Subir foto personal a Cloudinary ──────────────────
+  async function subirFotoPersonal(archivo) {
+    if (!archivo) return;
+    const prog = document.getElementById('subir-prog');
+    prog.style.width = '0%';
+
+    const fd = new FormData();
+    fd.append('file', archivo);
+    fd.append('upload_preset', UPLOAD_PRESET);
+    fd.append('folder', 'perfil');
+    fd.append('public_id', 'foto_veronika');
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) prog.style.width = Math.round(e.loaded/e.total*100) + '%';
+    };
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText);
+      if (data.secure_url) {
+        const img = document.getElementById('foto-personal-img');
+        img.src = data.secure_url;
+        img.style.display = 'block';
+        document.getElementById('sobre-placeholder').style.display = 'none';
+        prog.style.width = '100%';
+        setTimeout(() => prog.style.width = '0%', 1500);
+        toast('✅ Foto subida correctamente', 'ok');
+        // Guardar URL en Firebase para que persista
+        db.collection('configuracion').doc('sitio').set({ fotoPersonalUrl: data.secure_url }, { merge: true });
+      } else {
+        toast('❌ Error al subir la foto');
+        prog.style.width = '0%';
+      }
+    };
+    xhr.onerror = () => { toast('❌ Error de red'); prog.style.width = '0%'; };
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`);
+    xhr.send(fd);
+  }
+
+  // ── Cargar foto personal guardada ─────────────────────
+  async function cargarFotoPersonal() {
+    try {
+      const doc = await db.collection('configuracion').doc('sitio').get();
+      if (doc.exists && doc.data().fotoPersonalUrl) {
+        const url = doc.data().fotoPersonalUrl;
+        const img = document.getElementById('foto-personal-img');
+        img.src = url;
+        img.style.display = 'block';
+        document.getElementById('sobre-placeholder').style.display = 'none';
+      }
+    } catch(e) { /* silencioso */ }
+  }
+
+  // ── Cargar álbumes desde Firebase ─────────────────────
+  async function cargarAlbumes() {
     try {
       const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
-      const lista = snap.docs.map(d=>({id:d.id,...d.data()}));
+      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
       renderAlbumes(lista.length > 0 ? lista : albumesEj);
-    } catch(e){
-      renderAlbumes(albumesEj);
-    }
+    } catch(e) { renderAlbumes(albumesEj); }
   }
 
   const albumesEj = [
-    {id:'ej1',nombre:"Maratón Ciudad de Río Gallegos",fecha:"15 Jun 2025",lugar:"Río Gallegos",cantidadFotos:348,precio:"$2.500",publico:true,slug:"maraton-rio-gallegos-2025-ej1",portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80"},
-    {id:'ej2',nombre:"Trail Patagonia Extrema",fecha:"28 Jul 2025",lugar:"El Calafate",cantidadFotos:512,precio:"$2.500",publico:true,slug:"trail-patagonia-2025-ej2",portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80"},
-    {id:'ej3',nombre:"Evento Privado",fecha:"10 Ago 2025",lugar:"Río Gallegos",cantidadFotos:120,precio:"$1.800",publico:false,slug:"evento-privado-ej3",portadaUrl:"https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=80"},
+    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80" },
+    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
+    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
 
-  function renderAlbumes(lista){
+  function renderAlbumes(lista) {
     const g = document.getElementById('grilla');
     g.innerHTML = lista.length === 0
       ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
-      : lista.map(a=>`
+      : lista.map(a => `
         <a class="tarjeta" href="evento.html?slug=${a.slug}">
-          <div class="tarjeta-img">
+          <div class="t-img">
             <img src="${a.portadaUrl||''}" alt="${a.nombre}" loading="lazy"/>
             <div class="t-badge">📷 ${a.cantidadFotos||0} fotos</div>
-            ${!a.publico?'<div class="t-priv">🔒 Privado</div>':''}
+            ${!a.publico ? '<div class="t-priv">🔒 Privado</div>' : ''}
           </div>
-          <div class="tarjeta-info">
+          <div class="t-info">
             <div class="t-fecha">${a.fecha||''}</div>
             <div class="t-nombre">${a.nombre}</div>
             <div class="t-lugar">📍 ${a.lugar||''}</div>
           </div>
-          <div class="tarjeta-pie">
+          <div class="t-pie">
             <span class="t-precio">Desde $${Number(a.precio||0).toLocaleString('es-AR')}</span>
             <span class="t-cta">Ver fotos →</span>
           </div>
         </a>`).join('');
   }
-  cargarAlbumes();
 
-  function buscarDorsal(){
+  function buscarDorsal() {
     const d = document.getElementById('inputDorsal').value.trim();
-    if(!d){alert('Ingresá tu número de dorsal');return;}
+    if (!d) { alert('Ingresá tu número de dorsal'); return; }
     window.location.href = `buscar.html?dorsal=${d}`;
   }
 
-  // ══════════════════════════════════════════════════
-  // BOT LUZ RINASCERE — MEJORADO
-  // ══════════════════════════════════════════════════
-  let botAbierto=false, etapa=0, tipoConsulta=null;
-  const WA = "542966346212";
+  // ── Iniciar ───────────────────────────────────────────
+  cargarAlbumes();
+  cargarFotoPersonal();
 
-  const flujos = {
+  // ══ BOT LUZ ══════════════════════════════════════════
+  let botAbierto=false, etapa=0, tipoConsulta=null;
+  const WA="542966346212";
+
+  const flujos={
     sesion:[
-      {bot:"Qué lindo lo que me contás ✨\nCada sesión es única, pensada para reflejar tu esencia y que te sientas cómoda en todo momento 🤍\n¿Es para vos, pareja, familia o algo especial?", ops:["Para mí sola 💫","En pareja 💑","Familia 👨‍👩‍👧","Algo especial ✨"]},
-      {bot:"Hermoso 💛 Trabajo con sesiones completamente personalizadas:\n\n✨ Acompañamiento previo\n✨ Guía y dirección durante la sesión\n✨ Edición cuidada con estética real\n\n¿Querés que te cuente sobre disponibilidad y precios?", ops:["Sí, quiero saber más 💛","¿Dónde son las sesiones?","Quiero reservar ya 📅"]},
-      {bot:"Trabajo con cupos limitados para mantener la calidad de cada sesión ✨\nPodemos coordinar una fecha que te quede cómoda 🤍\n\n¿Preferís ver la disponibilidad en el calendario o que te escriba Verónica directamente?", ops:["Ver calendario 📅","Hablar con Verónica 💬"]},
-      {bot:"Va a ser un momento muy especial 💛\nTe conecto ahora con Verónica para organizar todo con calma ✨", ops:[], accion:"wa_sesion"}
+      {bot:"Qué lindo lo que me contás ✨\nCada sesión es única, pensada para reflejar tu esencia y que te sientas cómoda en todo momento 🤍\n¿Es para vos, pareja, familia o algo especial?",ops:["Para mí sola 💫","En pareja 💑","Familia 👨‍👩‍👧","Algo especial ✨"]},
+      {bot:"Hermoso 💛 Trabajo con sesiones completamente personalizadas:\n\n✨ Acompañamiento previo\n✨ Guía durante la sesión\n✨ Edición cuidada y estética real\n\n¿Querés que te cuente sobre disponibilidad?",ops:["Sí, quiero saber más 💛","¿Dónde son las sesiones?","Quiero reservar 📅"]},
+      {bot:"Trabajo con cupos limitados para cuidar cada sesión ✨\n¿Preferís ver el calendario o que te escriba Verónica directamente?",ops:["Ver calendario 📅","Hablar con Verónica 💬"]},
+      {bot:"Va a ser un momento muy especial 💛\nTe conecto con Verónica ahora ✨",ops:[],accion:"wa_sesion"}
     ],
     fotos:[
-      {bot:"Tus fotos ya están listas ✨\nPodés verlas con tranquilidad y elegir las que más conecten con vos 💛\n¿Cómo querés buscarlas?", ops:["Por número de dorsal 🔢","Por selfie 📸","Ver todos los álbumes 📷"]},
-      {bot:"Tomate tu tiempo 🤍\nCada imagen fue pensada para reflejar un momento real ✨\nCuando encuentres tus favoritas podés comprarlas y descargarlas al instante en alta calidad 💛\n\n¿Necesitás ayuda para encontrarlas?", ops:["Sí, necesito ayuda 🙋","Ya las encontré, quiero comprar 💳","Tengo un problema"]},
-      {bot:"El proceso de compra es muy simple 💛\n\n1️⃣ Seleccionás las fotos que más te gusten\n2️⃣ Hacés clic en Comprar\n3️⃣ Pagás con Mercado Pago\n4️⃣ Descargás en alta calidad al instante ✨\n\n¿Querés que te lleve a los álbumes?", ops:["Ir a los álbumes 📷","Hablar con Verónica 💬"]}
+      {bot:"Tus fotos ya están listas ✨\n¿Cómo querés buscarlas?",ops:["Por número de dorsal 🔢","Ver todos los álbumes 📷","Necesito ayuda 🙋"]},
+      {bot:"Cuando encuentres tus favoritas 💛\nPodés comprarlas y descargarlas al instante en alta calidad ✨\n¿Necesitás ayuda para encontrarlas?",ops:["Sí, ayudame 🙋","Ya las encontré 💳","Hablar con Verónica 💬"]},
+      {bot:"El proceso es muy simple 💛\n1️⃣ Seleccionás las fotos\n2️⃣ Pagás con Mercado Pago\n3️⃣ Descargás en alta calidad ✨\n¿Vamos a los álbumes?",ops:["Ir a los álbumes 📷","Hablar con Verónica 💬"]}
     ]
   };
 
   function toggleBot(){
     botAbierto=!botAbierto;
     document.getElementById('bot-ventana').classList.toggle('abierto',botAbierto);
-    if(botAbierto && document.getElementById('bot-msgs').children.length===0) iniciarBot();
+    if(botAbierto&&document.getElementById('bot-msgs').children.length===0) iniciarBot();
   }
 
   function iniciarBot(){
-    etapa=0; tipoConsulta=null;
-    mostrarTyping(()=>{
-      agregarMsg('bot',"Hola 🤍 soy Luz Rinascere\nGracias por escribir ✨ Estoy para acompañarte en una experiencia fotográfica pensada desde lo natural, lo auténtico y lo emocional 💛\n\n¿En qué puedo ayudarte hoy?");
-      mostrarOps(["📸 Quiero una sesión fotográfica","🖼 Buscar mis fotos de un evento","💬 Consulta general","💳 Información sobre precios"]);
+    etapa=0;tipoConsulta=null;
+    typing(()=>{
+      msg('bot',"Hola 🤍 soy Luz Rinascere\nGracias por escribir ✨ Estoy para acompañarte en una experiencia fotográfica pensada desde lo auténtico y lo emocional 💛\n\n¿En qué puedo ayudarte?");
+      ops(["📸 Quiero una sesión fotográfica","🖼 Buscar mis fotos de un evento","💬 Consulta general","💰 Información sobre precios"]);
     });
   }
 
-  function agregarMsg(quien, txt){
+  function msg(quien,txt){
     const d=document.createElement('div');
     d.className=`msg msg-${quien}`;
     d.textContent=txt;
     const m=document.getElementById('bot-msgs');
-    m.appendChild(d);
-    m.scrollTop=m.scrollHeight;
+    m.appendChild(d);m.scrollTop=m.scrollHeight;
   }
 
-  function mostrarTyping(cb){
+  function typing(cb){
     const m=document.getElementById('bot-msgs');
     const t=document.createElement('div');
     t.className='bot-typing';
     t.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    m.appendChild(t);
-    m.scrollTop=m.scrollHeight;
-    setTimeout(()=>{ t.remove(); cb(); }, 900);
+    m.appendChild(t);m.scrollTop=m.scrollHeight;
+    setTimeout(()=>{t.remove();cb();},850);
   }
 
-  function mostrarOps(lista){
+  function ops(lista){
     document.getElementById('bot-ops').innerHTML=lista.map(o=>`<button class="bot-op" onclick="clickOp('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('');
   }
 
   function clickOp(op){
     document.getElementById('bot-ops').innerHTML='';
-    agregarMsg('user',op);
-
-    // Acción WhatsApp
-    if(op.includes('WhatsApp')||op.includes('Verónica')||op.includes('Escribir')){
-      mostrarTyping(()=>{
-        agregarMsg('bot',"¡Perfecto! 💛\nTe llevo directo con Verónica ✨\nNos vemos del otro lado 🤍");
-        setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Vi tu sitio y quiero consultar 📸')}`, '_blank'), 1200);
-      }); return;
+    msg('user',op);
+    if(op.includes('Verónica')||op.includes('WhatsApp')||op.includes('Escribir')){
+      typing(()=>{msg('bot',"¡Perfecto! 💛 Te llevo con Verónica ✨");setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Vi tu sitio y quiero consultar 📸')}`,'_blank'),1000);});return;
     }
-    if(op.includes('calendario')||op.includes('Reservar')||op.includes('reservar')){
-      mostrarTyping(()=>{
-        agregarMsg('bot',"Te llevo al calendario 📅\nPodés elegir la fecha y hora que mejor te quede 🤍");
-        setTimeout(()=>document.getElementById('reservas').scrollIntoView({behavior:'smooth'}), 1000);
-      }); return;
+    if(op.includes('calendario')||op.includes('Reservar')){
+      typing(()=>{msg('bot',"Te llevo al calendario 📅");setTimeout(()=>document.getElementById('reservas').scrollIntoView({behavior:'smooth'}),800);});return;
     }
     if(op.includes('álbumes')||op.includes('Álbumes')){
-      mostrarTyping(()=>{
-        agregarMsg('bot',"¡Vamos! 📷\nTe llevo a los álbumes ✨");
-        setTimeout(()=>document.getElementById('albumes').scrollIntoView({behavior:'smooth'}), 1000);
-      }); return;
-    }
-    if(op.includes('selfie')){
-      mostrarTyping(()=>{ agregarMsg('bot',"📸 La búsqueda por selfie está disponible desde la página de cada álbum. ¡Próximamente también desde acá! ✨"); mostrarOps(["Ver álbumes 📷","Buscar por dorsal 🔢"]); }); return;
+      typing(()=>{msg('bot',"¡Vamos! 📷");setTimeout(()=>document.getElementById('albumes').scrollIntoView({behavior:'smooth'}),800);});return;
     }
     if(op.includes('precios')||op.includes('Precios')){
-      mostrarTyping(()=>{ agregarMsg('bot',"Los precios varían según el evento 💛\nGeneralmente las fotos tienen un valor entre $1.500 y $2.500 ARS c/u ✨\nPodés ver el precio exacto en cada álbum 🤍"); mostrarOps(["Ver álbumes 📷","Hablar con Verónica 💬"]); }); return;
+      typing(()=>{msg('bot',"Los precios varían según el evento 💛\nGeneralmente entre $1.500 y $2.500 ARS por foto ✨\nVer el precio exacto en cada álbum 🤍");ops(["Ver álbumes 📷","Hablar con Verónica 💬"]);});return;
     }
-
-    // Primera elección principal
     if(!tipoConsulta){
       if(op.includes('sesión')){tipoConsulta='sesion';etapa=0;}
       else if(op.includes('fotos')){tipoConsulta='fotos';etapa=0;}
-      else {
-        mostrarTyping(()=>{ agregarMsg('bot',"Con gusto te ayudo 🤍\n¿Sobre qué te puedo contar? 💛"); mostrarOps(["📸 Sesiones fotográficas","🖼 Mis fotos de un evento","💳 Precios","💬 Hablar con Verónica"]); });
-        return;
-      }
+      else{typing(()=>{msg('bot',"Con gusto te ayudo 🤍\n¿Sobre qué te puedo contar? 💛");ops(["📸 Sesiones fotográficas","🖼 Mis fotos","💰 Precios","💬 Hablar con Verónica"]);});return;}
       const paso=flujos[tipoConsulta][0];
-      mostrarTyping(()=>{ agregarMsg('bot',paso.bot); mostrarOps(paso.ops); });
+      typing(()=>{msg('bot',paso.bot);ops(paso.ops);});
       return;
     }
-
-    // Avanzar flujo
     const flujo=flujos[tipoConsulta];
-    etapa=Math.min(etapa+1, flujo.length-1);
+    etapa=Math.min(etapa+1,flujo.length-1);
     const paso=flujo[etapa];
-    mostrarTyping(()=>{
-      agregarMsg('bot',paso.bot);
-      if(paso.accion==='wa_sesion'){
-        setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Quiero reservar una sesión fotográfica 📸')}`, '_blank'), 1200);
-      } else { mostrarOps(paso.ops||[]); }
+    typing(()=>{
+      msg('bot',paso.bot);
+      if(paso.accion==='wa_sesion'){setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Quiero reservar una sesión 📸')}`,'_blank'),1000);}
+      else ops(paso.ops||[]);
     });
   }
 
   function enviarMsg(){
-    const inp=document.getElementById('bot-input');
+    const inp=document.getElementById('bot-inp');
     const txt=inp.value.trim();
-    if(!txt) return;
+    if(!txt)return;
     inp.value='';
-    agregarMsg('user',txt);
+    msg('user',txt);
     document.getElementById('bot-ops').innerHTML='';
-    mostrarTyping(()=>{
-      agregarMsg('bot',"Gracias por escribir 🤍\nVoy a pasarle tu consulta a Verónica para que te responda personalmente ✨\n💛 Te conecto ahora mismo");
-      setTimeout(()=>{
-        window.open(`https://wa.me/${WA}?text=${encodeURIComponent(`Hola Verónica! Un cliente escribió en el bot: "${txt}"`)}`, '_blank');
-      }, 1500);
+    typing(()=>{
+      msg('bot',"Gracias por escribir 🤍\nLe voy a pasar tu consulta a Verónica para que te responda personalmente ✨");
+      setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent(`Hola Verónica! Mensaje del bot del sitio: "${txt}"`)}`, '_blank'),1500);
     });
   }
+
+  function toast(msg,tipo=''){
+    const el=document.getElementById('toast');
+    el.textContent=msg;
+    el.className='toast show'+(tipo?' '+tipo:'');
+    clearTimeout(el._t);
+    el._t=setTimeout(()=>el.classList.remove('show'),3500);
+  }
 </script>
+<input type="file" id="about-img">
+document.getElementById('about-img').addEventListener('change', async function(e){
+
+  const file = e.target.files[0];
+
+  const publicId = await subirFotoCloudinary(file, "about");
+
+  const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/${publicId}`;
+
+  document.getElementById('sobre-mi').style.backgroundImage = `url(${url})`;
+
+});
+#sobre-mi{
+  background-size: cover;
+  background-position: center;
+  height: 400px;
+}
+const link = `https://rinascere-web.vercel.app/evento/${slug}`;
 </body>
 </html>
-document.getElementById('input-sobre-mi').addEventListener('change', async function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("upload_preset", "rinascere_upload");
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload`, {
-    method: "POST",
-    body: fd
-  });
-
-  const data = await res.json();
-
-  document.getElementById('img-sobre-mi').src = data.secure_url;
-});
