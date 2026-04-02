@@ -191,10 +191,28 @@
       .foto-card img { height:160px; }
     }
   </style>
+#contenedor-fotos{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+  margin-top:20px;
+}
+
 .card-foto{
   background:#fff;
   border-radius:12px;
   overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card-foto img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+}
+
+.info{
+  padding:10px;
 }
 
 .cafe{
@@ -231,9 +249,7 @@
 <div class="fotos-sec">
   <div class="fotos-header">
     <h2 id="fotos-titulo">Fotos del evento</h2>
-    <span id="fotos-contador" style="color:var(--gris);font-size:0.82rem;"></span>
-  </div>
-  <div class="grilla" id="grilla">
+      <div class="grilla" id="grilla">
     <div class="loading" style="grid-column:1/-1">
       <div class="spinner"></div>Cargando fotos...
     </div>
@@ -690,6 +706,7 @@ function urlPreview(id){
   return `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${id}`;
 }
 <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.3,g_center/fl_layer_apply/w_500/${foto}">
+
 // 🔽 ACÁ ESTÁ EL BLOQUE DE FOTOS
 fotos.forEach(foto => {
 
@@ -815,22 +832,53 @@ async function comprar(){
   window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
 }
 </script>
-// 🔥 RENDER REAL DE FOTOS (SOLUCIÓN DEFINITIVA)
 
 function renderFotos(album){
 
-  const contenedor = document.getElementById("contenedor-fotos");
+  <script>
 
-  if(!contenedor){
-    console.error("NO EXISTE contenedor-fotos");
-    return;
+const slug = window.location.pathname.split("/").pop();
+
+const contenedor = document.getElementById("contenedor-fotos");
+
+async function cargarAlbum(){
+
+  try{
+
+    const snap = await db.collection("albumes")
+      .where("slug","==",slug)
+      .get();
+
+    if(snap.empty){
+      contenedor.innerHTML = "<p>No se encontró el álbum</p>";
+      return;
+    }
+
+    const album = snap.docs[0].data();
+
+    console.log("ALBUM:", album);
+
+    renderFotos(album);
+
+  }catch(e){
+    console.error(e);
+    contenedor.innerHTML = "<p>Error al cargar fotos</p>";
   }
+
+}
+
+function renderFotos(album){
 
   contenedor.innerHTML = "";
 
   const fotos = Array.isArray(album.fotos)
     ? album.fotos
     : (album.fotos || "").split(",");
+
+  if(!fotos || fotos.length === 0){
+    contenedor.innerHTML = "<p>No hay fotos disponibles</p>";
+    return;
+  }
 
   fotos.forEach((foto, i) => {
 
@@ -840,12 +888,11 @@ function renderFotos(album){
     card.className = "card-foto";
 
     card.innerHTML = `
-      <img src="${url}" 
+      <img src="${url}"
            alt="Foto ${i+1}"
-           style="width:100%; height:220px; object-fit:cover; border-radius:10px;"
            onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
 
-      <div style="padding:8px">
+      <div class="info">
         <strong>$0</strong>
         <div class="cafe">☕ Valor colaborativo</div>
       </div>
@@ -856,3 +903,8 @@ function renderFotos(album){
   });
 
 }
+
+// 🚀 INICIAR
+cargarAlbum();
+
+</script>
