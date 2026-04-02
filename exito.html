@@ -1,0 +1,8 @@
+<script>
+localStorage.setItem("pago_realizado", "true");
+window.location.href = "/";
+</script>
+function urlHD(id){
+  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_100/${id}`;
+}
+descargarFoto(urlHD(foto));
