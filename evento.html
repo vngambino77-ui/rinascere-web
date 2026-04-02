@@ -304,10 +304,23 @@ function irAPago(){
   alert("Redirigiendo a Mercado Pago (simulación)");
   window.open("https://www.mercadopago.com.ar/", "_blank");
 }
-<button onclick="irAPago()">Comprar</button>
+function comprar(){
+  alert("Redirigiendo a Mercado Pago");
+  window.open("https://www.mercadopago.com.ar/", "_blank");
+}
+<button onclick="comprar()">Comprar</button>
 img.onerror = () => {
   img.src = "https://via.placeholder.com/300x200?text=Error";
 };
+— AGREGAR “☕ VALOR COLABORATIVO”
+<div>$${album.precio}</div>
+${album.precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
+
+.cafe{
+  font-size: 12px;
+  color: #A07830;
+  margin-top: 4px;
+}
 
 <script>
 
@@ -360,12 +373,22 @@ img.onerror = () => {
       return;
     }
     try {
-      const snap = await db.collection('albumes').where('slug', '==', slug).limit(1).get();
-      if (snap.empty) {
-        document.getElementById('grilla').innerHTML = '<div class="loading" style="grid-column:1/-1">Álbum no encontrado.</div>';
-        return;
-      }
-      album = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      db.collection("albumes")
+  .where("slug", "==", slug)
+  .get()
+  .then((snap) => {
+
+    const doc = snap.docs[0];
+    const album = doc.data();
+
+    // 👇 ACÁ ES DONDE TENÉS QUE PONERLO
+
+  });const album = doc.data();
+
+console.log("FOTOS DEL ÁLBUM:", album.fotos);
+
+// después sigue tu código
+album.fotos.forEach((foto, i) => {
       todasFotos = album.fotos || [];
 
       document.getElementById('album-nombre').textContent = album.nombre;
@@ -545,7 +568,7 @@ function comprar(){
         creadoEn: new Date().toISOString()
       });
 
-      const slug = getSlug();
+      const slug = window.location.pathname.split("/").pop();
       const base = window.location.origin;
       const successUrl = `${base}/evento.html?slug=${slug}&status=approved&external_reference=${pedidoRef.id}`;
       const failUrl    = `${base}/evento.html?slug=${slug}&status=rejected`;
@@ -653,6 +676,7 @@ onerror="this.style.background='#eee';this.style.minHeight='90px'"/>
 function urlPreview(id){
   return `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${id}`;
 }
+<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.3,g_center/fl_layer_apply/w_500/${foto}">
 // 🔽 ACÁ ESTÁ EL BLOQUE DE FOTOS
 fotos.forEach(foto => {
 
@@ -670,7 +694,7 @@ fotos.forEach(foto => {
 
   actualizarBarra();
 };
-img.src = urlPreview(foto);
+<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}" alt="Foto ${i+1}">
 
 contenedor.innerHTML += `<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${foto}">`;
 });
