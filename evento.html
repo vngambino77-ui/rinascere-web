@@ -249,6 +249,7 @@
 <div class="fotos-sec">
   <div class="fotos-header">
     <h2 id="fotos-titulo">Fotos del evento</h2>
+<div id="contenedor-fotos"></div>
       <div class="grilla" id="grilla">
     <div class="loading" style="grid-column:1/-1">
       <div class="spinner"></div>Cargando fotos...
@@ -789,8 +790,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🎯 2. Contenedor
   const contenedor = document.getElementById("contenedor-fotos");
 
-  <div id="contenedor-fotos"></div>
-
+  if(!contenedor){
+    console.error("❌ No existe #contenedor-fotos en el HTML");
+    return;
   }
 
   contenedor.innerHTML = "<p>Cargando fotos...</p>";
@@ -908,7 +910,9 @@ function renderFotos(album){
 
   <script>
 
-const slug = window.location.pathname.split("/").pop();
+const params = new URLSearchParams(window.location.search);
+const slug = params.get("slug");
+console.log("SLUG:", slug);
 
 const contenedor = document.getElementById("contenedor-fotos");
 
