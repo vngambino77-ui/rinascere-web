@@ -191,6 +191,27 @@
       .foto-card img { height:160px; }
     }
   </style>
+#barra-compra{
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #1A1A1A;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 20px;
+  align-items: center;
+  z-index: 999;
+}
+
+#barra-compra button{
+  background: gold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+}
 </head>
 <body>
 
@@ -257,6 +278,8 @@
 </div>
 
 <!-- MODAL PAGO -->
+let seleccionadas = [];
+const precioPorFoto = 2500;
 <div class="overlay" id="overlay-pago">
   <div class="modal">
     <h2>Resumen de compra</h2>
@@ -298,6 +321,16 @@
 <img.onclick = bloquearDescarga;/div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+function irAPago(){
+  alert("Redirigiendo a Mercado Pago (simulación)");
+  window.open("https://www.mercadopago.com.ar/", "_blank");
+}
+<button onclick="irAPago()">Comprar</button>
+img.onerror = () => {
+  img.src = "https://via.placeholder.com/300x200?text=Error";
+};
 
 <script>
 
@@ -586,8 +619,9 @@ function comprar(){
       const urlVista = urlOriginal(pid);
       return `
         <div class="descarga-item">
-          <img src="${urlVista}" alt="Foto ${i+1}"
-            onerror="this.style.background='#eee';this.style.minHeight='90px'"/>
+img.src = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${foto}`; 
+img.src = `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_50,w_0.3,g_center/fl_layer_apply/w_600/${foto}`;           
+onerror="this.style.background='#eee';this.style.minHeight='90px'"/>
           <a href="${urlDesc}" download="${nombre}.jpg" target="_blank">
             ⬇ Descargar
           </a>
@@ -645,16 +679,127 @@ function urlPreview(id){
 // 🔽 ACÁ ESTÁ EL BLOQUE DE FOTOS
 fotos.forEach(foto => {
 
- const img = document.createElement('img');
+ img.onclick = () => {
+
+  const index = seleccionadas.indexOf(foto);
+
+  if(index > -1){
+    seleccionadas.splice(index,1);
+    img.style.border = "none";
+  }else{
+    seleccionadas.push(foto);
+    img.style.border = "3px solid gold";
+  }
+
+  actualizarBarra();
+};
 img.src = urlPreview(foto);
 
 contenedor.innerHTML += `<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${foto}">`;
 });
-function descargarFoto(url){
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = "foto.jpg";
-  a.click();
+function comprar(){
+
+  if(seleccionadas.length === 0){
+    alert("Seleccioná al menos una foto");
+    return;
+  }
+
+  const total = calcularPrecio();
+
+  // 🔥 SIMULACIÓN MERCADO PAGO
+  const url = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=TEST123`;
+
+  alert(`Vas a pagar $${total}`);
+
+  window.open(url, "_blank");
+
+}<div id="barra-compra">
+  <span id="contador">0 fotos</span>
+  <span id="total">$0</span>
+  <button onclick="comprar()">Comprar</button>
+<function actualizarBarra(){
+
+  document.getElementById("contador").textContent =
+    seleccionadas.length + " fotos";
+
+  document.getElementById("total").textContent =
+    "$" + (seleccionadas.length * precioPorFoto);
+
+}/div>
+function calcularPrecio(){
+
+  const n = seleccionadas.length;
+
+  if(n >= 5) return 9000;
+  if(n >= 3) return 6000;
+
+  return n * precioPorFoto;
 }
-</body>
+document.getElementById("total").textContent =
+  "$" + calcularPrecio();
+function comprar(){
+
+  if(seleccionadas.length === 0){
+    alert("Seleccioná al menos una foto");
+    return;
+  }
+
+  const total = calcularPrecio();
+
+  // 🔥 SIMULACIÓN DE PAGO
+  localStorage.setItem("pago_realizado", "true");
+
+  alert(`Pago simulado por $${total} ✔`);
+
+}</body>
 </html>
+functions/index.js
+const functions = require("firebase-functions");
+const mercadopago = require("mercadopago");
+
+mercadopago.configure({
+  access_token: "TU_ACCESS_TOKEN_REAL"
+});
+
+exports.crearPago = functions.https.onRequest(async (req, res) => {
+
+  const { items } = req.body;
+
+  try{
+    const preference = await mercadopago.preferences.create({
+      items: items,
+      back_urls: {
+        success: "https://tuweb.com/exito.html"
+      }
+    });
+
+    res.json({ id: preference.body.id });
+
+  }catch(e){
+    res.status(500).send(e.message);
+  }
+
+});
+async function comprar(){
+
+  if(seleccionadas.length === 0){
+    alert("Seleccioná al menos una foto");
+    return;
+  }
+
+  const items = [{
+    title: "Fotos Rinascere",
+    quantity: seleccionadas.length,
+    unit_price: calcularPrecio() / seleccionadas.length
+  }];
+
+  const res = await fetch("https://TU_BACKEND/crearPago", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ items })
+  });
+
+  const data = await res.json();
+
+  window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
+}
