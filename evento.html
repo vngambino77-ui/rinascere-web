@@ -778,7 +778,79 @@ function comprar(){
 
   alert(`Pago simulado por $${total} ✔`);
 
-}</body>
+}
+<script>
+// ⏳ Asegura que el DOM ya esté cargado
+document.addEventListener("DOMContentLoaded", async () => {
+
+  // 🎯 1. Obtener slug correcto
+  const slug = window.location.pathname.split("/").pop();
+
+  // 🎯 2. Contenedor
+  const contenedor = document.getElementById("contenedor-fotos");
+
+  <div id="contenedor-fotos"></div>
+
+  }
+
+  contenedor.innerHTML = "<p>Cargando fotos...</p>";
+
+  try{
+    // 🔥 3. Leer Firebase
+    const snap = await db.collection("albumes")
+      .where("slug","==",slug)
+      .get();
+
+    if(snap.empty){
+      contenedor.innerHTML = "<p>❌ No se encontró el álbum</p>";
+      return;
+    }
+
+    const album = snap.docs[0].data();
+    console.log("✅ ALBUM:", album);
+
+    // 🔥 4. Normalizar fotos
+    const fotos = Array.isArray(album.fotos)
+      ? album.fotos
+      : (album.fotos || "").split(",");
+
+    if(!fotos || fotos.length === 0){
+      contenedor.innerHTML = "<p>No hay fotos</p>";
+      return;
+    }
+
+    // 🔥 5. Render
+    contenedor.innerHTML = "";
+
+    fotos.forEach((foto, i) => {
+
+      const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
+
+      const card = document.createElement("div");
+      card.className = "card-foto";
+
+      card.innerHTML = `
+        <img src="${url}"
+             alt="Foto ${i+1}"
+             onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+
+        <div class="info">
+          <strong>$0</strong>
+          <div class="cafe">☕ Valor colaborativo</div>
+        </div>
+      `;
+
+      contenedor.appendChild(card);
+    });
+
+  }catch(e){
+    console.error("❌ ERROR:", e);
+    contenedor.innerHTML = "<p>Error cargando fotos</p>";
+  }
+
+});
+</script>
+</body>
 </html>
 functions/index.js
 const functions = require("firebase-functions");
