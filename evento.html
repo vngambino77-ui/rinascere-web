@@ -415,18 +415,23 @@
       album = { id: snap.docs[0].id, ...snap.docs[0].data() };
       todasFotos = album.fotos || [];
 
-      // ✅ PORTADA: usa portadaUrl si existe, sino usa la primera foto del álbum
-      const portadaId = album.portadaUrl
-        ? null  // es una URL completa
-        : (todasFotos.length > 0 ? todasFotos[0] : null);
-
+      // ✅ PORTADA CORREGIDA
+      // Soporta ambos formatos: public_id limpio (nuevo) y URL completa (viejo)
       const heroImg = document.getElementById('hero-img');
-      if (album.portadaUrl) {
-        heroImg.src = album.portadaUrl;
-      } else if (portadaId) {
-        heroImg.src = urlPortada(portadaId);
+      const portadaId = album.portadaUrl || (todasFotos.length > 0 ? todasFotos[0] : null);
+
+      if (portadaId) {
+        if (portadaId.startsWith('http')) {
+          // URL completa guardada antes de la corrección
+          heroImg.src = portadaId;
+        } else {
+          // ✅ public_id limpio — URL sin marca de agua para la portada
+          heroImg.src = `https://res.cloudinary.com/${CLOUD}/image/upload/w_1200,q_80,f_auto/${portadaId}`;
+        }
+        heroImg.onerror = () => {
+          document.getElementById('hero').style.background = 'linear-gradient(135deg,#2a2020,#1a1a1a)';
+        };
       } else {
-        // Fallback elegante si no hay fotos
         document.getElementById('hero').style.background = 'linear-gradient(135deg,#2a2020,#1a1a1a)';
       }
 

@@ -21,13 +21,12 @@
 
     const CLOUD         = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
-    // ✅ CORRECCIÓN: logo codificado correctamente para Cloudinary
-    const LOGO_ID       = "My%20Brand:logo_png_fwpt2v";
+    // ✅ ID correcto del logo
+    const LOGO_ID       = "rinascere";
 
-    // Preview con marca de agua para el panel admin
     function urlPreview(publicId) {
       if (!publicId) return '';
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO_ID},o_45,w_0.3,g_center/fl_layer_apply/w_400,q_60,f_auto/${publicId}`;
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO_ID},o_50,w_0.3,g_center/fl_layer_apply/w_400,q_60,f_auto/${publicId}`;
     }
 
     // ✅ Subir foto a Cloudinary — corregido
@@ -432,7 +431,9 @@
             if (fill) fill.style.width = pct + '%';
           });
           fotosIds.push(publicId);
-          if (i === 0) portadaUrl = urlPreview(publicId);
+          // ✅ Guardamos el public_id limpio, NO la URL con marca de agua
+          // La URL se construye dinámicamente cuando se muestra
+          if (i === 0) portadaUrl = publicId;
           const prevItem = document.getElementById(`prev-${i}`);
           if (prevItem) prevItem.classList.add('subida');
           const el = document.getElementById(`pct-${i}`);
@@ -499,7 +500,11 @@
     }
     tbody.innerHTML = lista.map(a => `
       <tr>
-        <td>${a.portadaUrl ? `<img class="thumb" src="${a.portadaUrl}" alt="portada"/>` : '📷'}</td>
+      // ✅ portadaUrl ahora es el public_id limpio
+      // Construimos la URL real para mostrar en la tabla
+      <td>${a.portadaUrl
+        ? `<img class="thumb" src="https://res.cloudinary.com/${CLOUD}/image/upload/w_100,q_60,f_auto/${a.portadaUrl}" alt="portada"/>`
+        : '📷'}</td>
         <td><strong>${a.nombre}</strong></td>
         <td>${a.fecha||'—'}</td>
         <td>${a.cantidadFotos||0}</td>

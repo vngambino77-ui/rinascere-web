@@ -19,7 +19,8 @@
     const db = firebase.firestore();
     const CLOUD = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
-  </script>
+    // ✅ ID correcto del logo sin espacios
+    const LOGO_ID = "rinascere";  </script>
   <style>
     :root {
       --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
@@ -377,7 +378,7 @@
       <div class="sobre-datos">
         <div class="sobre-dato"><span>📍</span><span>Río Gallegos, Santa Cruz · Toda la región patagónica</span></div>
         <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank">+54 9 2966 346212</a></div>
-        <div class="sobre-dato"><span>🌐</span><span>Argentina</span></div>
+        <div class="sobre-dato"><span>🌐</span><span>Cobertura en toda Argentina</span></div>
       </div>
       <div class="sobre-btns">
         <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 Escribime</a>
@@ -559,10 +560,29 @@
     const g = document.getElementById('grilla');
     g.innerHTML = lista.length === 0
       ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
-      : lista.map(a => `
+      : lista.map(a => {
+          // ✅ Construir URL de portada correctamente
+          // portadaUrl puede ser: public_id limpio (nuevo) o URL completa (viejo)
+          let imgSrc = '';
+          if (a.portadaUrl) {
+            if (a.portadaUrl.startsWith('http')) {
+              // URL completa guardada antes de la corrección
+              imgSrc = a.portadaUrl;
+            } else {
+              // ✅ public_id limpio — construimos la URL bien
+              imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.portadaUrl}`;
+            }
+          } else if (a.fotos && a.fotos.length > 0) {
+            // Si no hay portada, usamos la primera foto del array
+            imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
+          }
+          return `
         <a class="tarjeta" href="evento.html?slug=${a.slug}">
           <div class="t-img">
-            <img src="${a.portadaUrl||''}" alt="${a.nombre}" loading="lazy"/>
+            ${imgSrc
+              ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
+                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f0ede8,#ddd)';"/>`
+              : ''}
             <div class="t-badge">📷 ${a.cantidadFotos||0} fotos</div>
             ${!a.publico ? '<div class="t-priv">🔒 Privado</div>' : ''}
           </div>
@@ -572,10 +592,11 @@
             <div class="t-lugar">📍 ${a.lugar||''}</div>
           </div>
           <div class="t-pie">
-            <span class="t-precio">Desde $${Number(a.precio||0).toLocaleString('es-AR')}</span>
+            <span class="t-precio">Desde ${Number(a.precio||0).toLocaleString('es-AR')}</span>
             <span class="t-cta">Ver fotos →</span>
           </div>
-        </a>`).join('');
+        </a>`;
+        }).join('');
   }
 
   function buscarDorsal() {
@@ -695,23 +716,5 @@
     el._t=setTimeout(()=>el.classList.remove('show'),3500);
   }
 </script>
-<input type="file" id="about-img">
-document.getElementById('about-img').addEventListener('change', async function(e){
-
-  const file = e.target.files[0];
-
-  const publicId = await subirFotoCloudinary(file, "about");
-
-  const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/${publicId}`;
-
-  document.getElementById('sobre-mi').style.backgroundImage = `url(${url})`;
-
-});
-#sobre-mi{
-  background-size: cover;
-  background-position: center;
-  height: 400px;
-}
-const link = `https://rinascere-web.vercel.app/evento/${slug}`;
 </body>
 </html>
