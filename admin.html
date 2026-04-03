@@ -167,6 +167,25 @@
     .qr-box strong{display:block;font-size:0.82rem;margin-bottom:10px;}
     .qr-box p{font-size:0.72rem;color:var(--gris);margin-top:8px;word-break:break-all;}
 
+    /* TIPOS DE COBRO */
+    .tipo-cobro-opcion{
+      display:flex;align-items:flex-start;gap:14px;
+      border:2px solid #e0e0e0;border-radius:12px;
+      padding:14px 16px;cursor:pointer;transition:all 0.2s;
+      background:var(--blanco);
+    }
+    .tipo-cobro-opcion:hover{border-color:var(--dorado);background:rgba(201,168,76,0.04);}
+    .tipo-cobro-opcion.activo{border-color:var(--dorado);background:rgba(201,168,76,0.08);}
+    .tipo-cobro-opcion strong{display:block;font-size:0.9rem;margin-bottom:2px;}
+    .tipo-cobro-opcion p{font-size:0.78rem;color:var(--gris);margin:0;}
+    .tipo-radio{
+      width:20px;height:20px;border-radius:50%;
+      border:2px solid #ccc;display:flex;align-items:center;
+      justify-content:center;font-size:0.7rem;color:var(--dorado);
+      flex-shrink:0;margin-top:2px;transition:all 0.2s;
+    }
+    .tipo-radio.sel{border-color:var(--dorado);background:var(--dorado);color:#fff;}
+
     .toast{position:fixed;top:20px;right:20px;z-index:999;background:var(--negro);color:#fff;padding:14px 22px;border-radius:12px;font-size:0.88rem;box-shadow:0 6px 24px rgba(0,0,0,0.2);transform:translateY(-10px);opacity:0;transition:all 0.3s;border-left:4px solid var(--dorado);max-width:320px;}
     .toast.show{transform:translateY(0);opacity:1;}
     .toast.error{border-left-color:var(--rojo);}
@@ -295,6 +314,23 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="overlay" id="overlay-precio">
+  <div class="modal" style="max-width:380px;">
+    <h2>Editar <span>precio</span></h2>
+    <p style="color:var(--gris);font-size:0.85rem;margin-bottom:20px;" id="precio-album-nombre"></p>
+    <div class="fg">
+      <label>Precio por foto (ARS)</label>
+      <input type="number" id="nuevo-precio" placeholder="Ej: 2500" min="0"/>
+      <p style="font-size:0.75rem;color:var(--gris);margin-top:6px;">
+        💡 Poné <strong>0</strong> para que las fotos sean de descarga libre con opción de café voluntario
+      </p>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-negro" onclick="document.getElementById('overlay-precio').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-dorado" onclick="guardarPrecio()">✓ Guardar precio</button>
+    </div>
+  </div>
+</div>
 
 <script>
   let albumesCache = [];
@@ -473,6 +509,7 @@
           <div class="acciones">
             <button class="btn btn-negro btn-sm" onclick="verFotos('${a.id}','${a.nombre}')">🖼 Ver fotos</button>
             <button class="btn btn-negro btn-sm" onclick="verQR('${a.slug}')">📱 QR</button>
+            <button class="btn btn-dorado btn-sm" onclick="editarPrecio('${a.id}','${a.nombre}',${a.precio||0})">✏️ Precio</button>
             <button class="btn btn-rojo btn-sm" onclick="eliminar('${a.id}','${a.nombre}')">🗑</button>
           </div>
         </td>
@@ -509,6 +546,33 @@
       actualizarStats(albumesCache);
       toast('🗑 Álbum eliminado', 'ok');
     } catch(e) { toast('❌ Error al eliminar', 'error'); }
+  }
+
+  // ── Editar precio de álbum existente ───────────────────
+  let albumEditandoId = null;
+
+  function editarPrecio(id, nombre, precioActual) {
+    albumEditandoId = id;
+    document.getElementById('precio-album-nombre').textContent = '📁 ' + nombre;
+    document.getElementById('nuevo-precio').value = precioActual;
+    document.getElementById('overlay-precio').classList.add('open');
+  }
+
+  async function guardarPrecio() {
+    const nuevoPrecio = Number(document.getElementById('nuevo-precio').value);
+    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+      toast('⚠️ Ingresá un precio válido (0 o mayor)', 'error'); return;
+    }
+    try {
+      await db.collection('albumes').doc(albumEditandoId).update({ precio: nuevoPrecio });
+      const idx = albumesCache.findIndex(a => a.id === albumEditandoId);
+      if (idx !== -1) albumesCache[idx].precio = nuevoPrecio;
+      renderTabla(albumesCache);
+      document.getElementById('overlay-precio').classList.remove('open');
+      toast(nuevoPrecio === 0 ? '✅ Álbum configurado como libre + café ☕' : `✅ Precio actualizado a ${nuevoPrecio.toLocaleString('es-AR')}`, 'ok');
+    } catch(e) {
+      toast('❌ Error al guardar precio', 'error');
+    }
   }
 
   function toast(msg, tipo='') {
