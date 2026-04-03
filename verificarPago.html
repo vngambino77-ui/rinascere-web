@@ -1,8 +1,11 @@
-import mercadopago from "mercadopago";
+import { MercadoPagoConfig, Payment } from "mercadopago";
 
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN
+// 🔐 Inicializar cliente
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN
 });
+
+const payment = new Payment(client);
 
 export default async function handler(req, res) {
 
@@ -14,16 +17,17 @@ export default async function handler(req, res) {
 
   try {
 
-    const pago = await mercadopago.payment.findById(payment_id);
-
-    const estado = pago.body.status;
+    const response = await payment.get({ id: payment_id });
 
     return res.status(200).json({
-      status: estado
+      status: response.status,          // approved | pending | rejected
+      status_detail: response.status_detail,
+      amount: response.transaction_amount
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error MP:", error);
+
     return res.status(500).json({
       error: "Error verificando pago"
     });

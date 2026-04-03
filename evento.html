@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Evento</title>
+<title>Evento - Rinascere</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -19,71 +19,158 @@ const db = firebase.firestore();
 const CLOUD = "dwqvqpkbe";
 const LOGO = "My Brand/logo_png_fwpt2v";
 
+// 🔐 preview con marca de agua
 function urlPreview(id){
   return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
 }
 
+// 🔓 original sin marca
 function urlOriginal(id){
   return `https://res.cloudinary.com/${CLOUD}/image/upload/q_auto/${id}`;
 }
 </script>
 
 <style>
-body{font-family:Arial;padding:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px}
-.card{cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
-.card img{width:100%;height:200px;object-fit:cover}
-.card.sel{outline:3px solid gold}
-button{margin-top:20px;padding:10px 20px}
-</style>
+body{font-family:Arial;background:#faf8f4;padding:20px}
+h1{margin-bottom:10px}
 
+.portada img{
+  width:100%;
+  max-height:300px;
+  object-fit:cover;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:15px;
+}
+
+.card{
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+  cursor:pointer;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  transition:0.2s;
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.card.sel{
+  outline:3px solid #C9A84C;
+  transform:scale(0.96);
+}
+
+button{
+  margin-top:20px;
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  background:#C9A84C;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
 </head>
+
 <body>
 
-<h1 id="titulo"></h1>
+<h1 id="titulo">Cargando...</h1>
 
-<div id="portada"></div>
+<div class="portada" id="portada"></div>
 
 <div class="grid" id="grid"></div>
 
-<button onclick="comprar()">Comprar</button>
+<button onclick="comprar()">Comprar seleccionadas</button>
 
 <script>
-let seleccionadas = [];
+
 let album = null;
+let seleccionadas = [];
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
 
-async function cargar(){
+// 🔥 1. VERIFICAR PAGO AL ENTRAR
+async function verificarPago(){
 
-  const snap = await db.collection("albumes")
-    .where("slug","==",slug)
-    .get();
+  const payment_id = params.get("payment_id");
 
-  if(snap.empty){
-    alert("No existe álbum");
-    return;
+  if(!payment_id) return;
+
+  try{
+    const res = await fetch(`/api/verificar-pago?payment_id=${payment_id}`);
+    const data = await res.json();
+
+    if(data.status === "approved"){
+
+      alert("✅ Pago aprobado");
+
+      // 🔓 recuperar fotos compradas
+      const fotos = JSON.parse(localStorage.getItem("fotosCompra")) || [];
+
+      descargarFotos(fotos);
+
+      // limpiar storage
+      localStorage.removeItem("fotosCompra");
+    }
+
+  }catch(e){
+    console.error("Error verificando pago", e);
   }
-
-  album = snap.docs[0].data();
-
-  document.getElementById("titulo").innerText = album.nombre;
-
-  if(album.portada){
-    document.getElementById("portada").innerHTML =
-      `<img src="${album.portada}" style="width:100%;max-height:300px;object-fit:cover">`;
-  }
-
-  render(album.fotos);
 }
 
-function render(fotos){
+// 🔥 2. CARGAR ÁLBUM
+async function cargarAlbum(){
+
+  try{
+
+    const snap = await db.collection("albumes")
+      .where("slug","==",slug)
+      .get();
+
+    if(snap.empty){
+      document.body.innerHTML = "❌ Álbum no encontrado";
+      return;
+    }
+
+    album = snap.docs[0].data();
+
+    document.getElementById("titulo").innerText = album.nombre;
+
+    if(album.portada){
+      document.getElementById("portada").innerHTML =
+        `<img src="${album.portada}">`;
+    }
+
+    renderFotos(album.fotos || []);
+
+  }catch(e){
+    console.error(e);
+    document.body.innerHTML = "Error cargando álbum";
+  }
+}
+
+// 🔥 3. RENDER FOTOS
+function renderFotos(fotos){
 
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
 
-  fotos.forEach(foto => {
+  if(fotos.length === 0){
+    grid.innerHTML = "No hay fotos";
+    return;
+  }
+
+  fotos.forEach((foto) => {
 
     const div = document.createElement("div");
     div.className = "card";
@@ -100,36 +187,66 @@ function render(fotos){
         seleccionadas.push(foto);
       }
 
-      console.log(seleccionadas);
+      console.log("Seleccionadas:", seleccionadas);
     };
 
     grid.appendChild(div);
   });
 }
 
+// 🔥 4. COMPRAR
 async function comprar(){
 
   if(seleccionadas.length === 0){
-    alert("Seleccioná fotos");
+    alert("Seleccioná fotos primero");
     return;
   }
 
-  const res = await fetch("/api/crear-preferencia",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      fotos: seleccionadas,
-      precio: album.precio,
-      titulo: album.nombre
-    })
-  });
+  // 🔐 guardamos selección antes de ir a pagar
+  localStorage.setItem("fotosCompra", JSON.stringify(seleccionadas));
 
-  const data = await res.json();
+  try{
 
-  window.location.href = data.init_point;
+    const res = await fetch("/api/crear-preferencia",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        fotos: seleccionadas,
+        precio: album.precio,
+        titulo: album.nombre
+      })
+    });
+
+    const data = await res.json();
+
+    window.location.href = data.init_point;
+
+  }catch(e){
+    alert("Error en pago");
+    console.error(e);
+  }
 }
 
-cargar();
+// 🔥 5. DESCARGA AUTOMÁTICA
+function descargarFotos(fotos){
+
+  fotos.forEach((foto,i)=>{
+
+    const link = document.createElement("a");
+
+    link.href = urlOriginal(foto);
+    link.download = `foto_${i+1}.jpg`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+// 🚀 INIT
+verificarPago();
+cargarAlbum();
+
 </script>
 
 </body>
