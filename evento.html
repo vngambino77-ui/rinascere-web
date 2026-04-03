@@ -1,1116 +1,120 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Álbum — Ph. Rinascere Fotografías</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
-      authDomain: "rinascere-fotografias.firebaseapp.com",
-      projectId: "rinascere-fotografias",
-      storageBucket: "rinascere-fotografias.firebasestorage.app",
-      messagingSenderId: "234239060454",
-      appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
-    });
-    const db = firebase.firestore();
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    const CLOUD   = "dwqvqpkbe";
-    const LOGO_ID = "My Brand/logo_png_fwpt2v";
-    const MP_KEY  = "APP_USR-58abc961-9e16-4946-b220-e87994a436f7";
+<title>Álbum — Rinascere Fotografías</title>
 
-    // BAJA CALIDAD con logo repetido en toda la imagen (protegida)
-    function urlProtegida(publicId) {
-      if (!publicId) return '';
-      const l = encodeURIComponent(LOGO_ID);
-      // 9 logos cubriendo toda la foto en grilla
-      const capas = [
-        `l_${l},o_45,w_0.28,g_north_west,x_10,y_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_north,y_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_north_east,x_10,y_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_west,x_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_center/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_east,x_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_south_west,x_10,y_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_south,y_10/fl_layer_apply`,
-        `l_${l},o_45,w_0.28,g_south_east,x_10,y_10/fl_layer_apply`,
-      ].join('/');
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/${capas}/w_600,q_40,f_jpg/${publicId}`;
-    }
-
-    // ALTA CALIDAD sin marca de agua (solo post-pago)
-    function urlOriginal(publicId){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_auto/${publicId}`;
-}
-
-function comprarSeleccion(){
-
-  if(!window.fotosSeleccionadas || window.fotosSeleccionadas.length === 0){
-    alert("Seleccioná fotos");
-    return;
-  }
-
-  const total = window.fotosSeleccionadas.length * window.albumPrecio;
-
-  if(!confirm(`Total: $${total}`)) return;
-
-  localStorage.setItem("compraFotos", JSON.stringify(window.fotosSeleccionadas));
-
-  alert("Pago aprobado");
-
-  descargarFotos();
-}
-
-function descargarFotos(){
-
-  const fotos = JSON.parse(localStorage.getItem("compraFotos")) || [];
-
-  fotos.forEach((foto, i) => {
-
-    const link = document.createElement("a");
-
-    link.href = urlOriginal(foto);
-    link.download = `foto_${i+1}.jpg`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  });
-
-}
-  </script>
-  <style>
-    :root {
-      --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
-      --blanco:#fff; --crema:#FAF8F4; --gris:#888; --negro:#1A1A1A;
-      --verde:#27ae60; --rojo:#e74c3c;
-      --fuente-t:'Playfair Display',serif; --fuente-c:'Inter',sans-serif;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body { font-family:var(--fuente-c); background:var(--crema); color:var(--negro); user-select:none; }
-    img { pointer-events:none; -webkit-user-drag:none; }
-
-    /* NAV */
-    nav { background:rgba(255,255,255,0.97); border-bottom:1px solid #eee; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
-    .nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
-    .nav-logo img { height:44px; mix-blend-mode:multiply; }
-    .nav-back { text-decoration:none; color:var(--gris); font-size:0.85rem; display:flex; align-items:center; gap:4px; }
-    .nav-back:hover { color:var(--dorado); }
-
-    /* HERO ÁLBUM */
-    .hero { background:linear-gradient(160deg,#f0ede8,#e8e0d0); padding:44px 24px 32px; text-align:center; }
-    .eyebrow { font-size:0.72rem; color:var(--dorado-oscuro); letter-spacing:3px; text-transform:uppercase; font-weight:600; margin-bottom:8px; }
-    .hero h1 { font-family:var(--fuente-t); font-size:clamp(1.5rem,4vw,2.2rem); margin-bottom:8px; }
-    .hero-meta { font-size:0.86rem; color:var(--gris); margin-bottom:16px; }
-    .hero-stats { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-    .hero-stat { background:rgba(255,255,255,0.85); padding:7px 16px; border-radius:50px; font-size:0.8rem; font-weight:600; }
-
-    /* INSTRUCCIÓN */
-    .instruccion { background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05)); border:1px solid rgba(201,168,76,0.3); border-radius:12px; padding:14px 20px; margin:16px 24px; text-align:center; font-size:0.85rem; color:#555; }
-    .instruccion strong { color:var(--dorado-oscuro); }
-
-    /* BUSCADOR */
-    .buscador { background:var(--blanco); padding:18px 24px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
-    .buscador input { border:2px solid #ddd; border-radius:50px; padding:10px 18px; font-size:0.88rem; outline:none; width:190px; transition:border-color 0.2s; font-family:var(--fuente-c); }
-    .buscador input:focus { border-color:var(--dorado); }
-
-    /* BOTONES */
-    .btn { display:inline-flex; align-items:center; gap:7px; padding:10px 20px; border-radius:50px; border:none; font-family:var(--fuente-c); font-size:0.85rem; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none; }
-    .btn-dorado { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; box-shadow:0 3px 14px rgba(201,168,76,0.3); }
-    .btn-dorado:hover { transform:translateY(-1px); }
-    .btn-outline { background:transparent; border:2px solid var(--dorado); color:var(--dorado-oscuro); }
-    .btn-outline:hover { background:var(--dorado); color:#fff; }
-    .btn-verde { background:var(--verde); color:#fff; }
-    .btn-negro { background:var(--negro); color:#fff; }
-    .btn-mp { background:linear-gradient(135deg,#009ee3,#007eb5); color:#fff; }
-
-    /* GRILLA FOTOS */
-    .fotos-sec { padding:28px 20px; max-width:1200px; margin:0 auto; }
-    .fotos-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:8px; }
-    .fotos-header h2 { font-family:var(--fuente-t); font-size:1.3rem; }
-    .grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
-
-    /* FOTO CARD */
-    .foto-card { border-radius:12px; overflow:hidden; background:var(--blanco); box-shadow:0 2px 10px rgba(0,0,0,0.07); cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; position:relative; }
-    .foto-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.12); }
-    .foto-card img { width:100%; height:200px; object-fit:cover; display:block; background:#f0f0f0; }
-    .foto-check { position:absolute; top:8px; right:8px; width:26px; height:26px; background:var(--dorado); border-radius:50%; display:none; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:0.85rem; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
-    .foto-card.sel .foto-check { display:flex; }
-    .foto-card.sel img { filter:brightness(0.78); }
-    .foto-card.sel { border:3px solid var(--dorado); }
-    .foto-pie { padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
-    .foto-precio { font-weight:700; font-size:0.85rem; color:var(--dorado-oscuro); }
-    .foto-hint { font-size:0.72rem; color:var(--gris); }
-
-    /* CARGANDO */
-    .loading { text-align:center; padding:60px 20px; color:var(--gris); font-family:var(--fuente-t); font-size:1.1rem; }
-    .spinner { width:32px; height:32px; border:3px solid #eee; border-top-color:var(--dorado); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* BARRA COMPRA FLOTANTE */
-    .barra { position:fixed; bottom:0; left:0; right:0; z-index:200; background:var(--negro); color:#fff; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; transform:translateY(100%); transition:transform 0.3s; box-shadow:0 -4px 24px rgba(0,0,0,0.25); flex-wrap:wrap; gap:10px; }
-    .barra.vis { transform:translateY(0); }
-    .barra-info strong { font-size:1rem; }
-    .barra-info span { font-size:0.78rem; color:#aaa; margin-left:8px; }
-    .barra-btns { display:flex; gap:8px; flex-wrap:wrap; }
-    .btn-pagar { background:linear-gradient(135deg,#009ee3,#007eb5); color:#fff; border:none; padding:12px 24px; border-radius:50px; font-weight:700; font-size:0.9rem; cursor:pointer; font-family:var(--fuente-c); display:flex; align-items:center; gap:8px; }
-    .btn-limpiar { background:transparent; color:#aaa; border:1px solid #444; padding:10px 16px; border-radius:50px; font-size:0.8rem; cursor:pointer; font-family:var(--fuente-c); }
-
-    /* LIGHTBOX */
-    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:300; display:none; align-items:center; justify-content:center; flex-direction:column; padding:16px; }
-    .lightbox.open { display:flex; }
-    .lb-wrap { position:relative; max-width:92vw; }
-    .lightbox img { max-width:92vw; max-height:72vh; object-fit:contain; border-radius:8px; display:block; }
-    .lb-x { position:fixed; top:16px; right:16px; color:#fff; font-size:1.8rem; cursor:pointer; background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; z-index:10; }
-    .lb-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.18); border:none; color:#fff; font-size:1.4rem; padding:12px; border-radius:50%; cursor:pointer; }
-    .lb-prev { left:-50px; }
-    .lb-next { right:-50px; }
-    .lb-bottom { display:flex; gap:10px; margin-top:14px; justify-content:center; flex-wrap:wrap; }
-    @media(max-width:600px) {
-      .lb-prev { left:4px; }
-      .lb-next { right:4px; }
-      .lightbox img { max-height:60vh; }
-    }
-
-    /* MODAL PAGO */
-    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; padding:20px; }
-    .overlay.open { display:flex; }
-    .modal { background:var(--blanco); border-radius:20px; width:460px; max-width:100%; max-height:92vh; overflow-y:auto; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-    .modal h2 { font-family:var(--fuente-t); font-size:1.3rem; margin-bottom:6px; }
-    .modal-sub { color:var(--gris); font-size:0.83rem; margin-bottom:20px; }
-    .res-fotos { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
-    .res-fotos img { width:54px; height:54px; object-fit:cover; border-radius:6px; border:1px solid #eee; }
-    .res-total { background:var(--crema); border-radius:10px; padding:14px; margin-bottom:18px; }
-    .res-linea { display:flex; justify-content:space-between; font-size:0.86rem; padding:3px 0; }
-    .res-linea.total { font-weight:700; font-size:0.98rem; border-top:1px solid #ddd; margin-top:8px; padding-top:10px; }
-    .fg { margin-bottom:14px; }
-    .fg label { display:block; font-size:0.78rem; font-weight:600; color:#444; margin-bottom:5px; }
-    .fg input { width:100%; padding:10px 14px; border:2px solid #e0e0e0; border-radius:10px; font-family:var(--fuente-c); font-size:0.88rem; outline:none; transition:border-color 0.2s; }
-    .fg input:focus { border-color:var(--dorado); }
-    .mp-btn { width:100%; padding:14px; background:linear-gradient(135deg,#009ee3,#007eb5); color:#fff; border:none; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:var(--fuente-c); display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; transition:opacity 0.2s; }
-    .mp-btn:hover { opacity:0.9; }
-    .mp-btn:disabled { opacity:0.6; cursor:not-allowed; }
-
-    /* MODAL DESCARGA */
-    .descarga-header { text-align:center; padding:10px 0 20px; }
-    .descarga-header .ico { font-size:3.5rem; margin-bottom:10px; }
-    .descarga-header h3 { font-family:var(--fuente-t); font-size:1.4rem; margin-bottom:6px; }
-    .descarga-header p { color:var(--gris); font-size:0.85rem; line-height:1.6; }
-    .descarga-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin:20px 0; }
-    .descarga-item { background:var(--crema); border-radius:10px; overflow:hidden; border:1px solid #eee; }
-    .descarga-item img { width:100%; height:90px; object-fit:cover; display:block; }
-    .descarga-item a { display:flex; align-items:center; justify-content:center; gap:4px; padding:8px; font-size:0.75rem; color:var(--dorado-oscuro); font-weight:600; text-decoration:none; background:var(--blanco); transition:background 0.2s; }
-    .descarga-item a:hover { background:var(--crema); }
-    .descarga-todas { width:100%; padding:14px; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; border:none; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:var(--fuente-c); margin-bottom:10px; }
-
-    /* TOAST */
-    .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); z-index:999; background:var(--negro); color:#fff; padding:12px 22px; border-radius:50px; font-size:0.85rem; opacity:0; transition:all 0.3s; white-space:nowrap; border-left:4px solid var(--dorado); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    .toast.ok { border-left-color:var(--verde); }
-    .toast.error { border-left-color:var(--rojo); }
-
-    @media(max-width:640px) {
-      .fotos-sec { padding:20px 14px; }
-      .grilla { grid-template-columns:repeat(2,1fr); gap:10px; }
-      .foto-card img { height:160px; }
-    }
-
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:16px;
-    margin-top:20px;
-  }
-
-  .card-foto{
-    background:#fff;
-    border-radius:12px;
-    overflow:hidden;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .card-foto img{
-    width:100%;
-    height:220px;
-    object-fit:cover;
-  }
-
-  .info{
-    padding:10px;
-  }
-
-  .cafe{
-    font-size:12px;
-    color:#A07830;
-  }
-.card-foto{
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.card-foto.seleccionada{
-  outline:3px solid #C9A84C;
-  transform:scale(0.97);
-}
-.btn-comprar{
-  margin-top:20px;
-  padding:12px 20px;
-  border:none;
-  border-radius:8px;
-  background:#C9A84C;
-  color:white;
-  font-weight:600;
-  cursor:pointer;
-}
-  </style>
-</head>
-<body>
-
-<nav>
-  <a href="index.html" class="nav-logo">
-    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
-  </a>
-  <a href="index.html" class="nav-back">← Volver</a>
-</nav>
-
-<div class="hero">
-  <div class="eyebrow">Álbum de fotografías</div>
-  <h1 id="album-nombre">Cargando...</h1>
-  <div class="hero-meta" id="album-meta"></div>
-  <div class="hero-stats" id="album-stats"></div>
-</div>
-
-<div class="instruccion">
-  <strong>¿Cómo funciona?</strong> Tocá una foto para verla en grande · Seleccioná las que más te gusten · Pagá y descargalas al instante en alta calidad 📸
-</div>
-
-<div class="buscador" id="buscador" style="display:none">
-  <input type="text" id="input-dorsal" placeholder="Número de dorsal (ej: 42)" maxlength="6" inputmode="numeric"/>
-  <button class="btn btn-dorado" onclick="filtrarDorsal()">🔍 Buscar</button>
-  <button class="btn btn-outline" onclick="mostrarTodas()">Ver todas</button>
-</div>
-
-<div class="fotos-sec">
-  <div class="fotos-header">
-    <h2 id="fotos-titulo">Fotos del evento</h2>
-<div id="contenedor-fotos"></div>
-<button onclick="comprarSeleccion()" class="btn-comprar">
-  Comprar fotos seleccionadas
-</button>
-    <h1 id="titulo-evento"></h1>
-    <div id="portada-album"></div>
-      <div class="grilla" id="grilla">
-    <div class="loading" style="grid-column:1/-1">
-      <div class="spinner"></div>Cargando fotos...
-    </div>
-  </div>
-</div>
-
-<!-- BARRA COMPRA FLOTANTE -->
-<div class="barra" id="barra">
-  <div class="barra-info">
-    <strong id="barra-total">$0</strong>
-    <span id="barra-cant">0 fotos seleccionadas</span>
-  </div>
-  <div class="barra-btns">
-    <button class="btn-limpiar" onclick="limpiarSel()">✕ Limpiar</button>
-    <button class="btn-pagar" onclick="abrirPago()">💳 Comprar y descargar</button>
-  </div>
-</div>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox">
-  <button class="lb-x" onclick="cerrarLb()">✕</button>
-  <div class="lb-wrap">
-    <button class="lb-nav lb-prev" onclick="navLb(-1)">‹</button>
-    <img id="lb-img" src="" alt="Foto"/>
-    <button class="lb-nav lb-next" onclick="navLb(1)">›</button>
-  </div>
-  <div class="lb-bottom">
-    <button class="btn btn-dorado" id="lb-btn-sel" onclick="toggleSelLb()">+ Seleccionar esta foto</button>
-    <button class="btn btn-negro" onclick="cerrarLb()">✕ Cerrar</button>
-  </div>
-</div>
-
-<!-- MODAL PAGO -->
-<div class="overlay" id="overlay-pago">
-  <div class="modal">
-    <h2>Resumen de compra</h2>
-    <p class="modal-sub">Revisá tu selección antes de pagar con Mercado Pago</p>
-    <div class="res-fotos" id="res-fotos"></div>
-    <div class="res-total" id="res-total"></div>
-    <div class="fg">
-      <label>Tu email (para recibir confirmación)</label>
-      <input type="email" id="email-input" placeholder="tucorreo@gmail.com" inputmode="email"/>
-    </div>
-    <button class="mp-btn" id="mp-btn" onclick="procesarPago()">
-      💳 Pagar con Mercado Pago
-    </button>
-    <p style="text-align:center;font-size:0.72rem;color:var(--gris);margin-top:10px;">
-      Pago 100% seguro · Tarjetas, débito y más · Sin cuenta de MP requerida
-    </p>
-    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:10px;" onclick="cerrarPago()">Cancelar</button>
-  </div>
-</div>
-
-<!-- MODAL DESCARGA -->
-<div class="overlay" id="overlay-descarga">
-  <div class="modal">
-    <div class="descarga-header">
-      <div class="ico">🎉</div>
-      <h3>¡Pago exitoso!</h3>
-      <p>Tus fotos están listas en alta calidad y sin marca de agua.<br>
-      Descargalas ahora — el link es válido por <strong>24 horas</strong>.</p>
-    </div>
-    <div class="descarga-grid" id="descarga-grid"></div>
-    <button class="descarga-todas" onclick="descargarTodas()">⬇ Descargar todas las fotos</button>
-    <p style="text-align:center;font-size:0.75rem;color:var(--gris);">
-      Si estás en el celular, tocá cada foto individualmente para guardarla en tu galería 📱
-    </p>
-    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:10px;" onclick="document.getElementById('overlay-descarga').classList.remove('open')">Cerrar</button>
-  <div function bloquearDescarga(){
-  alert("🔒 Comprá la foto para descargarla en alta calidad");
-}/div>
-<img.onclick = bloquearDescarga;/div>
-
-<div class="toast" id="toast"></div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-function irAPago(){
-  alert("Redirigiendo a Mercado Pago (simulación)");
-  window.open("https://www.mercadopago.com.ar/", "_blank");
+firebase.initializeApp({
+  apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
+  authDomain: "rinascere-fotografias.firebaseapp.com",
+  projectId: "rinascere-fotografias"
+});
+
+const db = firebase.firestore();
+const CLOUD = "dwqvqpkbe";
+</script>
+
+<style>
+body{font-family:Arial;background:#faf8f4;margin:0}
+
+.hero{
+  text-align:center;
+  padding:30px;
 }
-function comprar(){
-  alert("Redirigiendo a Mercado Pago");
-  window.open("https://www.mercadopago.com.ar/", "_blank");
+
+#portada-album img{
+  width:100%;
+  height:300px;
+  object-fit:cover;
+  border-radius:10px;
 }
-<button onclick="comprar()">Comprar</button>
-img.onerror = () => {
-  img.src = "https://via.placeholder.com/300x200?text=Error";
-};
-— AGREGAR “☕ VALOR COLABORATIVO”
-<div>$${album.precio}</div>
-${album.precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
+
+#contenedor-fotos{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.card.sel{
+  outline:3px solid gold;
+}
+
+.info{
+  padding:10px;
+  font-size:14px;
+}
 
 .cafe{
-  font-size: 12px;
-  color: #A07830;
-  margin-top: 4px;
+  font-size:12px;
+  color:#a07830;
 }
+
+.btn{
+  display:block;
+  margin:20px auto;
+  padding:12px 20px;
+  background:#c9a84c;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+  <h1 id="titulo">Cargando...</h1>
+  <div id="portada-album"></div>
+</div>
+
+<div id="contenedor-fotos">
+  <p>Cargando fotos...</p>
+</div>
+
+<button class="btn" onclick="comprar()">Comprar selección</button>
 
 <script>
 
-  // Protección
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey||e.metaKey) && ['s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
-    if (e.key === 'PrintScreen' || e.key === 'F12') e.preventDefault();
-  });
-
-  let album = null;
-  let todasFotos = [];
-  let fotosMostradas = [];
-  let seleccionadas = new Set();
-  let lbIdx = 0;
-
-  // ── Obtener slug de la URL ─────────────────────────────
-  function getSlug() {
-    const p = new URLSearchParams(window.location.search);
-    return p.get('slug') || null;
-  }
-
-  // ── Verificar pago aprobado (regreso desde MP) ─────────
-  async function verificarPago() {
-    const p = new URLSearchParams(window.location.search);
-    const status = p.get('status') || p.get('collection_status');
-    const pedidoId = p.get('external_reference');
-
-    if ((status === 'approved' || status === 'approved') && pedidoId) {
-      try {
-        const docRef = db.collection('pedidos').doc(pedidoId);
-        const docSnap = await docRef.get();
-        if (docSnap.exists) {
-          const pedido = docSnap.data();
-          if (pedido.estado !== 'pagado') {
-            await docRef.update({ estado: 'pagado', fechaPago: new Date().toISOString() });
-          }
-          mostrarDescarga(pedido.fotosIds || []);
-        }
-      } catch (e) { console.error('Error verificando pago:', e); }
-    }
-  }
-
-  // ── Cargar álbum desde Firebase ────────────────────────
-  async function cargar() {
-    await verificarPago();
-    const slug = getSlug();
-    if (!slug) {
-      document.getElementById('grilla').innerHTML = '<div class="loading" style="grid-column:1/-1">No se especificó ningún álbum.</div>';
-      return;
-    }
-    try {
-      db.collection("albumes")
-  .where("slug", "==", slug)
-  .get()
-  .then((snap) => {
-
-    const doc = snap.docs[0];
-    const album = doc.data();
-
-    renderFotos(album);
-    console.log("ALBUM:", album);
-    console.log("FOTOS DEL ÁLBUM:", album.fotos);
-
-// después sigue tu código
-const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
-
-card.innerHTML = `
-  <img src="${url}" alt="Foto ${i+1}" 
-       onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
-`;
-      todasFotos = album.fotos || [];
-
-      document.getElementById('album-nombre').textContent = album.nombre;
-      document.title = album.nombre + ' — Ph. Rinascere';
-      document.getElementById('album-meta').textContent =
-        [album.lugar ? '📍 ' + album.lugar : '', album.fecha ? '📅 ' + album.fecha : ''].filter(Boolean).join(' · ');
-      document.getElementById('album-stats').innerHTML = `
-        <div class="hero-stat">📷 ${todasFotos.length} fotos</div>
-        <div class="hero-stat">💰 $${Number(album.precio||0).toLocaleString('es-AR')} c/u</div>
-        <div class="hero-stat">${album.publico ? '🌐 Público' : '🔒 Privado'}</div>`;
-
-      if (album.identificacion === 'dorsal' || album.identificacion === 'ambos') {
-        document.getElementById('buscador').style.display = 'flex';
-      }
-
-      renderFotos(todasFotos);
-    } catch (e) {
-      console.error(e);
-      document.getElementById('grilla').innerHTML = '<div class="loading" style="grid-column:1/-1">Error al cargar. Intentá de nuevo.</div>';
-    }
-  }
-
-  // ── Renderizar grilla de fotos ─────────────────────────
-  function renderFotos(fotos) {
-    fotosMostradas = fotos;
-    const g = document.getElementById('grilla');
-    document.getElementById('fotos-contador').textContent = `${fotos.length} foto${fotos.length !== 1 ? 's' : ''}`;
-
-    if (fotos.length === 0) {
-      g.innerHTML = '<div class="loading" style="grid-column:1/-1">No se encontraron fotos.</div>';
-      return;
-    }
-
-    g.innerHTML = fotos.map((pid, i) => {
-      const sel = seleccionadas.has(pid);
-      const imgUrl = urlProtegida(pid);
-      return `
-        <div class="foto-card ${sel ? 'sel' : ''}" id="card-${i}" onclick="abrirLb(${i})">
-          <img src="${imgUrl}" alt="Foto ${i+1}" loading="lazy"
-            onerror="this.style.background='#eee';this.style.height='200px'"/>
-          <div class="foto-check">✓</div>
-          <div class="foto-pie">
-            <span class="foto-precio">$${Number(album?.precio||0).toLocaleString('es-AR')}</span>
-            <span class="foto-hint">${sel ? '✓ Seleccionada' : 'Tocá para ver'}</span>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  // ── Buscador por dorsal ────────────────────────────────
-  function filtrarDorsal() {
-    const d = document.getElementById('input-dorsal').value.trim();
-    if (!d) { mostrarTodas(); return; }
-    const f = todasFotos.filter(p => p.toLowerCase().includes(d.toLowerCase()));
-    document.getElementById('fotos-titulo').textContent = `Fotos con dorsal #${d}`;
-    if (f.length === 0) {
-      toast('No encontramos fotos con ese dorsal. Mostrando todas.', 'error');
-      renderFotos(todasFotos);
-    } else {
-      renderFotos(f);
-    }
-  }
-
-  function mostrarTodas() {
-    document.getElementById('fotos-titulo').textContent = 'Fotos del evento';
-    document.getElementById('input-dorsal').value = '';
-    renderFotos(todasFotos);
-  }
-
-  // ── Lightbox ───────────────────────────────────────────
-  function abrirLb(i) {
-    lbIdx = i;
-    actualizarLb();
-    document.getElementById('lightbox').classList.add('open');
-  }
-
-  function cerrarLb() {
-    document.getElementById('lightbox').classList.remove('open');
-  }
-
-  function navLb(dir) {
-    lbIdx = (lbIdx + dir + fotosMostradas.length) % fotosMostradas.length;
-    actualizarLb();
-  }
-
-  function actualizarLb() {
-    const pid = fotosMostradas[lbIdx];
-    document.getElementById('lb-img').src = urlProtegida(pid);
-    const btn = document.getElementById('lb-btn-sel');
-    const sel = seleccionadas.has(pid);
-    btn.textContent = sel ? '✓ Quitar selección' : '+ Seleccionar esta foto';
-    btn.style.background = sel ? 'var(--verde)' : '';
-  }
-
-  function toggleSelLb() {
-    const pid = fotosMostradas[lbIdx];
-    if (seleccionadas.has(pid)) seleccionadas.delete(pid);
-    else seleccionadas.add(pid);
-    actualizarBarra();
-    actualizarLb();
-    renderFotos(fotosMostradas);
-    setTimeout(() => { document.getElementById('lightbox').classList.add('open'); actualizarLb(); }, 10);
-  }
-
-  document.getElementById('lightbox').addEventListener('click', e => {
-    if (e.target === e.currentTarget) cerrarLb();
-  });
-  document.addEventListener('keydown', e => {
-    if (!document.getElementById('lightbox').classList.contains('open')) return;
-    if (e.key === 'ArrowLeft') navLb(-1);
-    if (e.key === 'ArrowRight') navLb(1);
-    if (e.key === 'Escape') cerrarLb();
-  });
-
-  // ── Barra compra ───────────────────────────────────────
-  function actualizarBarra() {
-    const cant = seleccionadas.size;
-    const total = cant * Number(album?.precio || 0);
-    document.getElementById('barra-cant').textContent = `${cant} foto${cant !== 1 ? 's' : ''} seleccionada${cant !== 1 ? 's' : ''}`;
-    document.getElementById('barra-total').textContent = `$${total.toLocaleString('es-AR')}`;
-    document.getElementById('barra').classList.toggle('vis', cant > 0);
-  }
-
-  function limpiarSel() {
-    seleccionadas.clear();
-    actualizarBarra();
-    renderFotos(fotosMostradas);
-  }
-
-  // ── Modal pago ─────────────────────────────────────────
-  function abrirPago() {
-    if (seleccionadas.size === 0) return;
-    const fotos = Array.from(seleccionadas);
-    const precio = Number(album?.precio || 0);
-    const total = fotos.length * precio;
-
-    document.getElementById('res-fotos').innerHTML = fotos.map(pid =>
-      `<img src="${urlProtegida(pid)}" alt="foto"/>`).join('');
-
-    document.getElementById('res-total').innerHTML = `
-      <div class="res-linea"><span>${fotos.length} foto${fotos.length !== 1 ? 's' : ''}</span><span>$${(fotos.length * precio).toLocaleString('es-AR')}</span></div>
-      <div class="res-linea total"><span>Total a pagar</span><span>$${total.toLocaleString('es-AR')}</span></div>`;
-
-    document.getElementById('overlay-pago').classList.add('open');
-  }
-
-  function cerrarPago() {
-    document.getElementById('overlay-pago').classList.remove('open');
-  }
-function comprar(){
-  alert("Simulación de pago");
-}
-
-  // ── Procesar pago ──────────────────────────────────────
-  async function procesarPago() {
-    const email = document.getElementById('email-input').value.trim();
-    if (!email || !email.includes('@')) {
-      toast('⚠️ Ingresá tu email para continuar', 'error'); return;
-    }
-
-    const fotos = Array.from(seleccionadas);
-    const precio = Number(album?.precio || 0);
-    const total = fotos.length * precio;
-    const btn = document.getElementById('mp-btn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Procesando...';
-
-    try {
-      // Guardar pedido en Firebase
-      const pedidoRef = await db.collection('pedidos').add({
-        albumId: album.id,
-        albumNombre: album.nombre,
-        fotosIds: fotos,
-        emailCliente: email,
-        total,
-        estado: 'pendiente',
-        creadoEn: new Date().toISOString()
-      });
-
-      const slug = window.location.pathname.split("/").pop();
-      const base = window.location.origin;
-      const successUrl = `${base}/evento.html?slug=${slug}&status=approved&external_reference=${pedidoRef.id}`;
-      const failUrl    = `${base}/evento.html?slug=${slug}&status=rejected`;
-
-      // ── MODO PRUEBA: simula pago aprobado ──────────────
-      // Cuando tengas el backend Node.js listo, reemplazá
-      // este bloque por la llamada a tu servidor que crea
-      // la preferencia de Mercado Pago y redirige al cliente.
-      cerrarPago();
-      toast('✅ Pago aprobado (modo prueba)', 'ok');
-      setTimeout(() => mostrarDescarga(fotos), 1200);
-
-      /* ── PRODUCCIÓN: descomentar cuando el backend esté listo ──
-      const res = await fetch('https://tu-backend.vercel.app/crear-preferencia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: fotos.map((pid, i) => ({
-            title: `Foto ${i+1} — ${album.nombre}`,
-            quantity: 1,
-            unit_price: precio,
-            currency_id: 'ARS'
-          })),
-          email,
-          pedidoId: pedidoRef.id,
-          back_urls: { success: successUrl, failure: failUrl, pending: failUrl }
-        })
-      });
-      const { init_point } = await res.json();
-      window.location.href = init_point;
-      */
-
-    } catch (e) {
-      console.error(e);
-      toast('❌ Error al procesar el pago', 'error');
-      btn.disabled = false;
-      btn.textContent = '💳 Pagar con Mercado Pago';
-    }
-  }
-
-  // ── Mostrar descarga ───────────────────────────────────
-  function mostrarDescarga(fotos) {
-    const grid = document.getElementById('descarga-grid');
-    const album_nombre = album?.nombre || 'rinascere';
-    grid.innerHTML = fotos.map((pid, i) => {
-      const nombre = `rinascere_foto_${i+1}`;
-      const urlDesc = urlDescarga(pid, nombre);
-      const urlVista = urlOriginal(pid);
-      return `
-        <div class="descarga-item">
-img.src = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${foto}`; 
-img.src = `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_50,w_0.3,g_center/fl_layer_apply/w_600/${foto}`;           
-onerror="this.style.background='#eee';this.style.minHeight='90px'"/>
-          <a href="${urlDesc}" download="${nombre}.jpg" target="_blank">
-            ⬇ Descargar
-          </a>
-        </div>`;
-    }).join('');
-
-    document.getElementById('overlay-descarga').classList.add('open');
-    seleccionadas.clear();
-    actualizarBarra();
-    renderFotos(fotosMostradas);
-  }
-
-  // ── Descargar todas ────────────────────────────────────
-  // En celular abre cada foto en nueva pestaña para guardar desde ahí
-  function descargarTodas() {
-    const links = document.querySelectorAll('#descarga-grid a');
-    const esCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-    if (esCelular) {
-      // En celular: abrir cada foto individualmente
-      links.forEach((a, i) => {
-        setTimeout(() => window.open(a.href, '_blank'), i * 600);
-      });
-      toast('📱 Abriendo fotos para guardar en tu galería', 'ok');
-    } else {
-      // En desktop: descarga directa
-      links.forEach((a, i) => {
-        setTimeout(() => {
-          const tmp = document.createElement('a');
-          tmp.href = a.href;
-          tmp.download = a.download;
-          document.body.appendChild(tmp);
-          tmp.click();
-          document.body.removeChild(tmp);
-        }, i * 800);
-      });
-      toast('⬇ Descargando todas las fotos...', 'ok');
-    }
-  }
-
-  // ── Toast ──────────────────────────────────────────────
-  function toast(msg, tipo = '') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast show' + (tipo ? ' ' + tipo : '');
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 3500);
-  }
-
-  cargar();
-</script>
+// 🔐 Marca de agua preview
 function urlPreview(id){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${id}`;
-}
-<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.3,g_center/fl_layer_apply/w_500/${foto}">
-// 🔽 ACÁ ESTÁ EL BLOQUE DE FOTOS
-fotos.forEach(foto => {
-
- img.onclick = () => {
-
-  const index = seleccionadas.indexOf(foto);
-
-  if(index > -1){
-    seleccionadas.splice(index,1);
-    img.style.border = "none";
-  }else{
-    seleccionadas.push(foto);
-    img.style.border = "3px solid gold";
-  }
-
-  actualizarBarra();
-};
-<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}" alt="Foto ${i+1}">
-
-contenedor.innerHTML += `<img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_auto/${foto}">`;
-});
-function comprar(){
-
-  if(seleccionadas.length === 0){
-    alert("Seleccioná al menos una foto");
-    return;
-  }
-
-  const total = calcularPrecio();
-
-  // 🔥 SIMULACIÓN MERCADO PAGO
-  const url = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=TEST123`;
-
-  alert(`Vas a pagar $${total}`);
-
-  window.open(url, "_blank");
-
-}<div id="barra-compra">
-  <span id="contador">0 fotos</span>
-  <span id="total">$0</span>
-  <button onclick="comprar()">Comprar</button>
-<function actualizarBarra(){
-
-  document.getElementById("total").textContent =
-    "$" + (seleccionadas.length * precioPorFoto);
-
-}/div>
-function calcularPrecio(){
-
-  const n = seleccionadas.length;
-
-  if(n >= 5) return 9000;
-  if(n >= 3) return 6000;
-
-  return n * precioPorFoto;
-}
-document.getElementById("total").textContent =
-  "$" + calcularPrecio();
-function comprar(){
-
-  if(seleccionadas.length === 0){
-    alert("Seleccioná al menos una foto");
-    return;
-  }
-
-  const total = calcularPrecio();
-
-  // 🔥 SIMULACIÓN DE PAGO
-  localStorage.setItem("pago_realizado", "true");
-
-  alert(`Pago simulado por $${total} ✔`);
-
-}
-<script>
-// ⏳ Asegura que el DOM ya esté cargado
-document.addEventListener("DOMContentLoaded", async () => {
-
-  // 🎯 1. Obtener slug correcto
-  const slug = window.location.pathname.split("/").pop();
-
-  // 🎯 2. Contenedor
-  const contenedor = document.getElementById("contenedor-fotos");
-
-  if(!contenedor){
-    console.error("❌ No existe #contenedor-fotos en el HTML");
-    return;
-  }
-
-  contenedor.innerHTML = "<p>Cargando fotos...</p>";
-
-  try{
-    // 🔥 3. Leer Firebase
-    const snap = await db.collection("albumes")
-      .where("slug","==",slug)
-      .get();
-
-    if(snap.empty){
-      contenedor.innerHTML = "<p>❌ No se encontró el álbum</p>";
-      return;
-    }
-
-    const album = snap.docs[0].data();
-    console.log("✅ ALBUM:", album);
-
-    // 🔥 4. Normalizar fotos
-    const fotos = Array.isArray(album.fotos)
-      ? album.fotos
-      : (album.fotos || "").split(",");
-
-    if(!fotos || fotos.length === 0){
-      contenedor.innerHTML = "<p>No hay fotos</p>";
-      return;
-    }
-
-    // 🔥 5. Render
-    contenedor.innerHTML = "";
-
-// 🧠 aseguramos array de seleccionadas
-if(!window.fotosSeleccionadas){
-  window.fotosSeleccionadas = [];
+  return `https://res.cloudinary.com/${CLOUD}/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
 }
 
-// 🔐 función preview con marca de agua
-function urlPreview(publicId){
-  // 🧠 array global
-if(!window.fotosSeleccionadas){
-  window.fotosSeleccionadas = [];
+// 🔓 Original sin marca
+function urlOriginal(id){
+  return `https://res.cloudinary.com/${CLOUD}/image/upload/q_auto/${id}`;
 }
 
-// 🔐 función con marca de agua
-function urlPreview(publicId){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${publicId}`;
-}
+// 🧠 Estado global
+let seleccionadas = [];
+let precio = 0;
 
-const preview = urlPreview(foto);
-
-const card = document.createElement("div");
-card.className = "card-foto";
-
-card.innerHTML = `
-  <img src="${preview}"
-       alt="Foto ${i+1}"
-       onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
-
-  <div class="info">
-    <strong>$${album.precio || 0}</strong>
-    <div class="cafe">☕ Valor colaborativo</div>
-  </div>
-`;
-
-// 🎯 selección real
-card.addEventListener("click", () => {
-
-  card.classList.toggle("seleccionada");
-
-  if(window.fotosSeleccionadas.includes(foto)){
-    window.fotosSeleccionadas =
-      window.fotosSeleccionadas.filter(f => f !== foto);
-  }else{
-    window.fotosSeleccionadas.push(foto);
-  }
-
-  console.log("Seleccionadas:", window.fotosSeleccionadas);
-});
-
-    if(window.fotosSeleccionadas.includes(foto)){
-      window.fotosSeleccionadas =
-        window.fotosSeleccionadas.filter(f => f !== foto);
-    }else{
-      window.fotosSeleccionadas.push(foto);
-    }
-
-    console.log("Seleccionadas:", window.fotosSeleccionadas);
-  });
-
-  contenedor.appendChild(card);
-});
-
-  }catch(e){
-    console.error("❌ ERROR:", e);
-    contenedor.innerHTML = "<p>Error cargando fotos</p>";
-  }
-
-});
-</script>
-</body>
-</html>
-functions/index.js
-const functions = require("firebase-functions");
-const mercadopago = require("mercadopago");
-
-mercadopago.configure({
-  access_token: "TU_ACCESS_TOKEN_REAL"
-});
-
-exports.crearPago = functions.https.onRequest(async (req, res) => {
-
-  const { items } = req.body;
-
-  try{
-    const preference = await mercadopago.preferences.create({
-      items: items,
-      back_urls: {
-        success: "https://tuweb.com/exito.html"
-      }
-    });
-
-    res.json({ id: preference.body.id });
-
-  }catch(e){
-    res.status(500).send(e.message);
-  }
-
-});
-async function comprar(){
-
-  if(seleccionadas.length === 0){
-    alert("Seleccioná al menos una foto");
-    return;
-  }
-
-  const items = [{
-    title: "Fotos Rinascere",
-    quantity: seleccionadas.length,
-    unit_price: calcularPrecio() / seleccionadas.length
-  }];
-
-  const res = await fetch("https://TU_BACKEND/crearPago", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ items })
-  });
-
-  const data = await res.json();
-
-  window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
-}
-
-<script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-
-  // 🔹 Obtener slug
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("slug");
-
-  console.log("SLUG:", slug);
-
-  const contenedor = document.getElementById("contenedor-fotos");
-
-  if(!contenedor){
-    console.error("No existe contenedor-fotos");
-    return;
-  }
-
-  contenedor.innerHTML = "<p>Cargando fotos...</p>";
-
-  try{
-
-    const snap = await db.collection("albumes")
-      .where("slug","==",slug)
-      .get();
-
-    if(snap.empty){
-      contenedor.innerHTML = "<p>No se encontró el álbum</p>";
-      return;
-    }
-
-    const album = snap.docs[0].data();
-const portadaDiv = document.getElementById("portada-album");
-
-if(album.portadaUrl){
-  portadaDiv.innerHTML = `
-    <img src="${album.portadaUrl}"
-         style="width:100%; height:350px; object-fit:cover; border-radius:12px;">
-  `;
-}else{
-  portadaDiv.innerHTML = "<p>Sin portada</p>";
-}
-
-console.log("PORTADA:", album.portadaUrl);
-window.albumPrecio = album.precio || 0;
-
-
-// 🔥 FUNCIÓN LIMPIA (FUERA DEL DOMContentLoaded)
-function renderFotos(album){
-
-  const contenedor = document.getElementById("contenedor-fotos");
-
-  if(!contenedor){
-    console.error("No existe contenedor");
-    return;
-  }
-
-  contenedor.innerHTML = "";
-
-  const fotos = album.fotos || [];
-
-  if(fotos.length === 0){
-    contenedor.innerHTML = "<p>No hay fotos</p>";
-    return;
-  }
-
-  // 🔐 array global
-  if(!window.fotosSeleccionadas){
-    window.fotosSeleccionadas = [];
-  }
-
-  // 🔐 preview con marca de agua
-  
-function urlPreview(publicId){
-    return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${publicId}`;
-  }
-
-  fotos.forEach((foto, i) => {
-
-    const id = typeof foto === "string" ? foto : foto.id;
-    const preview = urlPreview(id);
-
-    const card = document.createElement("div");
-    card.className = "card-foto";
-
-    card.innerHTML = `
-      <img src="${preview}"
-           alt="Foto ${i+1}"
-           onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
-
-      <div class="info">
-        <strong>$${album.precio || 0}</strong>
-        <div class="cafe">☕ Valor colaborativo</div>
-      </div>
-    `;
-
-    card.addEventListener("click", () => {
-
-      card.classList.toggle("seleccionada");
-
-      if(window.fotosSeleccionadas.includes(id)){
-        window.fotosSeleccionadas =
-          window.fotosSeleccionadas.filter(f => f !== id);
-      }else{
-        window.fotosSeleccionadas.push(id);
-      }
-
-    });
-
-    contenedor.appendChild(card);
-  });
-
-// 🚀 INICIAR
-async function cargarAlbum(){
+// 🚀 Cargar álbum
+async function cargar(){
 
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
@@ -1118,7 +122,7 @@ async function cargarAlbum(){
   const contenedor = document.getElementById("contenedor-fotos");
 
   if(!slug){
-    contenedor.innerHTML = "<p>Falta slug</p>";
+    contenedor.innerHTML = "<p>Error: falta slug</p>";
     return;
   }
 
@@ -1129,55 +133,86 @@ async function cargarAlbum(){
       .get();
 
     if(snap.empty){
-      contenedor.innerHTML = "<p>No se encontró el álbum</p>";
+      contenedor.innerHTML = "<p>No existe el álbum</p>";
       return;
     }
 
     const album = snap.docs[0].data();
 
-    window.albumPrecio = album.precio || 0;
+    document.getElementById("titulo").textContent = album.nombre;
+
+    precio = album.precio || 0;
 
     // 📸 PORTADA
-    const portadaDiv = document.getElementById("portada-album");
-
-    if(portadaDiv && album.portadaUrl){
-      portadaDiv.innerHTML = `
-        <img src="${album.portadaUrl}"
-             style="width:100%;height:350px;object-fit:cover;border-radius:12px;">
+    if(album.portadaUrl){
+      document.getElementById("portada-album").innerHTML = `
+        <img src="${album.portadaUrl}">
       `;
     }
 
-    renderFotos(album);
+    const fotos = album.fotos || [];
+
+    if(fotos.length === 0){
+      contenedor.innerHTML = "<p>No hay fotos</p>";
+      return;
+    }
+
+    contenedor.innerHTML = "";
+
+    fotos.forEach((id, i)=>{
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <img src="${urlPreview(id)}">
+        <div class="info">
+          <strong>$${precio}</strong>
+          ${precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
+        </div>
+      `;
+
+      card.onclick = ()=>{
+
+        card.classList.toggle("sel");
+
+        if(seleccionadas.includes(id)){
+          seleccionadas = seleccionadas.filter(f=>f!==id);
+        }else{
+          seleccionadas.push(id);
+        }
+
+        console.log("Seleccionadas:", seleccionadas);
+      };
+
+      contenedor.appendChild(card);
+    });
 
   }catch(e){
     console.error(e);
-    contenedor.innerHTML = "<p>Error al cargar</p>";
+    contenedor.innerHTML = "<p>Error cargando</p>";
   }
-
-}cargarAlbum();  // 💰 SIMULACIÓN DE PAGO (luego Mercado Pago)
-  const total = window.fotosSeleccionadas.length * (window.albumPrecio || 0);
-
-  const confirmar = confirm(`Total: $${total} \n¿Confirmar compra?`);
-
-  if(!confirmar) return;
-
-  // 🔐 guardar compra
-  localStorage.setItem("compraFotos", JSON.stringify(window.fotosSeleccionadas));
-
-  alert("Pago aprobado");
-
-  descargarFotos();
 }
 
-function descargarFotos(){
+// 💰 Comprar
+function comprar(){
 
-  const fotos = JSON.parse(localStorage.getItem("compraFotos")) || [];
+  if(seleccionadas.length === 0){
+    alert("Seleccioná fotos");
+    return;
+  }
 
-  fotos.forEach((foto, i) => {
+  const total = seleccionadas.length * precio;
+
+  if(!confirm(`Total: $${total}`)) return;
+
+  alert("Pago simulado ✔");
+
+  // 🔓 descarga
+  seleccionadas.forEach((id,i)=>{
 
     const link = document.createElement("a");
-
-    link.href = urlOriginal(foto);
+    link.href = urlOriginal(id);
     link.download = `foto_${i+1}.jpg`;
 
     document.body.appendChild(link);
@@ -1188,4 +223,10 @@ function descargarFotos(){
 
 }
 
+// 🚀 INIT
+cargar();
+
 </script>
+
+</body>
+</html>
