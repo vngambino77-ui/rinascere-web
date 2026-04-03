@@ -1,7 +1,7 @@
 import mercadopago from "mercadopago";
 
 mercadopago.configure({
-  access_token: "TU_ACCESS_TOKEN_REAL"
+  access_token: APP_USR-2728717194982261-032915-732e9a841643b7a4b6636b5255120cbb-3297989181
 });
 
 export default async function handler(req, res) {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("ERROR MP:", error);
     res.status(500).json({ error: error.message });
   }
 }

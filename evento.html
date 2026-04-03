@@ -2,11 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evento</title>
 
-<title>Álbum — Rinascere Fotografías</title>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -16,214 +13,183 @@ firebase.initializeApp({
   authDomain: "rinascere-fotografias.firebaseapp.com",
   projectId: "rinascere-fotografias"
 });
-
 const db = firebase.firestore();
-const CLOUD = "dwqvqpkbe";
 </script>
 
 <style>
-body{font-family:Arial;background:#faf8f4;margin:0}
-
-.hero{
-  text-align:center;
-  padding:30px;
-}
-
-#portada-album img{
-  width:100%;
-  height:300px;
-  object-fit:cover;
-  border-radius:10px;
-}
-
+body{font-family:Arial;background:#fafafa;margin:0}
 #contenedor-fotos{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
   padding:20px;
 }
-
 .card{
-  background:white;
-  border-radius:10px;
+  background:#fff;
+  border-radius:12px;
   overflow:hidden;
   box-shadow:0 2px 10px rgba(0,0,0,0.1);
   cursor:pointer;
 }
-
-.card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.card.sel{
-  outline:3px solid gold;
-}
-
-.info{
-  padding:10px;
-  font-size:14px;
-}
-
-.cafe{
-  font-size:12px;
-  color:#a07830;
-}
-
-.btn{
-  display:block;
-  margin:20px auto;
+.card img{width:100%;height:220px;object-fit:cover}
+.card.sel{outline:3px solid gold}
+.info{padding:10px}
+.cafe{font-size:12px;color:#A07830}
+button{
+  margin:20px;
   padding:12px 20px;
-  background:#c9a84c;
-  color:white;
+  background:#C9A84C;
   border:none;
   border-radius:8px;
   cursor:pointer;
+  color:white;
 }
 </style>
 </head>
 
 <body>
 
-<div class="hero">
-  <h1 id="titulo">Cargando...</h1>
-  <div id="portada-album"></div>
-</div>
+<h2 style="text-align:center">Álbum</h2>
 
-<div id="contenedor-fotos">
-  <p>Cargando fotos...</p>
-</div>
+<div id="contenedor-fotos"></div>
 
-<button class="btn" onclick="comprar()">Comprar selección</button>
+<button onclick="pagar()">Comprar seleccionadas</button>
 
 <script>
 
-// 🔐 Marca de agua preview
-function urlPreview(id){
-  return `https://res.cloudinary.com/${CLOUD}/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
-}
-
-// 🔓 Original sin marca
-function urlOriginal(id){
-  return `https://res.cloudinary.com/${CLOUD}/image/upload/q_auto/${id}`;
-}
-
-// 🧠 Estado global
 let seleccionadas = [];
-let precio = 0;
+let albumGlobal = null;
 
-// 🚀 Cargar álbum
+// 🔐 preview con marca de agua
+function urlPreview(id){
+  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
+}
+
+// 🔓 original sin marca
+function urlOriginal(id){
+  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_auto/${id}`;
+}
+
+// 🔥 cargar álbum
 async function cargar(){
 
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
 
   const contenedor = document.getElementById("contenedor-fotos");
+  contenedor.innerHTML = "Cargando fotos...";
 
-  if(!slug){
-    contenedor.innerHTML = "<p>Error: falta slug</p>";
+  const snap = await db.collection("albumes")
+    .where("slug","==",slug)
+    .get();
+
+  if(snap.empty){
+    contenedor.innerHTML = "No existe álbum";
     return;
   }
 
-  try{
+  const album = snap.docs[0].data();
+  albumGlobal = album;
 
-    const snap = await db.collection("albumes")
-      .where("slug","==",slug)
-      .get();
+  const fotos = album.fotos || [];
 
-    if(snap.empty){
-      contenedor.innerHTML = "<p>No existe el álbum</p>";
-      return;
-    }
+  contenedor.innerHTML = "";
 
-    const album = snap.docs[0].data();
+  fotos.forEach((foto,i)=>{
 
-    document.getElementById("titulo").textContent = album.nombre;
+    const card = document.createElement("div");
+    card.className = "card";
 
-    precio = album.precio || 0;
+    card.innerHTML = `
+      <img src="${urlPreview(foto)}">
+      <div class="info">
+        <strong>$${album.precio || 0}</strong>
+        ${album.precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
+      </div>
+    `;
 
-    // 📸 PORTADA
-    if(album.portadaUrl){
-      document.getElementById("portada-album").innerHTML = `
-        <img src="${album.portadaUrl}">
-      `;
-    }
+    card.onclick = ()=>{
+      card.classList.toggle("sel");
 
-    const fotos = album.fotos || [];
+      if(seleccionadas.includes(foto)){
+        seleccionadas = seleccionadas.filter(f=>f!==foto);
+      }else{
+        seleccionadas.push(foto);
+      }
+    };
 
-    if(fotos.length === 0){
-      contenedor.innerHTML = "<p>No hay fotos</p>";
-      return;
-    }
+    contenedor.appendChild(card);
 
-    contenedor.innerHTML = "";
+  });
 
-    fotos.forEach((id, i)=>{
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <img src="${urlPreview(id)}">
-        <div class="info">
-          <strong>$${precio}</strong>
-          ${precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
-        </div>
-      `;
-
-      card.onclick = ()=>{
-
-        card.classList.toggle("sel");
-
-        if(seleccionadas.includes(id)){
-          seleccionadas = seleccionadas.filter(f=>f!==id);
-        }else{
-          seleccionadas.push(id);
-        }
-
-        console.log("Seleccionadas:", seleccionadas);
-      };
-
-      contenedor.appendChild(card);
-    });
-
-  }catch(e){
-    console.error(e);
-    contenedor.innerHTML = "<p>Error cargando</p>";
-  }
 }
 
-// 💰 Comprar
-function comprar(){
+// 💳 pago real
+async function pagar(){
 
   if(seleccionadas.length === 0){
     alert("Seleccioná fotos");
     return;
   }
 
-  const total = seleccionadas.length * precio;
+  const email = prompt("Tu email:");
 
-  if(!confirm(`Total: $${total}`)) return;
+  const items = seleccionadas.map(f=>({
+    title:"Foto Rinascere",
+    quantity:1,
+    unit_price: albumGlobal.precio
+  }));
 
-  alert("Pago simulado ✔");
-
-  // 🔓 descarga
-  seleccionadas.forEach((id,i)=>{
-
-    const link = document.createElement("a");
-    link.href = urlOriginal(id);
-    link.download = `foto_${i+1}.jpg`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+  const res = await fetch("/api/crearPago",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      items,
+      email,
+      fotografoMP: albumGlobal.vendedorMP,
+      comision:0.7
+    })
   });
+
+  const data = await res.json();
+
+  if(data.init_point){
+    window.location.href = data.init_point;
+  }else{
+    alert("Error al generar pago");
+  }
 
 }
 
-// 🚀 INIT
+// 🔥 validar pago al volver
+async function verificarPago(){
+
+  const params = new URLSearchParams(window.location.search);
+  const payment_id = params.get("payment_id");
+
+  if(!payment_id) return;
+
+  const res = await fetch(`/api/verificarPago?payment_id=${payment_id}`);
+  const data = await res.json();
+
+  if(data.status === "approved"){
+
+    alert("Pago aprobado 🎉");
+
+    seleccionadas.forEach((foto,i)=>{
+      const link = document.createElement("a");
+      link.href = urlOriginal(foto);
+      link.download = `foto_${i}.jpg`;
+      link.click();
+    });
+
+  }else{
+    alert("Pago no aprobado");
+  }
+
+}
+
+verificarPago();
 cargar();
 
 </script>
