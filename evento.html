@@ -218,6 +218,15 @@
     font-size:12px;
     color:#A07830;
   }
+.card-foto{
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.card-foto.seleccionada{
+  outline:3px solid #C9A84C;
+  transform:scale(0.97);
+}
   </style>
 </head>
 <body>
@@ -250,6 +259,8 @@
   <div class="fotos-header">
     <h2 id="fotos-titulo">Fotos del evento</h2>
 <div id="contenedor-fotos"></div>
+    <h1 id="titulo-evento"></h1>
+<div id="portada-album"></div>
       <div class="grilla" id="grilla">
     <div class="loading" style="grid-column:1/-1">
       <div class="spinner"></div>Cargando fotos...
@@ -824,26 +835,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 🔥 5. Render
     contenedor.innerHTML = "";
 
-    fotos.forEach((foto, i) => {
+// 🧠 aseguramos array de seleccionadas
+if(!window.fotosSeleccionadas){
+  window.fotosSeleccionadas = [];
+}
 
-      const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
+// 🔐 función preview con marca de agua
+function urlPreview(publicId){
+  // 🧠 array global
+if(!window.fotosSeleccionadas){
+  window.fotosSeleccionadas = [];
+}
 
-      const card = document.createElement("div");
-      card.className = "card-foto";
+// 🔐 función con marca de agua
+function urlPreview(publicId){
+  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${publicId}`;
+}
 
-      card.innerHTML = `
-        <img src="${url}"
-             alt="Foto ${i+1}"
-             onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+const preview = urlPreview(foto);
 
-        <div class="info">
-          <strong>$0</strong>
-          <div class="cafe">☕ Valor colaborativo</div>
-        </div>
-      `;
+const card = document.createElement("div");
+card.className = "card-foto";
 
-      contenedor.appendChild(card);
-    });
+card.innerHTML = `
+  <img src="${preview}"
+       alt="Foto ${i+1}"
+       onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+
+  <div class="info">
+    <strong>$${album.precio || 0}</strong>
+    <div class="cafe">☕ Valor colaborativo</div>
+  </div>
+`;
+
+// 🎯 selección real
+card.addEventListener("click", () => {
+
+  card.classList.toggle("seleccionada");
+
+  if(window.fotosSeleccionadas.includes(foto)){
+    window.fotosSeleccionadas =
+      window.fotosSeleccionadas.filter(f => f !== foto);
+  }else{
+    window.fotosSeleccionadas.push(foto);
+  }
+
+  console.log("Seleccionadas:", window.fotosSeleccionadas);
+});
+
+    if(window.fotosSeleccionadas.includes(foto)){
+      window.fotosSeleccionadas =
+        window.fotosSeleccionadas.filter(f => f !== foto);
+    }else{
+      window.fotosSeleccionadas.push(foto);
+    }
+
+    console.log("Seleccionadas:", window.fotosSeleccionadas);
+  });
+
+  contenedor.appendChild(card);
+});
 
   }catch(e){
     console.error("❌ ERROR:", e);
@@ -935,6 +986,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const album = snap.docs[0].data();
+console.log("PORTADA:", album.portadaUrl);
+
+const portadaDiv = document.getElementById("portada-album");
+
+if(album.portadaUrl){
+
+  const img = new Image();
+
+  img.src = album.portadaUrl;
+
+  img.style.width = "100%";
+  img.style.height = "350px";
+  img.style.objectFit = "cover";
+  img.style.borderRadius = "12px";
+
+  portadaDiv.innerHTML = "";
+  portadaDiv.appendChild(img);
+
+}else{
+  portadaDiv.innerHTML = "<p>Sin portada</p>";
+}
 
     console.log("ALBUM:", album);
 
