@@ -13,185 +13,123 @@ firebase.initializeApp({
   authDomain: "rinascere-fotografias.firebaseapp.com",
   projectId: "rinascere-fotografias"
 });
+
 const db = firebase.firestore();
+
+const CLOUD = "dwqvqpkbe";
+const LOGO = "My Brand/logo_png_fwpt2v";
+
+function urlPreview(id){
+  return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
+}
+
+function urlOriginal(id){
+  return `https://res.cloudinary.com/${CLOUD}/image/upload/q_auto/${id}`;
+}
 </script>
 
 <style>
-body{font-family:Arial;background:#fafafa;margin:0}
-#contenedor-fotos{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:16px;
-  padding:20px;
-}
-.card{
-  background:#fff;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 2px 10px rgba(0,0,0,0.1);
-  cursor:pointer;
-}
-.card img{width:100%;height:220px;object-fit:cover}
+body{font-family:Arial;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px}
+.card{cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.card img{width:100%;height:200px;object-fit:cover}
 .card.sel{outline:3px solid gold}
-.info{padding:10px}
-.cafe{font-size:12px;color:#A07830}
-button{
-  margin:20px;
-  padding:12px 20px;
-  background:#C9A84C;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  color:white;
-}
+button{margin-top:20px;padding:10px 20px}
 </style>
-</head>
 
+</head>
 <body>
 
-<h2 style="text-align:center">Álbum</h2>
+<h1 id="titulo"></h1>
 
-<div id="contenedor-fotos"></div>
+<div id="portada"></div>
 
-<button onclick="pagar()">Comprar seleccionadas</button>
+<div class="grid" id="grid"></div>
+
+<button onclick="comprar()">Comprar</button>
 
 <script>
-
 let seleccionadas = [];
-let albumGlobal = null;
+let album = null;
 
-// 🔐 preview con marca de agua
-function urlPreview(id){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${id}`;
-}
+const params = new URLSearchParams(window.location.search);
+const slug = params.get("slug");
 
-// 🔓 original sin marca
-function urlOriginal(id){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_auto/${id}`;
-}
-
-// 🔥 cargar álbum
 async function cargar(){
-
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("slug");
-
-  const contenedor = document.getElementById("contenedor-fotos");
-  contenedor.innerHTML = "Cargando fotos...";
 
   const snap = await db.collection("albumes")
     .where("slug","==",slug)
     .get();
 
   if(snap.empty){
-    contenedor.innerHTML = "No existe álbum";
+    alert("No existe álbum");
     return;
   }
 
-  const album = snap.docs[0].data();
-  albumGlobal = album;
+  album = snap.docs[0].data();
 
-  const fotos = album.fotos || [];
+  document.getElementById("titulo").innerText = album.nombre;
 
-  contenedor.innerHTML = "";
+  if(album.portada){
+    document.getElementById("portada").innerHTML =
+      `<img src="${album.portada}" style="width:100%;max-height:300px;object-fit:cover">`;
+  }
 
-  fotos.forEach((foto,i)=>{
+  render(album.fotos);
+}
 
-    const card = document.createElement("div");
-    card.className = "card";
+function render(fotos){
 
-    card.innerHTML = `
-      <img src="${urlPreview(foto)}">
-      <div class="info">
-        <strong>$${album.precio || 0}</strong>
-        ${album.precio == 0 ? '<div class="cafe">☕ Valor colaborativo</div>' : ''}
-      </div>
-    `;
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
 
-    card.onclick = ()=>{
-      card.classList.toggle("sel");
+  fotos.forEach(foto => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `<img src="${urlPreview(foto)}">`;
+
+    div.onclick = () => {
+
+      div.classList.toggle("sel");
 
       if(seleccionadas.includes(foto)){
-        seleccionadas = seleccionadas.filter(f=>f!==foto);
+        seleccionadas = seleccionadas.filter(f => f !== foto);
       }else{
         seleccionadas.push(foto);
       }
+
+      console.log(seleccionadas);
     };
 
-    contenedor.appendChild(card);
-
+    grid.appendChild(div);
   });
-
 }
 
-// 💳 pago real
-async function pagar(){
+async function comprar(){
 
   if(seleccionadas.length === 0){
     alert("Seleccioná fotos");
     return;
   }
 
-  const email = prompt("Tu email:");
-
-  const items = seleccionadas.map(f=>({
-    title:"Foto Rinascere",
-    quantity:1,
-    unit_price: albumGlobal.precio
-  }));
-
-  const res = await fetch("/api/crearPago",{
+  const res = await fetch("/api/crear-preferencia",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      items,
-      email,
-      fotografoMP: albumGlobal.vendedorMP,
-      comision:0.7
+    body: JSON.stringify({
+      fotos: seleccionadas,
+      precio: album.precio,
+      titulo: album.nombre
     })
   });
 
   const data = await res.json();
 
-  if(data.init_point){
-    window.location.href = data.init_point;
-  }else{
-    alert("Error al generar pago");
-  }
-
+  window.location.href = data.init_point;
 }
 
-// 🔥 validar pago al volver
-async function verificarPago(){
-
-  const params = new URLSearchParams(window.location.search);
-  const payment_id = params.get("payment_id");
-
-  if(!payment_id) return;
-
-  const res = await fetch(`/api/verificarPago?payment_id=${payment_id}`);
-  const data = await res.json();
-
-  if(data.status === "approved"){
-
-    alert("Pago aprobado 🎉");
-
-    seleccionadas.forEach((foto,i)=>{
-      const link = document.createElement("a");
-      link.href = urlOriginal(foto);
-      link.download = `foto_${i}.jpg`;
-      link.click();
-    });
-
-  }else{
-    alert("Pago no aprobado");
-  }
-
-}
-
-verificarPago();
 cargar();
-
 </script>
 
 </body>
