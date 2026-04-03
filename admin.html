@@ -401,7 +401,10 @@ fd.append("folder", `albumes/${user}/${carpeta}`);
   });
 
   // ── Guardar álbum ──────────────────────────────────────
-  async function guardarAlbum(){
+if(archivos.length === 0){
+  toast('⚠️ Subí al menos una foto');
+  return;
+}async function guardarAlbum(){
     const nombre  = document.getElementById('f-nombre').value.trim();
     const fecha   = document.getElementById('f-fecha').value;
     const precio  = document.getElementById('f-precio').value;
@@ -415,9 +418,10 @@ fd.append("folder", `albumes/${user}/${carpeta}`);
 
     // Generar slug único
     const slug = nombre.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-      + '-' + Date.now().toString(36);
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^a-z0-9]+/g,'-')
+  .replace(/^-|-$/g,'')
+  + '-' + Date.now();
 
     slugActual = slug;
 
@@ -436,8 +440,10 @@ fd.append("folder", `albumes/${user}/${carpeta}`);
 
       for (let i = 0; i < archivosSeleccionados.length; i++){
       const publicId = await subirFotoCloudinary(...)
-      fotosSubidas.push(publicId);
-
+fotosSubidas.push({
+  id: publicId,
+  original: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto/${publicId}`
+});
      if(i===0){
   portadaUrl = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_800/${publicId}`;
 }

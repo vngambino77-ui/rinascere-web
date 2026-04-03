@@ -42,17 +42,46 @@
     }
 
     // ALTA CALIDAD sin marca de agua (solo post-pago)
-    function urlOriginal(publicId) {
-      if (!publicId) return '';
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/q_100,fl_attachment/${publicId}`;
-    }
+    function urlOriginal(publicId){
+  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_auto/${publicId}`;
+}
 
-    // URL original para descarga forzada en celular
-    function urlDescarga(publicId, nombre) {
-      if (!publicId) return '';
-      const n = encodeURIComponent(nombre || 'rinascere_foto');
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/fl_attachment:${n}/q_100/${publicId}`;
-    }
+function comprarSeleccion(){
+
+  if(!window.fotosSeleccionadas || window.fotosSeleccionadas.length === 0){
+    alert("Seleccioná fotos");
+    return;
+  }
+
+  const total = window.fotosSeleccionadas.length * window.albumPrecio;
+
+  if(!confirm(`Total: $${total}`)) return;
+
+  localStorage.setItem("compraFotos", JSON.stringify(window.fotosSeleccionadas));
+
+  alert("Pago aprobado");
+
+  descargarFotos();
+}
+
+function descargarFotos(){
+
+  const fotos = JSON.parse(localStorage.getItem("compraFotos")) || [];
+
+  fotos.forEach((foto, i) => {
+
+    const link = document.createElement("a");
+
+    link.href = urlOriginal(foto);
+    link.download = `foto_${i+1}.jpg`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  });
+
+}
   </script>
   <style>
     :root {
@@ -968,6 +997,7 @@ async function comprar(){
 
   window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
 }
+
 <script>
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1019,57 +1049,112 @@ function renderFotos(album){
 
   const contenedor = document.getElementById("contenedor-fotos");
 
+  if(!contenedor){
+    console.error("No existe contenedor");
+    return;
+  }
+
   contenedor.innerHTML = "";
 
-  const fotos = Array.isArray(album.fotos)
-    ? album.fotos
-    : (album.fotos || "").split(",");
+  const fotos = album.fotos || [];
 
-  if(!fotos || fotos.length === 0){
+  if(fotos.length === 0){
     contenedor.innerHTML = "<p>No hay fotos</p>";
     return;
   }
 
+  // 🔐 array global
+  if(!window.fotosSeleccionadas){
+    window.fotosSeleccionadas = [];
+  }
+
+  // 🔐 preview con marca de agua
+  
+function urlPreview(publicId){
+    return `https://res.cloudinary.com/dwqvqpkbe/image/upload/l_My%20Brand/logo_png_fwpt2v,o_40,w_0.4,g_center/fl_layer_apply,w_500,q_auto/${publicId}`;
+  }
+
   fotos.forEach((foto, i) => {
 
-    const url = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_500,q_auto/${foto}`;
+    const id = typeof foto === "string" ? foto : foto.id;
+    const preview = urlPreview(id);
 
     const card = document.createElement("div");
     card.className = "card-foto";
 
     card.innerHTML = `
-      <img src="${url}"
+      <img src="${preview}"
            alt="Foto ${i+1}"
            onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
 
       <div class="info">
-        <strong>$0</strong>
+        <strong>$${album.precio || 0}</strong>
         <div class="cafe">☕ Valor colaborativo</div>
       </div>
     `;
 
-    contenedor.appendChild(card);
+    card.addEventListener("click", () => {
 
+      card.classList.toggle("seleccionada");
+
+      if(window.fotosSeleccionadas.includes(id)){
+        window.fotosSeleccionadas =
+          window.fotosSeleccionadas.filter(f => f !== id);
+      }else{
+        window.fotosSeleccionadas.push(id);
+      }
+
+    });
+
+    contenedor.appendChild(card);
   });
 
-}
-
-</script>
 // 🚀 INICIAR
-cargarAlbum();
+async function cargarAlbum(){
 
-function urlOriginal(publicId){
-  return `https://res.cloudinary.com/dwqvqpkbe/image/upload/q_auto/${publicId}`;
-}
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
 
-function comprarSeleccion(){
+  const contenedor = document.getElementById("contenedor-fotos");
 
-  if(!window.fotosSeleccionadas || window.fotosSeleccionadas.length === 0){
-    alert("Seleccioná al menos una foto");
+  if(!slug){
+    contenedor.innerHTML = "<p>Falta slug</p>";
     return;
   }
 
-  // 💰 SIMULACIÓN DE PAGO (luego Mercado Pago)
+  try{
+
+    const snap = await db.collection("albumes")
+      .where("slug","==",slug)
+      .get();
+
+    if(snap.empty){
+      contenedor.innerHTML = "<p>No se encontró el álbum</p>";
+      return;
+    }
+
+    const album = snap.docs[0].data();
+
+    window.albumPrecio = album.precio || 0;
+
+    // 📸 PORTADA
+    const portadaDiv = document.getElementById("portada-album");
+
+    if(portadaDiv && album.portadaUrl){
+      portadaDiv.innerHTML = `
+        <img src="${album.portadaUrl}"
+             style="width:100%;height:350px;object-fit:cover;border-radius:12px;">
+      `;
+    }
+
+    renderFotos(album);
+
+  }catch(e){
+    console.error(e);
+    contenedor.innerHTML = "<p>Error al cargar</p>";
+  }
+
+}cargarAlbum();  // 💰 SIMULACIÓN DE PAGO (luego Mercado Pago)
   const total = window.fotosSeleccionadas.length * (window.albumPrecio || 0);
 
   const confirmar = confirm(`Total: $${total} \n¿Confirmar compra?`);
@@ -1102,4 +1187,5 @@ function descargarFotos(){
   });
 
 }
+
 </script>
