@@ -205,9 +205,9 @@
     .cal-nota { font-size:0.74rem; color:var(--gris); margin-top:10px; }
 
     /* HERO CON FOTO */
-
-
-
+    .hero-foto-bg { position:absolute; inset:0; background-size:cover; background-position:center; background-repeat:no-repeat; z-index:0; transition:opacity 0.5s; }
+    .hero-foto-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(250,248,244,0.88) 0%,rgba(250,248,244,0.72) 60%,rgba(250,248,244,0.55) 100%); z-index:1; }
+    .hero-foto-bg.tiene-foto ~ .hero::before { opacity:0; }
 
     /* PORTFOLIO */
     .portfolio-sec { background:var(--blanco); }
@@ -218,8 +218,6 @@
     .portfolio-foto { border-radius:12px; overflow:hidden; aspect-ratio:4/3; background:#ede8dc; cursor:pointer; }
     .portfolio-foto img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s; }
     .portfolio-foto:hover img { transform:scale(1.04); }
-    .portfolio-foto-vacia { border-radius:12px; aspect-ratio:4/3; background:var(--crema); border:2px dashed #ddd; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:#bbb; font-size:0.78rem; cursor:pointer; transition:border-color 0.2s; }
-    .portfolio-foto-vacia:hover { border-color:var(--dorado); color:var(--dorado-oscuro); }
     .portfolio-cta { text-align:center; }
 
     /* TESTIMONIOS */
@@ -325,6 +323,8 @@
 
 <!-- HERO -->
 <section class="hero" id="inicio">
+  <div class="hero-foto-bg" id="hero-foto-bg"></div>
+  <div class="hero-foto-overlay" id="hero-foto-overlay" style="display:none"></div>
   <div class="hero-con">
     <img class="hero-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Ph. Rinascere Fotografías"/>
     <div class="hero-nombre">Ph. Rinascere Fotografías</div>
@@ -665,29 +665,43 @@
   }
 
   // ── Cargar foto del hero desde Firebase ───────────────
+  async function cargarHeroFoto() {
+    try {
+      const doc = await db.collection('configuracion').doc('sitio').get();
+      if (doc.exists) {
+        const data = doc.data();
+        // Foto de hero (puede ser la misma que foto personal o una diferida)
+        const heroUrl = data.heroFotoUrl || data.fotoPersonalUrl;
+        if (heroUrl) {
+          const bg = document.getElementById('hero-foto-bg');
+          const overlay = document.getElementById('hero-foto-overlay');
+          bg.style.backgroundImage = `url('${heroUrl}')`;
+          overlay.style.display = 'block';
+          // Ajustar colores del texto al tener foto de fondo
+          document.querySelectorAll('.hero-bienvenida, .hero-tagline').forEach(el => el.style.color = '#fff');
+          document.querySelectorAll('.hero-bienvenida span').forEach(el => el.style.color = 'var(--dorado-claro)');
+          document.querySelector('.hero-logo').style.filter = 'brightness(0) invert(1)';
+          document.querySelector('.hero-nombre').style.color = '#fff';
+          document.querySelector('.hero-sub').style.color = 'var(--dorado-claro)';
+          document.querySelector('.hero').style.background = 'var(--negro)';
+        }
+      }
+    } catch(e) { /* silencioso — hero funciona igual sin foto */ }
+  }
 
   // ── Cargar portfolio desde Firebase ───────────────────
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
-    const SLOTS = 9;
+    const seccion = document.getElementById('portfolio');
     try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
+      const snap = await db.collection('portfolio').orderBy('orden').limit(9).get();
       const fotos = snap.docs.map(d => d.data());
-      let html = fotos.map(f => {
-        const url = f.url.startsWith('http') ? f.url
-          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
+      if (fotos.length === 0) { if (seccion) seccion.style.display = 'none'; return; }
+      grilla.innerHTML = fotos.map(f => {
+        const url = f.url.startsWith('http') ? f.url : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
         return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
       }).join('');
-      // Completar slots vacíos con placeholders de carga
-      const vacios = SLOTS - fotos.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-      }
-      grilla.innerHTML = html;
-    } catch(e) {
-      // Sin Firebase → mostrar placeholders
-      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-    }
+    } catch(e) { if (seccion) seccion.style.display = 'none'; }
   }
 
   // ── Cargar testimonios desde Firebase (opcional) ──────
@@ -711,6 +725,7 @@
   // ── Iniciar ───────────────────────────────────────────
   cargarAlbumes();
   cargarFotoPersonal();
+  cargarHeroFoto();
   cargarPortfolio();
   cargarTestimonios();
 
@@ -822,4 +837,4 @@
   }
 </script>
 </body>
-</html> 
+</html>

@@ -213,8 +213,9 @@
       <div class="sidebar-logo-txt">Ph. Rinascere<span>Panel admin</span></div>
     </div>
     <nav>
-      <a class="activo">🗂 Álbumes</a>
-      <a>📦 Pedidos</a>
+      <a class="activo" onclick="cambiarSeccion('albumes', this)">🗂 Álbumes</a>
+      <a onclick="cambiarSeccion('pedidos', this)">📦 Pedidos</a>
+      <a onclick="cambiarSeccion('portfolio', this)">🎨 Portfolio</a>
       <a>📊 Estadísticas</a>
       <a href="index.html" target="_blank">🌐 Ver sitio web</a>
     </nav>
@@ -222,13 +223,15 @@
   </aside>
 
   <main class="contenido">
-    <div class="stats">
+    <div class="stats" id="sec-albumes-stats">
       <div class="stat"><div class="num" id="st-total">—</div><div class="lbl">Álbumes</div></div>
       <div class="stat"><div class="num" id="st-pub">—</div><div class="lbl">Públicos</div></div>
       <div class="stat"><div class="num" id="st-priv">—</div><div class="lbl">Privados</div></div>
       <div class="stat"><div class="num" id="st-fotos">—</div><div class="lbl">Fotos totales</div></div>
     </div>
 
+    <!-- SECCIÓN ÁLBUMES -->
+    <div id="sec-albumes">
     <div class="encabezado">
       <h1>Mis <span>álbumes</span></h1>
       <button class="btn btn-dorado" onclick="abrirModal()">+ Nuevo álbum</button>
@@ -244,6 +247,23 @@
         </tbody>
       </table>
     </div>
+    </div>
+
+    <!-- SECCIÓN PORTFOLIO -->
+    <div id="sec-portfolio" style="display:none">
+      <div class="encabezado">
+        <h1>Mi <span>portfolio</span></h1>
+        <button class="btn btn-dorado" onclick="document.getElementById('input-port-foto').click()">+ Agregar foto</button>
+        <input type="file" id="input-port-foto" multiple accept="image/*" style="display:none" onchange="subirFotosPortfolio(this.files)"/>
+      </div>
+      <p style="color:var(--gris);font-size:0.85rem;margin-bottom:20px;">Estas fotos aparecen en la sección Portfolio de tu web. Subí hasta 9 fotos que representen tu mejor trabajo.</p>
+      <div id="port-grilla" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;"></div>
+      <div id="port-prog" style="display:none;background:var(--crema);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:0.85rem;color:var(--gris);margin-bottom:8px;" id="port-prog-txt">Subiendo...</div>
+        <div style="background:#ddd;border-radius:50px;height:6px;"><div id="port-prog-bar" style="background:var(--dorado);height:6px;border-radius:50px;width:0%;transition:width 0.3s;"></div></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -755,6 +775,104 @@
       renderTabla([]);
     }
   }
+
+  // ── Cambiar sección ───────────────────────────────────────
+  function cambiarSeccion(sec, el) {
+    // Sidebar activo
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('activo'));
+    if (el) el.classList.add('activo');
+    // Mostrar/ocultar secciones
+    document.getElementById('sec-albumes').style.display = sec === 'albumes' ? '' : 'none';
+    document.getElementById('sec-albumes-stats').style.display = sec === 'albumes' ? '' : 'none';
+    const secPort = document.getElementById('sec-portfolio');
+    if (secPort) secPort.style.display = sec === 'portfolio' ? '' : 'none';
+    if (sec === 'portfolio') cargarPortfolioAdmin();
+  }
+
+  // ── PORTFOLIO ─────────────────────────────────────────────
+  async function cargarPortfolioAdmin() {
+    const grilla = document.getElementById('port-grilla');
+    grilla.innerHTML = '<p style="color:var(--gris);font-size:0.85rem;">Cargando...</p>';
+    try {
+      const snap = await db.collection('portfolio').orderBy('orden').get();
+      const fotos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (fotos.length === 0) {
+        grilla.innerHTML = '<p style="color:var(--gris);font-size:0.85rem;grid-column:1/-1;">No hay fotos todavía. Hacé click en "+ Agregar foto" para subir tu primer imagen.</p>';
+        return;
+      }
+      grilla.innerHTML = fotos.map((f, i) => {
+        const url = f.url.startsWith('http') ? f.url : `https://res.cloudinary.com/${CLOUD}/image/upload/w_400,q_70,f_auto/${f.url}`;
+        return `
+          <div style="border-radius:12px;overflow:hidden;background:var(--blanco);box-shadow:0 2px 10px rgba(0,0,0,0.07);position:relative;">
+            <img src="${url}" alt="${f.titulo||''}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;" onerror="this.style.background='#eee'"/>
+            <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.8rem;color:var(--gris);">Foto ${i+1}</span>
+              <button onclick="eliminarFotoPortfolio('${f.id}', '${f.publicId||''}')" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:0.8rem;font-weight:600;">🗑 Eliminar</button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      grilla.innerHTML = '<p style="color:var(--rojo);font-size:0.85rem;">Error cargando portfolio.</p>';
+    }
+  }
+
+  async function subirFotosPortfolio(archivos) {
+    if (!archivos || archivos.length === 0) return;
+    const progWrap = document.getElementById('port-prog');
+    const progBar = document.getElementById('port-prog-bar');
+    const progTxt = document.getElementById('port-prog-txt');
+    progWrap.style.display = 'block';
+
+    // Contar cuántas fotos hay para calcular el orden
+    const snapActual = await db.collection('portfolio').get();
+    let orden = snapActual.size;
+
+    for (let i = 0; i < archivos.length; i++) {
+      const archivo = archivos[i];
+      progTxt.textContent = `Subiendo foto ${i+1} de ${archivos.length}...`;
+      progBar.style.width = Math.round((i / archivos.length) * 100) + '%';
+
+      try {
+        const fd = new FormData();
+        fd.append('file', archivo);
+        fd.append('upload_preset', UPLOAD_PRESET);
+        fd.append('folder', 'portfolio');
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.secure_url) {
+          await db.collection('portfolio').add({
+            url: data.public_id,
+            publicId: data.public_id,
+            titulo: archivo.name.replace(/\.[^.]+$/, ''),
+            orden: orden++,
+            creadoEn: new Date().toISOString()
+          });
+        }
+      } catch(e) {
+        toast('❌ Error subiendo ' + archivo.name, 'error');
+      }
+    }
+
+    progBar.style.width = '100%';
+    progTxt.textContent = '✅ ¡Listo!';
+    setTimeout(() => { progWrap.style.display = 'none'; }, 1500);
+    toast('✅ Portfolio actualizado', 'ok');
+    cargarPortfolioAdmin();
+  }
+
+  async function eliminarFotoPortfolio(docId, publicId) {
+    if (!confirm('¿Eliminar esta foto del portfolio?')) return;
+    try {
+      await db.collection('portfolio').doc(docId).delete();
+      toast('🗑 Foto eliminada', 'ok');
+      cargarPortfolioAdmin();
+    } catch(e) {
+      toast('❌ Error al eliminar', 'error');
+    }
+  }
+
   iniciar();
 </script>
 </body>
