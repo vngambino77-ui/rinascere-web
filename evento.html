@@ -19,7 +19,7 @@
     const db = firebase.firestore();
 
     const CLOUD = "dwqvqpkbe";
-    const LOGO  = "rinascere";   // public_id exacto sin extensión
+    const LOGO  = "rinascere";   // ← sin .png, es el public_id exacto
 
     function limpiarId(id) {
       if (!id) return '';
@@ -30,18 +30,11 @@
       return id.replace(/\.\w+$/, '');
     }
 
-    // 🔒 PROTEGIDA — foto en baja calidad con logo en mosaico cubriendo toda la imagen
-    // Orden correcto Cloudinary:
-    //   1) c_scale,w_600  → redimensionar la imagen base PRIMERO
-    //   2) l_rinascere    → abrir capa del logo
-    //   3) w_150,o_45     → tamaño en px (NO porcentaje) y opacidad
-    //   4) fl_tile        → repetir en mosaico
-    //   5) fl_layer_apply → cerrar y aplicar la capa
-    //   6) q_35,f_jpg     → comprimir al final
+    // 🔒 PROTEGIDA — logo Rinascere en mosaico sobre toda la foto
     function urlProtegida(id) {
       if (!id) return '';
       const pid = limpiarId(id);
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/c_scale,w_600/l_${LOGO},w_150,o_45,fl_tile/fl_layer_apply/q_35,f_jpg/${pid}`;
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/c_scale,w_600/l_${LOGO},w_150,o_40/fl_tiled/fl_layer_apply/q_40,f_jpg/${pid}`;
     }
 
     // ✅ ALTA CALIDAD sin logo — solo post pago
@@ -54,7 +47,7 @@
     function urlPortada(id) {
       if (!id) return '';
       const pid = limpiarId(id);
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/c_scale,w_1200/q_80,f_auto/${pid}`;
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/w_1200,q_80,f_auto/${pid}`;
     }
   </script>
   <style>
