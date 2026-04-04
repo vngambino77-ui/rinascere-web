@@ -19,7 +19,7 @@
     const db = firebase.firestore();
 
     const CLOUD = "dwqvqpkbe";
-    const LOGO  = "rinascere.png";
+    const LOGO  = "rinascere";   // ← sin .png, es el public_id exacto
 
     function limpiarId(id) {
       if (!id) return '';
@@ -30,20 +30,12 @@
       return id.replace(/\.\w+$/, '');
     }
 
-    // ✅ BAJA CALIDAD — logo repetido en 9 posiciones cubriendo toda la foto
+    // ✅ PROTEGIDA — logo en mosaico sobre toda la foto (fl_tile = tile automático)
+    // Sintaxis correcta Cloudinary: l_ID,opciones/fl_tile/fl_layer_apply
     function urlProtegida(id) {
       if (!id) return '';
       const pid = limpiarId(id);
-      // Sintaxis correcta Cloudinary: l_logo,w_0.25,o_50/g_POSICION/fl_layer_apply
-      const posiciones = [
-        'north_west','north','north_east',
-        'west','center','east',
-        'south_west','south','south_east'
-      ];
-      const capas = posiciones
-        .map(g => `l_${LOGO},w_0.25,o_50/g_${g}/fl_layer_apply`)
-        .join('/');
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/${capas}/w_600,q_35,f_jpg/${pid}`;
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},o_50,w_0.28,fl_tile/fl_layer_apply/w_600,q_35,f_jpg/${pid}`;
     }
 
     // ✅ ALTA CALIDAD sin logo — solo post pago
