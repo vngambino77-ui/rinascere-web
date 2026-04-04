@@ -35,7 +35,7 @@
     function urlProtegida(id) {
       if (!id) return '';
       const pid = limpiarId(id);
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},w_1.0,o_35,g_center/fl_layer_apply/${pid}`;
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},w_0.15,o_40/fl_tiled/fl_layer_apply/${pid}`;
     }
 
     // ✅ ALTA CALIDAD sin logo — solo post pago
