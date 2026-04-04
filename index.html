@@ -204,12 +204,34 @@
     .cal-btn:hover { transform:translateY(-1px); }
     .cal-nota { font-size:0.74rem; color:var(--gris); margin-top:10px; }
 
+    /* HERO CON FOTO */
+    .hero-foto-bg { position:absolute; inset:0; background-size:cover; background-position:center; background-repeat:no-repeat; z-index:0; transition:opacity 0.5s; }
+    .hero-foto-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(250,248,244,0.88) 0%,rgba(250,248,244,0.72) 60%,rgba(250,248,244,0.55) 100%); z-index:1; }
+    .hero-foto-bg.tiene-foto ~ .hero::before { opacity:0; }
+
     /* PORTFOLIO */
     .portfolio-sec { background:var(--blanco); }
-    .portfolio-box { max-width:720px; margin:0 auto; text-align:center; background:var(--crema); border-radius:20px; padding:50px 40px; border:1px solid #ede8dc; }
-    .portfolio-logo { width:110px; margin:0 auto 18px; mix-blend-mode:multiply; }
-    .portfolio-box h3 { font-family:var(--fuente-t); font-size:1.6rem; margin-bottom:10px; }
-    .portfolio-box p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 26px; font-size:0.92rem; }
+    .portfolio-box { max-width:1100px; margin:0 auto; }
+    .portfolio-intro { text-align:center; margin-bottom:32px; }
+    .portfolio-intro p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 20px; font-size:0.92rem; }
+    .portfolio-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
+    .portfolio-foto { border-radius:12px; overflow:hidden; aspect-ratio:4/3; background:#ede8dc; cursor:pointer; }
+    .portfolio-foto img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s; }
+    .portfolio-foto:hover img { transform:scale(1.04); }
+    .portfolio-foto-vacia { border-radius:12px; aspect-ratio:4/3; background:var(--crema); border:2px dashed #ddd; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:#bbb; font-size:0.78rem; cursor:pointer; transition:border-color 0.2s; }
+    .portfolio-foto-vacia:hover { border-color:var(--dorado); color:var(--dorado-oscuro); }
+    .portfolio-cta { text-align:center; }
+
+    /* TESTIMONIOS */
+    .test-sec { background:var(--crema); }
+    .test-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; max-width:960px; margin:0 auto; }
+    .test-card { background:var(--blanco); border-radius:16px; padding:26px 24px; box-shadow:0 2px 14px rgba(0,0,0,0.06); }
+    .test-estrellas { color:var(--dorado); font-size:0.9rem; margin-bottom:12px; letter-spacing:2px; }
+    .test-texto { font-family:'Playfair Display',serif; font-style:italic; font-size:1rem; line-height:1.8; color:#333; margin-bottom:16px; }
+    .test-autor { display:flex; align-items:center; gap:10px; }
+    .test-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:0.85rem; flex-shrink:0; }
+    .test-nombre { font-weight:600; font-size:0.88rem; }
+    .test-sesion { font-size:0.75rem; color:var(--gris); }
 
     /* FOOTER */
     footer { background:var(--negro); color:#aaa; padding:48px 32px 28px; }
@@ -275,7 +297,8 @@
       .sobre-texto-col { padding:32px 20px; }
       .footer-grid { grid-template-columns:1fr; gap:28px; }
       .bot-ventana { width:calc(100vw - 32px); right:16px; }
-      .portfolio-box { padding:36px 20px; }
+      .portfolio-grilla { grid-template-columns:repeat(2,1fr); gap:8px; }
+      .test-grilla { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -290,6 +313,7 @@
     <a href="#albumes">Álbumes</a>
     <a href="#reservas">Reservas</a>
     <a href="#sobre-mi">Sobre mí</a>
+    <a href="#testimonios">Testimonios</a>
     <a href="#portfolio">Portfolio</a>
     <a href="https://wa.me/542966346212" target="_blank" class="nav-wa">💬 WhatsApp</a>
     <a href="admin.html" class="nav-admin">⚙️ Admin</a>
@@ -301,6 +325,8 @@
 
 <!-- HERO -->
 <section class="hero" id="inicio">
+  <div class="hero-foto-bg" id="hero-foto-bg"></div>
+  <div class="hero-foto-overlay" id="hero-foto-overlay" style="display:none"></div>
   <div class="hero-con">
     <img class="hero-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Ph. Rinascere Fotografías"/>
     <div class="hero-nombre">Ph. Rinascere Fotografías</div>
@@ -419,6 +445,40 @@
   </div>
 </section>
 
+<!-- TESTIMONIOS -->
+<section class="test-sec" id="testimonios">
+  <div class="sec-titulo">
+    <h2>Lo que dicen mis clientes</h2>
+    <p>Experiencias reales de personas que eligieron Rinascere para capturar sus momentos</p>
+  </div>
+  <div class="test-grilla" id="test-grilla">
+    <div class="test-card">
+      <div class="test-estrellas">★★★★★</div>
+      <p class="test-texto">"Verónica capturó exactamente lo que yo quería pero no sabía cómo pedirle. Las fotos tienen una luz y una emoción increíble. Las voy a atesorar para siempre."</p>
+      <div class="test-autor">
+        <div class="test-avatar">MA</div>
+        <div><div class="test-nombre">María A.</div><div class="test-sesion">Sesión familiar · Río Gallegos</div></div>
+      </div>
+    </div>
+    <div class="test-card">
+      <div class="test-estrellas">★★★★★</div>
+      <p class="test-texto">"Nunca me había sentido tan cómoda frente a una cámara. Vero tiene una sensibilidad especial para hacerte relajar y el resultado fue hermoso."</p>
+      <div class="test-autor">
+        <div class="test-avatar">LC</div>
+        <div><div class="test-nombre">Laura C.</div><div class="test-sesion">Sesión individual · El Calafate</div></div>
+      </div>
+    </div>
+    <div class="test-card">
+      <div class="test-estrellas">★★★★★</div>
+      <p class="test-texto">"Las fotos de la maratón llegaron súper rápido y son increíbles. Se nota que ama lo que hace. Ya le encargué la próxima edición."</p>
+      <div class="test-autor">
+        <div class="test-avatar">RG</div>
+        <div><div class="test-nombre">Rodrigo G.</div><div class="test-sesion">Maratón Ciudad · Río Gallegos</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PORTFOLIO -->
 <section class="portfolio-sec" id="portfolio">
   <div class="sec-titulo">
@@ -426,10 +486,10 @@
     <p>Una selección de trabajos que reflejan mi forma de ver y sentir la fotografía</p>
   </div>
   <div class="portfolio-box">
-    <img class="portfolio-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo"/>
-    <h3>Mirá mi trabajo completo</h3>
-    <p>Visitá mi portfolio en Adobe Portfolio para explorar todas mis colecciones, proyectos y el estilo que me define.</p>
-    <a href="https://vngambino77.myportfolio.com" target="_blank" class="btn btn-dorado" style="margin:0 auto;">🎨 Ver portfolio completo</a>
+    <div class="portfolio-grilla" id="portfolio-grilla"></div>
+    <div class="portfolio-cta">
+      <a href="https://vngambino77.myportfolio.com" target="_blank" class="btn btn-outline">🎨 Ver portfolio completo en Adobe</a>
+    </div>
   </div>
 </section>
 
@@ -446,6 +506,7 @@
       <a href="#albumes">Álbumes</a>
       <a href="#reservas">Reservas</a>
       <a href="#sobre-mi">Sobre mí</a>
+      <a href="#testimonios">Testimonios</a>
       <a href="#portfolio">Portfolio</a>
     </div>
     <div class="footer-col">
@@ -605,9 +666,79 @@
     window.location.href = `evento.html?dorsal=${d}`;
   }
 
+  // ── Cargar foto del hero desde Firebase ───────────────
+  async function cargarHeroFoto() {
+    try {
+      const doc = await db.collection('configuracion').doc('sitio').get();
+      if (doc.exists) {
+        const data = doc.data();
+        // Foto de hero (puede ser la misma que foto personal o una diferida)
+        const heroUrl = data.heroFotoUrl || data.fotoPersonalUrl;
+        if (heroUrl) {
+          const bg = document.getElementById('hero-foto-bg');
+          const overlay = document.getElementById('hero-foto-overlay');
+          bg.style.backgroundImage = `url('${heroUrl}')`;
+          overlay.style.display = 'block';
+          // Ajustar colores del texto al tener foto de fondo
+          document.querySelectorAll('.hero-bienvenida, .hero-tagline').forEach(el => el.style.color = '#fff');
+          document.querySelectorAll('.hero-bienvenida span').forEach(el => el.style.color = 'var(--dorado-claro)');
+          document.querySelector('.hero-logo').style.filter = 'brightness(0) invert(1)';
+          document.querySelector('.hero-nombre').style.color = '#fff';
+          document.querySelector('.hero-sub').style.color = 'var(--dorado-claro)';
+          document.querySelector('.hero').style.background = 'var(--negro)';
+        }
+      }
+    } catch(e) { /* silencioso — hero funciona igual sin foto */ }
+  }
+
+  // ── Cargar portfolio desde Firebase ───────────────────
+  async function cargarPortfolio() {
+    const grilla = document.getElementById('portfolio-grilla');
+    const SLOTS = 9;
+    try {
+      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
+      const fotos = snap.docs.map(d => d.data());
+      let html = fotos.map(f => {
+        const url = f.url.startsWith('http') ? f.url
+          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
+        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
+      }).join('');
+      // Completar slots vacíos con placeholders de carga
+      const vacios = SLOTS - fotos.length;
+      if (vacios > 0) {
+        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+      }
+      grilla.innerHTML = html;
+    } catch(e) {
+      // Sin Firebase → mostrar placeholders
+      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+    }
+  }
+
+  // ── Cargar testimonios desde Firebase (opcional) ──────
+  async function cargarTestimonios() {
+    try {
+      const snap = await db.collection('testimonios').orderBy('orden').limit(6).get();
+      if (snap.empty) return; // Mantiene los testimonios estáticos por defecto
+      const lista = snap.docs.map(d => d.data());
+      document.getElementById('test-grilla').innerHTML = lista.map(t => `
+        <div class="test-card">
+          <div class="test-estrellas">${'★'.repeat(t.estrellas||5)}</div>
+          <p class="test-texto">"${t.texto}"</p>
+          <div class="test-autor">
+            <div class="test-avatar">${t.nombre.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div>
+            <div><div class="test-nombre">${t.nombre}</div><div class="test-sesion">${t.sesion||''}</div></div>
+          </div>
+        </div>`).join('');
+    } catch(e) { /* mantiene estáticos */ }
+  }
+
   // ── Iniciar ───────────────────────────────────────────
   cargarAlbumes();
   cargarFotoPersonal();
+  cargarHeroFoto();
+  cargarPortfolio();
+  cargarTestimonios();
 
   // ══ BOT LUZ ══════════════════════════════════════════
   let botAbierto=false, etapa=0, tipoConsulta=null;
