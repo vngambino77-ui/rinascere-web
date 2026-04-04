@@ -21,22 +21,33 @@
 
     const CLOUD         = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
-    // ✅ ID correcto del logo
     const LOGO_ID       = "rinascere";
 
+    // ✅ Siempre guardamos el public_id limpio, nunca la URL completa
     function urlPreview(publicId) {
       if (!publicId) return '';
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO_ID},o_50,w_0.3,g_center/fl_layer_apply/w_400,q_60,f_auto/${publicId}`;
+      // Si por algún motivo llegó una URL completa, la limpiamos
+      const id = limpiarId(publicId);
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO_ID},o_50,w_0.3,g_center/fl_layer_apply/w_400,q_60,f_auto/${id}`;
     }
 
-    // ✅ Subir foto a Cloudinary — corregido
+    // ✅ Limpia el ID — saca la URL base si estuviera incluida
+    function limpiarId(valor) {
+      if (!valor) return '';
+      if (valor.startsWith('http')) {
+        // Extraer solo el public_id de una URL completa de Cloudinary
+        const match = valor.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
+        return match ? match[1] : valor;
+      }
+      return valor;
+    }
+
     async function subirFoto(archivo, carpeta, onProgress) {
       return new Promise((resolve, reject) => {
         const fd = new FormData();
         fd.append('file', archivo);
         fd.append('upload_preset', UPLOAD_PRESET);
         fd.append('folder', `albumes/${carpeta}`);
-
         const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = e => {
           if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
@@ -44,6 +55,7 @@
         xhr.onload = () => {
           try {
             const data = JSON.parse(xhr.responseText);
+            // ✅ Guardamos SOLO el public_id, nunca la URL completa
             if (data.public_id) resolve(data.public_id);
             else reject(new Error(data.error?.message || 'Error Cloudinary'));
           } catch(e) { reject(e); }
@@ -115,12 +127,15 @@
     .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;}
     .badge-pub{background:#e8f5e9;color:#2e7d32;}
     .badge-priv{background:#fff8e1;color:#f57f17;}
+    .badge-fijo{background:#e3f2fd;color:#1565c0;}
+    .badge-libre{background:#f3e5f5;color:#6a1b9a;}
+    .badge-cafe{background:#fff3e0;color:#e65100;}
     .acciones{display:flex;gap:6px;flex-wrap:wrap;}
     .thumb{width:52px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #eee;}
 
     .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;}
     .overlay.open{display:flex;}
-    .modal{background:var(--blanco);border-radius:16px;width:600px;max-width:100%;max-height:92vh;overflow-y:auto;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+    .modal{background:var(--blanco);border-radius:16px;width:620px;max-width:100%;max-height:92vh;overflow-y:auto;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
     .modal h2{font-family:var(--fuente-t);font-size:1.4rem;margin-bottom:22px;}
     .modal h2 span{color:var(--dorado);}
 
@@ -129,6 +144,16 @@
     .fg input,.fg select{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:var(--fuente-c);font-size:0.88rem;outline:none;transition:border-color 0.2s;background:var(--blanco);}
     .fg input:focus,.fg select:focus{border-color:var(--dorado);}
     .fila{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+    /* ✅ TIPOS DE COBRO */
+    .tipos-cobro{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+    .tipo-op{display:flex;align-items:flex-start;gap:14px;border:2px solid #e0e0e0;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all 0.2s;background:var(--blanco);}
+    .tipo-op:hover{border-color:var(--dorado);background:rgba(201,168,76,0.04);}
+    .tipo-op.activo{border-color:var(--dorado);background:rgba(201,168,76,0.08);}
+    .tipo-op strong{display:block;font-size:0.9rem;margin-bottom:2px;}
+    .tipo-op p{font-size:0.78rem;color:var(--gris);margin:0;}
+    .tipo-radio{width:20px;height:20px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex-shrink:0;margin-top:2px;transition:all 0.2s;}
+    .tipo-radio.sel{border-color:var(--dorado);background:var(--dorado);}
 
     .tog-wrap{display:flex;align-items:center;gap:12px;}
     .tog{position:relative;width:46px;height:24px;flex-shrink:0;}
@@ -159,31 +184,12 @@
     .preview-item.subida .preview-ok{display:flex;}
 
     .fotos-album{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-    .fotos-album img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #eee;}
+    .fotos-album img{width:80px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #eee;}
 
     .qr-box{background:var(--gris-claro);border-radius:12px;padding:18px;text-align:center;margin-top:18px;display:none;}
     .qr-box.vis{display:block;}
     .qr-box strong{display:block;font-size:0.82rem;margin-bottom:10px;}
     .qr-box p{font-size:0.72rem;color:var(--gris);margin-top:8px;word-break:break-all;}
-
-    /* TIPOS DE COBRO */
-    .tipo-cobro-opcion{
-      display:flex;align-items:flex-start;gap:14px;
-      border:2px solid #e0e0e0;border-radius:12px;
-      padding:14px 16px;cursor:pointer;transition:all 0.2s;
-      background:var(--blanco);
-    }
-    .tipo-cobro-opcion:hover{border-color:var(--dorado);background:rgba(201,168,76,0.04);}
-    .tipo-cobro-opcion.activo{border-color:var(--dorado);background:rgba(201,168,76,0.08);}
-    .tipo-cobro-opcion strong{display:block;font-size:0.9rem;margin-bottom:2px;}
-    .tipo-cobro-opcion p{font-size:0.78rem;color:var(--gris);margin:0;}
-    .tipo-radio{
-      width:20px;height:20px;border-radius:50%;
-      border:2px solid #ccc;display:flex;align-items:center;
-      justify-content:center;font-size:0.7rem;color:var(--dorado);
-      flex-shrink:0;margin-top:2px;transition:all 0.2s;
-    }
-    .tipo-radio.sel{border-color:var(--dorado);background:var(--dorado);color:#fff;}
 
     .toast{position:fixed;top:20px;right:20px;z-index:999;background:var(--negro);color:#fff;padding:14px 22px;border-radius:12px;font-size:0.88rem;box-shadow:0 6px 24px rgba(0,0,0,0.2);transform:translateY(-10px);opacity:0;transition:all 0.3s;border-left:4px solid var(--dorado);max-width:320px;}
     .toast.show{transform:translateY(0);opacity:1;}
@@ -203,7 +209,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/My%20Brand/logo_png_fwpt2v" alt="Logo"/>
+      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo"/>
       <div class="sidebar-logo-txt">Ph. Rinascere<span>Panel admin</span></div>
     </div>
     <nav>
@@ -231,9 +237,7 @@
     <div class="tabla-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Portada</th><th>Nombre</th><th>Fecha</th><th>Fotos</th><th>Precio</th><th>Visibilidad</th><th>Acciones</th>
-          </tr>
+          <tr><th>Portada</th><th>Nombre</th><th>Fecha</th><th>Fotos</th><th>Precio</th><th>Cobro</th><th>Acciones</th></tr>
         </thead>
         <tbody id="tbody">
           <tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">Cargando álbumes...</td></tr>
@@ -247,23 +251,62 @@
 <div class="overlay" id="overlay">
   <div class="modal">
     <h2>Nuevo <span>álbum</span></h2>
+
     <div class="fila">
       <div class="fg"><label>Nombre del evento *</label><input id="f-nombre" placeholder="Ej: Maratón 2025"/></div>
       <div class="fg"><label>Fecha *</label><input type="date" id="f-fecha"/></div>
     </div>
     <div class="fila">
       <div class="fg"><label>Lugar</label><input id="f-lugar" placeholder="Ej: Río Gallegos"/></div>
-      <div class="fg"><label>Precio por foto (ARS) *</label><input type="number" id="f-precio" placeholder="2500" min="0"/></div>
+      <div class="fg"><label>¿Cómo se identifica el cliente?</label>
+        <select id="f-identif">
+          <option value="dorsal">Por número de dorsal</option>
+          <option value="selfie">Por selfie</option>
+          <option value="ambos">Ambas opciones</option>
+          <option value="ninguno">Sin filtro</option>
+        </select>
+      </div>
     </div>
+
+    <!-- ✅ TIPO DE COBRO integrado en la creación -->
     <div class="fg">
-      <label>¿Cómo se identifica el cliente?</label>
-      <select id="f-identif">
-        <option value="dorsal">Por número de dorsal</option>
-        <option value="selfie">Por selfie</option>
-        <option value="ambos">Ambas opciones</option>
-        <option value="ninguno">Sin filtro</option>
-      </select>
+      <label>¿Cómo querés cobrar este álbum? *</label>
+      <div class="tipos-cobro">
+        <div class="tipo-op activo" id="op-fijo" onclick="selTipo('fijo')">
+          <div class="tipo-radio sel" id="radio-fijo">✓</div>
+          <div><strong>💰 Precio fijo</strong><p>Todos pagan el mismo valor por foto</p></div>
+        </div>
+        <div class="tipo-op" id="op-libre" onclick="selTipo('libre')">
+          <div class="tipo-radio" id="radio-libre"></div>
+          <div><strong>🎁 Precio libre — el cliente elige</strong><p>El cliente decide cuánto pagar antes de descargar</p></div>
+        </div>
+        <div class="tipo-op" id="op-cafe" onclick="selTipo('cafe')">
+          <div class="tipo-radio" id="radio-cafe"></div>
+          <div><strong>☕ Gratis + café voluntario</strong><p>Descarga libre, con opción de colaborar</p></div>
+        </div>
+      </div>
     </div>
+
+    <!-- Campo precio fijo -->
+    <div id="campo-fijo" class="fg">
+      <label>Precio por foto (ARS) *</label>
+      <input type="number" id="f-precio" placeholder="Ej: 2500" min="1"/>
+    </div>
+
+    <!-- Campo precio mínimo sugerido -->
+    <div id="campo-libre" class="fg" style="display:none">
+      <label>Precio mínimo sugerido (ARS) — opcional</label>
+      <input type="number" id="f-precio-min" placeholder="Ej: 500" min="0"/>
+      <p style="font-size:0.75rem;color:var(--gris);margin-top:5px;">El cliente puede pagar más, menos o lo que quiera</p>
+    </div>
+
+    <!-- Link café -->
+    <div id="campo-cafe-link" class="fg" style="display:none">
+      <label>Tu link de pago voluntario (Mercado Pago)</label>
+      <input type="url" id="f-link-cafe" placeholder="https://mpago.la/tu-link"/>
+      <p style="font-size:0.75rem;color:var(--gris);margin-top:5px;">Crealo en mercadopago.com.ar → Cobrar → Link de pago</p>
+    </div>
+
     <div class="fg">
       <label>Visibilidad</label>
       <div class="tog-wrap">
@@ -271,6 +314,7 @@
         <span id="lbl-vis">🌐 Público — cualquiera con el link puede verlo</span>
       </div>
     </div>
+
     <div class="fg">
       <label>Subir fotos del evento</label>
       <div class="drop" id="drop" onclick="document.getElementById('f-fotos').click()">
@@ -284,6 +328,7 @@
       <div class="preview-grid" id="preview-grid"></div>
       <div class="prog-wrap" id="prog-wrap"></div>
     </div>
+
     <div class="qr-box" id="qr-box">
       <strong>🔗 Link y QR del álbum</strong>
       <div id="qr-div"></div>
@@ -293,9 +338,10 @@
         <button class="btn btn-dorado btn-sm" onclick="copiarLink()">📋 Copiar link</button>
       </div>
     </div>
+
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap;">
       <button class="btn btn-negro" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-dorado" onclick="guardarAlbum()" id="btn-guardar">✓ Crear álbum y generar QR</button>
+      <button class="btn btn-dorado" onclick="guardarAlbum()" id="btn-guardar">✓ Crear álbum</button>
     </div>
   </div>
 </div>
@@ -312,36 +358,93 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- MODAL EDITAR PRECIO -->
 <div class="overlay" id="overlay-precio">
-  <div class="modal" style="max-width:380px;">
-    <h2>Editar <span>precio</span></h2>
+  <div class="modal" style="max-width:440px;">
+    <h2>Configurar <span>cobro</span></h2>
     <p style="color:var(--gris);font-size:0.85rem;margin-bottom:20px;" id="precio-album-nombre"></p>
     <div class="fg">
+      <label>¿Cómo querés cobrar?</label>
+      <div class="tipos-cobro">
+        <div class="tipo-op" id="ep-op-fijo" onclick="selTipoEdit('fijo')">
+          <div class="tipo-radio" id="ep-radio-fijo"></div>
+          <div><strong>💰 Precio fijo</strong><p>Todos pagan el mismo valor</p></div>
+        </div>
+        <div class="tipo-op" id="ep-op-libre" onclick="selTipoEdit('libre')">
+          <div class="tipo-radio" id="ep-radio-libre"></div>
+          <div><strong>🎁 Precio libre</strong><p>El cliente elige cuánto pagar</p></div>
+        </div>
+        <div class="tipo-op" id="ep-op-cafe" onclick="selTipoEdit('cafe')">
+          <div class="tipo-radio" id="ep-radio-cafe"></div>
+          <div><strong>☕ Gratis + café voluntario</strong><p>Descarga libre con opción de colaborar</p></div>
+        </div>
+      </div>
+    </div>
+    <div id="ep-campo-fijo" class="fg" style="display:none">
       <label>Precio por foto (ARS)</label>
-      <input type="number" id="nuevo-precio" placeholder="Ej: 2500" min="0"/>
-      <p style="font-size:0.75rem;color:var(--gris);margin-top:6px;">
-        💡 Poné <strong>0</strong> para que las fotos sean de descarga libre con opción de café voluntario
-      </p>
+      <input type="number" id="ep-precio" placeholder="Ej: 2500" min="1"/>
+    </div>
+    <div id="ep-campo-libre" class="fg" style="display:none">
+      <label>Precio mínimo sugerido (ARS)</label>
+      <input type="number" id="ep-precio-min" placeholder="Ej: 500" min="0"/>
+    </div>
+    <div id="ep-campo-cafe" class="fg" style="display:none">
+      <label>Link de pago voluntario (Mercado Pago)</label>
+      <input type="url" id="ep-link-cafe" placeholder="https://mpago.la/tu-link"/>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
       <button class="btn btn-negro" onclick="document.getElementById('overlay-precio').classList.remove('open')">Cancelar</button>
-      <button class="btn btn-dorado" onclick="guardarPrecio()">✓ Guardar precio</button>
+      <button class="btn btn-dorado" onclick="guardarPrecio()">✓ Guardar</button>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
   let albumesCache = [];
   let archivosSeleccionados = [];
   let slugActual = '';
+  let tipoCobro = 'fijo';
+  let tipoCobroEdit = 'fijo';
+  let albumEditandoId = null;
 
+  // ── Toggle visibilidad ──────────────────────────────────
   document.getElementById('f-publico').addEventListener('change', function() {
     document.getElementById('lbl-vis').textContent = this.checked
       ? '🌐 Público — cualquiera con el link puede verlo'
       : '🔒 Privado — solo quien tenga el link';
   });
 
+  // ── Selección tipo de cobro (nuevo álbum) ───────────────
+  function selTipo(tipo) {
+    tipoCobro = tipo;
+    ['fijo','libre','cafe'].forEach(t => {
+      document.getElementById(`op-${t}`).classList.toggle('activo', t === tipo);
+      const r = document.getElementById(`radio-${t}`);
+      r.classList.toggle('sel', t === tipo);
+      r.textContent = t === tipo ? '✓' : '';
+    });
+    document.getElementById('campo-fijo').style.display      = tipo === 'fijo'  ? 'block' : 'none';
+    document.getElementById('campo-libre').style.display     = tipo === 'libre' ? 'block' : 'none';
+    document.getElementById('campo-cafe-link').style.display = (tipo === 'cafe' || tipo === 'libre') ? 'block' : 'none';
+  }
+
+  // ── Selección tipo de cobro (editar) ────────────────────
+  function selTipoEdit(tipo) {
+    tipoCobroEdit = tipo;
+    ['fijo','libre','cafe'].forEach(t => {
+      document.getElementById(`ep-op-${t}`).classList.toggle('activo', t === tipo);
+      const r = document.getElementById(`ep-radio-${t}`);
+      r.classList.toggle('sel', t === tipo);
+      r.textContent = t === tipo ? '✓' : '';
+    });
+    document.getElementById('ep-campo-fijo').style.display  = tipo === 'fijo'  ? 'block' : 'none';
+    document.getElementById('ep-campo-libre').style.display = tipo === 'libre' ? 'block' : 'none';
+    document.getElementById('ep-campo-cafe').style.display  = (tipo === 'cafe' || tipo === 'libre') ? 'block' : 'none';
+  }
+
+  // ── Drag & drop ─────────────────────────────────────────
   const dropEl = document.getElementById('drop');
   dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('over'); });
   dropEl.addEventListener('dragleave', () => dropEl.classList.remove('over'));
@@ -369,6 +472,7 @@
     });
   }
 
+  // ── Modal ────────────────────────────────────────────────
   function abrirModal() {
     document.getElementById('overlay').classList.add('open');
     document.getElementById('qr-box').classList.remove('vis');
@@ -377,28 +481,51 @@
     document.getElementById('prog-wrap').classList.remove('visible');
     document.getElementById('contador-sel').textContent = '';
     archivosSeleccionados = [];
-    ['f-nombre','f-fecha','f-lugar','f-precio'].forEach(id => document.getElementById(id).value = '');
+    ['f-nombre','f-fecha','f-lugar','f-precio','f-precio-min','f-link-cafe'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
     document.getElementById('f-fotos').value = '';
+    selTipo('fijo');
   }
 
   function cerrarModal() { document.getElementById('overlay').classList.remove('open'); }
   document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarModal(); });
 
+  // ── Guardar álbum ────────────────────────────────────────
   async function guardarAlbum() {
     const nombre  = document.getElementById('f-nombre').value.trim();
     const fecha   = document.getElementById('f-fecha').value;
-    const precio  = document.getElementById('f-precio').value;
     const lugar   = document.getElementById('f-lugar').value.trim();
     const publico = document.getElementById('f-publico').checked;
     const identif = document.getElementById('f-identif').value;
 
-    if (!nombre || !fecha || !precio) { toast('⚠️ Completá nombre, fecha y precio', 'error'); return; }
+    // Validar según tipo de cobro
+    let precio = 0;
+    let precioMinimo = 0;
+    let linkCafe = '';
+
+    if (tipoCobro === 'fijo') {
+      precio = Number(document.getElementById('f-precio').value);
+      if (!nombre || !fecha || !precio || precio <= 0) {
+        toast('⚠️ Completá nombre, fecha y precio', 'error'); return;
+      }
+    } else {
+      if (!nombre || !fecha) {
+        toast('⚠️ Completá nombre y fecha', 'error'); return;
+      }
+      if (tipoCobro === 'libre') {
+        precioMinimo = Number(document.getElementById('f-precio-min').value) || 0;
+        linkCafe = document.getElementById('f-link-cafe').value.trim();
+      } else if (tipoCobro === 'cafe') {
+        linkCafe = document.getElementById('f-link-cafe').value.trim();
+      }
+    }
 
     const slug = nombre.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       + '-' + Date.now().toString(36);
-
     slugActual = slug;
 
     const btn = document.getElementById('btn-guardar');
@@ -424,6 +551,7 @@
         pw.appendChild(item);
 
         try {
+          // ✅ subirFoto devuelve el public_id limpio
           const publicId = await subirFoto(archivo, slug, pct => {
             const el = document.getElementById(`pct-${i}`);
             const fill = document.getElementById(`fill-${i}`);
@@ -431,27 +559,26 @@
             if (fill) fill.style.width = pct + '%';
           });
           fotosIds.push(publicId);
-          // ✅ Guardamos el public_id limpio, NO la URL con marca de agua
-          // La URL se construye dinámicamente cuando se muestra
+          // ✅ portada = public_id limpio de la primera foto
           if (i === 0) portadaUrl = publicId;
           const prevItem = document.getElementById(`prev-${i}`);
           if (prevItem) prevItem.classList.add('subida');
           const el = document.getElementById(`pct-${i}`);
-          if (el) el.textContent = '✓ Listo';
+          if (el) el.textContent = '✓';
         } catch(err) {
           const el = document.getElementById(`pct-${i}`);
           if (el) el.textContent = '✗ Error';
-          console.error(`Error subiendo foto ${i}:`, err);
-          toast(`❌ Error al subir: ${nomCorto}`, 'error');
+          toast(`❌ Error subiendo: ${nomCorto}`, 'error');
         }
       }
     }
 
     try {
       const datos = {
-        nombre, fecha, precio: Number(precio), lugar, publico,
-        identificacion: identif, slug, portadaUrl,
-        fotos: fotosIds, cantidadFotos: fotosIds.length,
+        nombre, fecha, precio, precioMinimo, linkCafe,
+        tipoCobro, lugar, publico, identificacion: identif,
+        slug, portadaUrl, fotos: fotosIds,
+        cantidadFotos: fotosIds.length,
         creadoEn: new Date().toISOString()
       };
       const id = await fbGuardar(datos);
@@ -461,64 +588,51 @@
       generarQR(slug);
       toast(`✅ Álbum creado con ${fotosIds.length} foto${fotosIds.length !== 1 ? 's' : ''}`, 'ok');
     } catch(err) {
-      console.error('Error Firebase:', err);
+      console.error(err);
       toast('❌ Error guardando: ' + err.message, 'error');
     }
 
-    btn.textContent = '✓ Crear álbum y generar QR';
+    btn.textContent = '✓ Crear álbum';
     btn.disabled = false;
   }
 
-  function generarQR(slug) {
-    const link = `https://rinascere-web.vercel.app/evento.html?slug=${slug}`;
-    const div = document.getElementById('qr-div');
-    div.innerHTML = '';
-    new QRCode(div, { text:link, width:160, height:160, colorDark:'#1A1A1A', correctLevel:QRCode.CorrectLevel.H });
-    document.getElementById('qr-link').textContent = link;
-    document.getElementById('qr-box').classList.add('vis');
-  }
-
-  function descargarQR() {
-    const img = document.querySelector('#qr-div img');
-    if (!img) return;
-    const a = document.createElement('a');
-    a.href = img.src;
-    a.download = `qr-${slugActual}.png`;
-    a.click();
-  }
-
-  function copiarLink() {
-    navigator.clipboard.writeText(document.getElementById('qr-link').textContent)
-      .then(() => toast('📋 Link copiado', 'ok'));
-  }
-
+  // ── Tabla ────────────────────────────────────────────────
   function renderTabla(lista) {
     const tbody = document.getElementById('tbody');
     if (lista.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">Todavía no hay álbumes. ¡Creá el primero! 👆</td></tr>';
       return;
     }
-    tbody.innerHTML = lista.map(a => `
-      <tr>
-      // ✅ portadaUrl ahora es el public_id limpio
-      // Construimos la URL real para mostrar en la tabla
-      <td>${a.portadaUrl
-        ? `<img class="thumb" src="https://res.cloudinary.com/${CLOUD}/image/upload/w_100,q_60,f_auto/${a.portadaUrl}" alt="portada"/>`
-        : '📷'}</td>
+    tbody.innerHTML = lista.map(a => {
+      // ✅ Construir URL de portada correctamente
+      let thumbSrc = '';
+      if (a.portadaUrl) {
+        const id = limpiarId(a.portadaUrl);
+        thumbSrc = `https://res.cloudinary.com/${CLOUD}/image/upload/w_100,q_60,f_auto/${id}`;
+      }
+      const tipoBadge = {
+        fijo:  `<span class="badge badge-fijo">💰 $${Number(a.precio||0).toLocaleString('es-AR')}</span>`,
+        libre: `<span class="badge badge-libre">🎁 Libre</span>`,
+        cafe:  `<span class="badge badge-cafe">☕ Café</span>`
+      }[a.tipoCobro || 'fijo'] || `<span class="badge badge-fijo">💰 $${Number(a.precio||0).toLocaleString('es-AR')}</span>`;
+
+      return `<tr>
+        <td>${thumbSrc ? `<img class="thumb" src="${thumbSrc}" alt="portada" onerror="this.style.display='none'"/>` : '📷'}</td>
         <td><strong>${a.nombre}</strong></td>
         <td>${a.fecha||'—'}</td>
         <td>${a.cantidadFotos||0}</td>
         <td>$${Number(a.precio||0).toLocaleString('es-AR')}</td>
-        <td><span class="badge ${a.publico?'badge-pub':'badge-priv'}">${a.publico?'🌐 Público':'🔒 Privado'}</span></td>
+        <td>${tipoBadge}</td>
         <td>
           <div class="acciones">
-            <button class="btn btn-negro btn-sm" onclick="verFotos('${a.id}','${a.nombre}')">🖼 Ver fotos</button>
+            <button class="btn btn-negro btn-sm" onclick="verFotos('${a.id}','${a.nombre}')">🖼 Ver</button>
             <button class="btn btn-negro btn-sm" onclick="verQR('${a.slug}')">📱 QR</button>
-            <button class="btn btn-dorado btn-sm" onclick="editarPrecio('${a.id}','${a.nombre}',${a.precio||0})">✏️ Precio</button>
+            <button class="btn btn-dorado btn-sm" onclick="editarPrecio('${a.id}','${a.nombre}')">✏️ Cobro</button>
             <button class="btn btn-rojo btn-sm" onclick="eliminar('${a.id}','${a.nombre}')">🗑</button>
           </div>
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   function actualizarStats(lista) {
@@ -528,20 +642,87 @@
     document.getElementById('st-fotos').textContent  = lista.reduce((s,a)=>s+(a.cantidadFotos||0),0);
   }
 
+  // ── Ver fotos ────────────────────────────────────────────
   function verFotos(albumId, nombre) {
     const album = albumesCache.find(a => a.id === albumId);
     if (!album) return;
     const fotos = album.fotos || [];
     document.getElementById('fotos-album-titulo').textContent = `${nombre} · ${fotos.length} fotos`;
     const grid = document.getElementById('fotos-album-grid');
-    grid.innerHTML = fotos.length === 0
-      ? '<p style="color:#aaa;padding:20px;">Sin fotos todavía.</p>'
-      : fotos.map(pid => `<img src="${urlPreview(pid)}" alt="foto" onerror="this.style.background='#eee'"/>`).join('');
+    if (fotos.length === 0) {
+      grid.innerHTML = '<p style="color:#aaa;padding:20px;">Sin fotos todavía.</p>';
+    } else {
+      grid.innerHTML = fotos.map(pid => {
+        const id = limpiarId(pid);
+        return `<img src="https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO_ID},o_50,w_0.3,g_center/fl_layer_apply/w_200,q_60,f_auto/${id}" alt="foto" onerror="this.style.background='#eee'"/>`;
+      }).join('');
+    }
     document.getElementById('overlay-fotos').classList.add('open');
+  }
+
+  // ── QR ───────────────────────────────────────────────────
+  function generarQR(slug) {
+    const link = `https://rinascere-web.vercel.app/evento.html?slug=${slug}`;
+    const div = document.getElementById('qr-div');
+    div.innerHTML = '';
+    new QRCode(div, { text:link, width:160, height:160, colorDark:'#1A1A1A', correctLevel:QRCode.CorrectLevel.H });
+    document.getElementById('qr-link').textContent = link;
+    document.getElementById('qr-box').classList.add('vis');
   }
 
   function verQR(slug) { abrirModal(); setTimeout(() => generarQR(slug), 100); }
 
+  function descargarQR() {
+    const img = document.querySelector('#qr-div img');
+    if (!img) return;
+    const a = document.createElement('a');
+    a.href = img.src; a.download = `qr-${slugActual}.png`; a.click();
+  }
+
+  function copiarLink() {
+    navigator.clipboard.writeText(document.getElementById('qr-link').textContent)
+      .then(() => toast('📋 Link copiado', 'ok'));
+  }
+
+  // ── Editar precio/cobro ──────────────────────────────────
+  function editarPrecio(id, nombre) {
+    albumEditandoId = id;
+    const album = albumesCache.find(a => a.id === id);
+    document.getElementById('precio-album-nombre').textContent = '📁 ' + nombre;
+    const tipo = album?.tipoCobro || 'fijo';
+    document.getElementById('ep-precio').value     = album?.precio || '';
+    document.getElementById('ep-precio-min').value = album?.precioMinimo || 0;
+    document.getElementById('ep-link-cafe').value  = album?.linkCafe || '';
+    selTipoEdit(tipo);
+    document.getElementById('overlay-precio').classList.add('open');
+  }
+
+  async function guardarPrecio() {
+    let datos = { tipoCobro: tipoCobroEdit };
+    if (tipoCobroEdit === 'fijo') {
+      const p = Number(document.getElementById('ep-precio').value);
+      if (!p || p <= 0) { toast('⚠️ Ingresá un precio mayor a 0', 'error'); return; }
+      datos.precio = p;
+    } else if (tipoCobroEdit === 'libre') {
+      datos.precio = 0;
+      datos.precioMinimo = Number(document.getElementById('ep-precio-min').value) || 0;
+      datos.linkCafe = document.getElementById('ep-link-cafe').value.trim();
+    } else {
+      datos.precio = 0;
+      datos.linkCafe = document.getElementById('ep-link-cafe').value.trim();
+    }
+    try {
+      await db.collection('albumes').doc(albumEditandoId).update(datos);
+      const idx = albumesCache.findIndex(a => a.id === albumEditandoId);
+      if (idx !== -1) albumesCache[idx] = { ...albumesCache[idx], ...datos };
+      renderTabla(albumesCache);
+      document.getElementById('overlay-precio').classList.remove('open');
+      const msgs = { fijo:`✅ Precio: $${datos.precio?.toLocaleString('es-AR')}`, libre:'✅ Precio libre configurado', cafe:'✅ Gratis + café configurado' };
+      toast(msgs[tipoCobroEdit], 'ok');
+    } catch(e) { toast('❌ Error al guardar', 'error'); }
+  }
+
+  // ── Eliminar ─────────────────────────────────────────────
   async function eliminar(id, nombre) {
     if (!confirm(`¿Eliminás "${nombre}"? Esta acción no se puede deshacer.`)) return;
     try {
@@ -553,33 +734,7 @@
     } catch(e) { toast('❌ Error al eliminar', 'error'); }
   }
 
-  // ── Editar precio de álbum existente ───────────────────
-  let albumEditandoId = null;
-
-  function editarPrecio(id, nombre, precioActual) {
-    albumEditandoId = id;
-    document.getElementById('precio-album-nombre').textContent = '📁 ' + nombre;
-    document.getElementById('nuevo-precio').value = precioActual;
-    document.getElementById('overlay-precio').classList.add('open');
-  }
-
-  async function guardarPrecio() {
-    const nuevoPrecio = Number(document.getElementById('nuevo-precio').value);
-    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
-      toast('⚠️ Ingresá un precio válido (0 o mayor)', 'error'); return;
-    }
-    try {
-      await db.collection('albumes').doc(albumEditandoId).update({ precio: nuevoPrecio });
-      const idx = albumesCache.findIndex(a => a.id === albumEditandoId);
-      if (idx !== -1) albumesCache[idx].precio = nuevoPrecio;
-      renderTabla(albumesCache);
-      document.getElementById('overlay-precio').classList.remove('open');
-      toast(nuevoPrecio === 0 ? '✅ Álbum configurado como libre + café ☕' : `✅ Precio actualizado a ${nuevoPrecio.toLocaleString('es-AR')}`, 'ok');
-    } catch(e) {
-      toast('❌ Error al guardar precio', 'error');
-    }
-  }
-
+  // ── Toast ────────────────────────────────────────────────
   function toast(msg, tipo='') {
     const el = document.getElementById('toast');
     el.textContent = msg;
@@ -588,6 +743,7 @@
     el._t = setTimeout(() => el.classList.remove('show'), 4000);
   }
 
+  // ── Iniciar ──────────────────────────────────────────────
   async function iniciar() {
     try {
       albumesCache = await fbCargar();
