@@ -34,18 +34,15 @@
     function urlProtegida(id) {
       if (!id) return '';
       const pid = limpiarId(id);
-      const L = `l_${LOGO},o_50,w_0.25`;
-      const capas = [
-        `${L},g_north_west/fl_layer_apply`,
-        `${L},g_north/fl_layer_apply`,
-        `${L},g_north_east/fl_layer_apply`,
-        `${L},g_west/fl_layer_apply`,
-        `${L},g_center/fl_layer_apply`,
-        `${L},g_east/fl_layer_apply`,
-        `${L},g_south_west/fl_layer_apply`,
-        `${L},g_south/fl_layer_apply`,
-        `${L},g_south_east/fl_layer_apply`,
-      ].join('/');
+      // Sintaxis correcta Cloudinary: l_logo,w_0.25,o_50/g_POSICION/fl_layer_apply
+      const posiciones = [
+        'north_west','north','north_east',
+        'west','center','east',
+        'south_west','south','south_east'
+      ];
+      const capas = posiciones
+        .map(g => `l_${LOGO},w_0.25,o_50/g_${g}/fl_layer_apply`)
+        .join('/');
       return `https://res.cloudinary.com/${CLOUD}/image/upload/${capas}/w_600,q_35,f_jpg/${pid}`;
     }
 
