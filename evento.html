@@ -383,6 +383,19 @@
         document.getElementById('buscador').style.display = 'flex';
 
       renderFotos(todasFotos);
+
+      // ✅ Auto-filtrar por dorsal si viene como parámetro de URL
+      const dorsalParam = new URLSearchParams(window.location.search).get('dorsal');
+      if (dorsalParam) {
+        document.getElementById('buscador').style.display = 'flex';
+        document.getElementById('input-dorsal').value = dorsalParam;
+        const f = todasFotos.filter(p => p.toLowerCase().includes(dorsalParam.toLowerCase()));
+        if (f.length > 0) {
+          document.getElementById('fotos-titulo').textContent = `Fotos con dorsal #${dorsalParam}`;
+          renderFotos(f);
+        }
+      }
+
     } catch(e) {
       console.error(e);
       document.getElementById('grilla').innerHTML = '<div class="loading"><p>Error al cargar. Intentá de nuevo.</p></div>';
