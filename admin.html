@@ -893,7 +893,7 @@
         async function eliminarAlbum(id) {
             if (!confirm('¿Estás segura de eliminar este álbum? Se eliminarán también todas las fotos de Cloudinary.')) return;
 
-            mostrarToast('Eliminando...', 'info');
+            mostrarToast('Eliminando álbum...', 'info');
 
             try {
                 // 1️⃣ Obtener el álbum desde Firebase para sacar los public_ids de Cloudinary
@@ -907,35 +907,32 @@
                 const albumData = albumSnap.data();
                 const fotos = albumData.fotos || [];
 
-                // 2️⃣ Eliminar cada foto de Cloudinary
+                // 2️⃣ Eliminar fotos de Cloudinary usando la función serverless
                 if (fotos.length > 0) {
-                    for (const foto of fotos) {
-                        if (foto.public_id) {
-                            try {
-                                // Nota: La eliminación de Cloudinary requiere autenticación del lado del servidor
-                                // Esta es una versión simplificada. Para producción, necesitás una Cloud Function
-                                const response = await fetch(`https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/destroy`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        public_id: foto.public_id,
-                                        api_key: '559438173477765',
-                                        timestamp: Math.floor(Date.now() / 1000),
-                                        // Para producción: agregar signature firmada con api_secret
-                                    })
-                                });
+                    mostrarToast(`Eliminando ${fotos.length} fotos de Cloudinary...`, 'info');
+                    
+                    const public_ids = fotos.map(f => f.public_id).filter(Boolean);
+                    
+                    if (public_ids.length > 0) {
+                        const response = await fetch('/api/eliminar-fotos', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ public_ids })
+                        });
 
-                                const result = await response.json();
-                                console.log(`Foto ${foto.public_id} eliminada:`, result);
-                            } catch (error) {
-                                console.error(`Error eliminando foto ${foto.public_id}:`, error);
-                                // Continuar eliminando las demás aunque una falle
-                            }
+                        const result = await response.json();
+                        
+                        if (!result.success) {
+                            console.warn('Algunas fotos no se pudieron eliminar:', result);
+                            mostrarToast('⚠️ Algunas fotos no se eliminaron, pero continuamos...', 'info');
+                        } else {
+                            console.log('Todas las fotos eliminadas de Cloudinary:', result);
                         }
                     }
                 }
 
                 // 3️⃣ Eliminar el documento de Firebase
+                mostrarToast('Eliminando álbum de Firebase...', 'info');
                 await deleteDoc(albumRef);
 
                 // 4️⃣ Éxito
