@@ -1060,15 +1060,22 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // 1️⃣ Subir solo la foto de portada a ImageKit via servidor
-                const formDataPortada = new FormData();
-                formDataPortada.append('file', fotoPortada);
-                formDataPortada.append('fileName', 'portada_' + Date.now() + '.jpg');
-                formDataPortada.append('folder', '/portadas');
+                // 1️⃣ Convertir portada a base64 y subir a ImageKit
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(fotoPortada);
+                });
 
                 const response = await fetch('/api/subir-portada', {
                     method: 'POST',
-                    body: formDataPortada
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileBase64: base64,
+                        fileName: 'portada_' + Date.now() + '.jpg',
+                        mimeType: fotoPortada.type || 'image/jpeg'
+                    })
                 });
 
                 const data = await response.json();
