@@ -1055,6 +1055,42 @@
         // ══════════════════════════════════════════════════════════
         // GUARDAR ÁLBUM
         // ══════════════════════════════════════════════════════════
+        
+        // Función para comprimir imagen antes de subir
+        function comprimirImagen(file, maxWidth = 1920, quality = 0.85) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Redimensionar si es muy grande
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            }));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
         async function guardarAlbum(event) {
             event.preventDefault();
             
@@ -1065,11 +1101,18 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo...';
 
             try {
-                // Subir fotos a Cloudinary
-                const fotosSubidas = [];
-                for (let i = 0; i < fotosSeleccionadas.length; i++) {
+                // Comprimir fotos antes de subir (más rápido)
+                btnGuardar.innerHTML = '<span class="loader"></span> Optimizando fotos...';
+                const fotosComprimidas = await Promise.all(
+                    fotosSeleccionadas.map(foto => comprimirImagen(foto))
+                );
+                
+                // Subir fotos a Cloudinary EN PARALELO (mucho más rápido)
+                btnGuardar.innerHTML = '<span class="loader"></span> Subiendo fotos...';
+                
+                const promesasSubida = fotosComprimidas.map(async (archivo) => {
                     const formData = new FormData();
-                    formData.append('file', fotosSeleccionadas[i]);
+                    formData.append('file', archivo);
                     formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
 
                     const response = await fetch(
@@ -1078,13 +1121,16 @@
                     );
 
                     const data = await response.json();
-                    fotosSubidas.push({
+                    return {
                         url: data.secure_url,
                         public_id: data.public_id
-                    });
+                    };
+                });
 
-                    btnGuardar.innerHTML = `<span class="loader"></span> Subiendo ${i + 1}/${fotosSeleccionadas.length}...`;
-                }
+                // Esperar que todas las fotos se suban
+                const fotosSubidas = await Promise.all(promesasSubida);
+                
+                btnGuardar.innerHTML = '<span class="loader"></span> Guardando álbum...';
 
                 // Guardar en Firebase
                 const metodoPago = form.metodo_pago.value;
