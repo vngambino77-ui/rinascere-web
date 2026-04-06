@@ -762,6 +762,14 @@
                 <button type="submit" class="btn-submit" id="btn-guardar">
                     Crear álbum
                 </button>
+
+                <!-- Barra de progreso -->
+                <div id="progress-container" style="display: none; margin-top: 1rem;">
+                    <div style="background: #f0f0f0; border-radius: 8px; overflow: hidden; height: 30px; position: relative;">
+                        <div id="progress-bar" style="background: linear-gradient(135deg, #d4af37 0%, #c09c2e 100%); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                        <div id="progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #2c2c2c; font-weight: 600; font-size: 0.9rem;">0%</div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -1065,30 +1073,52 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo...';
 
             try {
-                // Subir fotos a Cloudinary EN PARALELO (sin compresión previa)
-                btnGuardar.innerHTML = `<span class="loader"></span> Subiendo ${fotosSeleccionadas.length} fotos...`;
+                // Mostrar barra de progreso
+                document.getElementById('progress-container').style.display = 'block';
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+
+                // Subir fotos por lotes para evitar colgar el navegador
+                const LOTE_SIZE = 10; // Subir 10 fotos a la vez
+                const fotosSubidas = [];
+                const totalFotos = fotosSeleccionadas.length;
+
+                for (let i = 0; i < totalFotos; i += LOTE_SIZE) {
+                    const lote = fotosSeleccionadas.slice(i, i + LOTE_SIZE);
+                    const fotasEnLote = Math.min(LOTE_SIZE, totalFotos - i);
+                    
+                    const porcentaje = Math.round(((i + fotasEnLote) / totalFotos) * 100);
+                    progressBar.style.width = porcentaje + '%';
+                    progressText.textContent = `${i + fotasEnLote}/${totalFotos} fotos (${porcentaje}%)`;
+                    btnGuardar.innerHTML = `<span class="loader"></span> Subiendo...`;
+
+                    // Subir este lote en paralelo
+                    const promesasLote = lote.map(async (archivo) => {
+                        const formData = new FormData();
+                        formData.append('file', archivo);
+                        formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
+
+                        const response = await fetch(
+                            `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`,
+                            { method: 'POST', body: formData }
+                        );
+
+                        const data = await response.json();
+                        return {
+                            url: data.secure_url,
+                            public_id: data.public_id
+                        };
+                    });
+
+                    // Esperar que este lote termine
+                    const resultadosLote = await Promise.all(promesasLote);
+                    fotosSubidas.push(...resultadosLote);
+
+                    // Pequeña pausa para no saturar
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
                 
-                const promesasSubida = fotosSeleccionadas.map(async (archivo) => {
-                    const formData = new FormData();
-                    formData.append('file', archivo);
-                    formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
-                    // Cloudinary optimiza automáticamente las fotos
-
-                    const response = await fetch(
-                        `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`,
-                        { method: 'POST', body: formData }
-                    );
-
-                    const data = await response.json();
-                    return {
-                        url: data.secure_url,
-                        public_id: data.public_id
-                    };
-                });
-
-                // Esperar que todas las fotos se suban
-                const fotosSubidas = await Promise.all(promesasSubida);
-                
+                progressText.textContent = 'Guardando álbum...';
                 btnGuardar.innerHTML = '<span class="loader"></span> Guardando álbum...';
 
                 // Guardar en Firebase
@@ -1120,11 +1150,14 @@
 
                 mostrarToast('✅ Álbum creado correctamente', 'success');
                 cerrarModal();
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('progress-bar').style.width = '0%';
                 cargarAlbumes();
 
             } catch (error) {
                 console.error('Error al guardar:', error);
                 mostrarToast('❌ Error al crear el álbum', 'error');
+                document.getElementById('progress-container').style.display = 'none';
             } finally {
                 btnGuardar.disabled = false;
                 btnGuardar.innerHTML = 'Crear álbum';
