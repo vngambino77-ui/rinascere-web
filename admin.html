@@ -685,7 +685,7 @@
                         <th>Nombre</th>
                         <th>Fecha</th>
                         <th>Fotos</th>
-                        <th>Precio</th>
+                        <th>Método</th>
                         <th>Cobro</th>
                         <th>Acciones</th>
                     </tr>
@@ -735,9 +735,18 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Método de descarga / pago</label>
+                    <select name="metodo_pago" id="metodo-pago" required>
+                        <option value="gratis">🎁 Gratis (descarga directa)</option>
+                        <option value="precio_fijo">💰 Precio fijo por foto (Mercado Pago)</option>
+                        <option value="cafecito">☕ Vale un cafecito (donación voluntaria)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="grupo-precio" style="display: none;">
                     <label>Precio por foto (en pesos)</label>
-                    <input type="number" name="precio" value="0" min="0" step="100">
-                    <small style="color: #999;">Dejá en 0 si las fotos son gratis</small>
+                    <input type="number" name="precio" value="500" min="100" step="100" placeholder="Ej: 500">
+                    <small style="color: #999;">Precio que se cobrará por cada foto seleccionada</small>
                 </div>
 
                 <div class="form-group">
@@ -863,13 +872,26 @@
                         ? '<span class="badge libre">🔓 Libre</span>' 
                         : '<span class="badge privado">🔒 Privado</span>';
                     
+                    // Determinar el método de pago a mostrar
+                    let metodoPago = '';
+                    if (album.metodo_pago === 'gratis') {
+                        metodoPago = '🎁 Gratis';
+                    } else if (album.metodo_pago === 'cafecito') {
+                        metodoPago = '☕ Cafecito';
+                    } else if (album.metodo_pago === 'precio_fijo') {
+                        metodoPago = `💰 $${album.precio || 0}`;
+                    } else {
+                        // Para álbumes viejos sin metodo_pago definido
+                        metodoPago = album.precio > 0 ? `$${album.precio}` : 'Gratis';
+                    }
+                    
                     return `
                         <tr>
                             <td><img src="${portada}" class="album-thumb" alt="${album.nombre}"></td>
                             <td>${album.nombre}</td>
                             <td>${album.fecha || 'Sin fecha'}</td>
                             <td>${album.fotos?.length || 0}</td>
-                            <td>$${album.precio || 0}</td>
+                            <td>${metodoPago}</td>
                             <td>${badge}</td>
                             <td class="actions">
                                 <button class="btn-action ver" onclick="window.open('evento.html?id=${album.id}', '_blank')">👁 Ver</button>
@@ -980,6 +1002,20 @@
         });
 
         // ══════════════════════════════════════════════════════════
+        // MANEJO DE MÉTODO DE PAGO
+        // ══════════════════════════════════════════════════════════
+        document.getElementById('metodo-pago').addEventListener('change', function() {
+            const grupoPrecio = document.getElementById('grupo-precio');
+            if (this.value === 'precio_fijo') {
+                grupoPrecio.style.display = 'block';
+                document.querySelector('input[name="precio"]').required = true;
+            } else {
+                grupoPrecio.style.display = 'none';
+                document.querySelector('input[name="precio"]').required = false;
+            }
+        });
+
+        // ══════════════════════════════════════════════════════════
         // SELECCIÓN DE FOTOS
         // ══════════════════════════════════════════════════════════
         document.getElementById('input-fotos').addEventListener('change', function(e) {
@@ -1051,14 +1087,25 @@
                 }
 
                 // Guardar en Firebase
+                const metodoPago = form.metodo_pago.value;
+                
                 const albumData = {
                     nombre: form.nombre.value,
                     fecha: form.fecha.value,
                     tipo: form.tipo.value,
-                    precio: parseInt(form.precio.value) || 0,
+                    metodo_pago: metodoPago,
                     fotos: fotosSubidas,
                     createdAt: serverTimestamp()
                 };
+
+                // Agregar precio solo si el método es "precio_fijo"
+                if (metodoPago === 'precio_fijo') {
+                    albumData.precio = parseInt(form.precio.value) || 500;
+                } else if (metodoPago === 'gratis') {
+                    albumData.precio = 0;
+                } else if (metodoPago === 'cafecito') {
+                    albumData.precio = 0; // No tiene precio fijo
+                }
 
                 if (form.tipo.value === 'privado') {
                     albumData.password = form.password.value;
