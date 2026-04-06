@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Álbum — Ph. Rinascere Fotografías</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
+      authDomain: "rinascere-fotografias.firebaseapp.com",
+      projectId: "rinascere-fotografias",
+      storageBucket: "rinascere-fotografias.firebasestorage.app",
+      messagingSenderId: "234239060454",
+      appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
+    });
+    const db = firebase.firestore();
+
+    const IK_URL = "https://ik.imagekit.io/kraplmd9q";
+
+    // Devuelve URL lista para mostrar (puede ser IK o URL directa de Drive/externa)
+    function urlProtegida(id) {
+      if (!id) return '';
+      // Si ya es una URL completa (de ImageKit o cualquier otra), la usamos directamente
+      if (id.startsWith('http')) {
+        // Si es ImageKit, agregamos marca de agua via transformación de texto
+        if (id.includes('ik.imagekit.io')) {
+          return id + '?tr=w-600,q-80,l-text,i-©%20Rinascere,fs-24,co-FFFFFF,a-center,o-40,l-end';
+        }
+        return id;
+      }
+      // Si es un public_id legacy de Cloudinary, construir URL de IK
+      return `${IK_URL}/${id}?tr=w-600,q-80`;
+    }
+
+    // URL en alta calidad para descarga post-pago
+    function urlHD(id, nombre) {
+      if (!id) return '';
+      // Si ya es URL completa, devolver directamente para descarga
+      if (id.startsWith('http')) return id;
+      return `${IK_URL}/${id}?tr=q-100,f-jpg`;
+    }
+
+    // URL para la portada del hero
+    function urlPortada(id) {
+      if (!id) return '';
+      if (id.startsWith('http')) return id;
+      return `${IK_URL}/${id}?tr=w-1200,q-80,f-auto`;
+    }
+  </script>
+  <style>
+    :root{
+      --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
+      --blanco:#fff; --crema:#FAF8F4; --gris:#888; --negro:#1A1A1A;
+      --verde:#27ae60; --rojo:#e74c3c;
+      --fuente-t:'Playfair Display',serif; --fuente-c:'Inter',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--fuente-c);background:var(--crema);color:var(--negro);user-select:none;}
+    img{pointer-events:none;-webkit-user-drag:none;}
+
+    nav{background:rgba(255,255,255,0.97);border-bottom:1px solid #eee;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+    .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+    .nav-logo img{height:44px;mix-blend-mode:multiply;}
+    .nav-back{text-decoration:none;color:var(--gris);font-size:0.85rem;}
+    .nav-back:hover{color:var(--dorado);}
+
+    .hero{position:relative;height:340px;overflow:hidden;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);}
+    .hero-img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(0.7);}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.1) 60%);}
+    .hero-info{position:absolute;bottom:0;left:0;right:0;padding:28px 24px;}
+    .hero-eyebrow{font-size:0.72rem;color:var(--dorado-claro);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+    .hero-titulo{font-family:var(--fuente-t);font-size:clamp(1.5rem,4vw,2.2rem);color:#fff;margin-bottom:8px;}
+    .hero-meta{font-size:0.86rem;color:rgba(255,255,255,0.75);margin-bottom:12px;}
+    .hero-stats{display:flex;gap:10px;flex-wrap:wrap;}
+    .hero-stat{background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);padding:6px 14px;border-radius:50px;font-size:0.78rem;font-weight:600;color:#fff;border:1px solid rgba(255,255,255,0.2);}
+
+    .instruccion{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:14px 20px;margin:16px 24px;text-align:center;font-size:0.85rem;color:#6b4f1a;}
+    .instruccion strong{color:var(--dorado-oscuro);}
+
+    .buscador{background:var(--blanco);padding:18px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+    .buscador input{border:2px solid #ddd;border-radius:50px;padding:10px 18px;font-size:0.88rem;outline:none;width:190px;transition:border-color 0.2s;font-family:var(--fuente-c);}
+    .buscador input:focus{border-color:var(--dorado);}
+
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-family:var(--fuente-c);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;}
+    .btn-dorado{background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:#fff;box-shadow:0 3px 14px rgba(201,168,76,0.3);}
+    .btn-dorado:hover{transform:translateY(-1px);}
+    .btn-outline{background:transparent;border:2px solid var(--dorado);color:var(--dorado-oscuro);}
+    .btn-outline:hover{background:var(--dorado);color:#fff;}
+    .btn-negro{background:var(--negro);color:#fff;}
+    .btn-cafe{background:linear-gradient(135deg,#6f4e37,#8b6347);color:#fff;}
+
+    .fotos-sec{padding:28px 20px;max-width:1200px;margin:0 auto;}
+    .fotos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+    .fotos-header h2{font-family:var(--fuente-t);font-size:1.3rem;}
+    .grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+
+    .foto-card{border-radius:12px;overflow:hidden;background:var(--blanco);box-shadow:0 2px 10px rgba(0,0,0,0.07);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;position:relative;}
+    .foto-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+    .foto-card img{width:100%;height:200px;object-fit:cover;display:block;background:#f0ede8;}
+    .foto-check{position:absolute;top:8px;right:8px;width:26px;height:26px;background:var(--dorado);border-radius:50%;display:none;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;}
+    .foto-card.sel .foto-check{display:flex;}
+    .foto-card.sel img{filter:brightness(0.78);}
+    .foto-card.sel{border:3px solid var(--dorado);}
+    .foto-pie{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+    .foto-precio{font-weight:700;font-size:0.85rem;color:var(--dorado-oscuro);}
+    .foto-hint{font-size:0.72rem;color:var(--gris);}
+
+    .loading{text-align:center;padding:60px 20px;grid-column:1/-1;}
+    .spinner{width:36px;height:36px;border:3px solid #eee;border-top-color:var(--dorado);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .barra{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--negro);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;transform:translateY(100%);transition:transform 0.3s;box-shadow:0 -4px 24px rgba(0,0,0,0.25);flex-wrap:wrap;gap:10px;}
+    .barra.vis{transform:translateY(0);}
+    .barra-info strong{font-size:1rem;}
+    .barra-info span{font-size:0.78rem;color:#aaa;margin-left:8px;}
+    .barra-btns{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-pagar{background:linear-gradient(135deg,#009ee3,#007eb5);color:#fff;border:none;padding:12px 24px;border-radius:50px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:var(--fuente-c);display:flex;align-items:center;gap:8px;}
+    .btn-limpiar{background:transparent;color:#aaa;border:1px solid #444;padding:10px 16px;border-radius:50px;font-size:0.8rem;cursor:pointer;font-family:var(--fuente-c);}
+
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;padding:16px;}
+    .lightbox.open{display:flex;}
+    .lb-wrap{position:relative;max-width:92vw;}
+    .lightbox img{max-width:92vw;max-height:72vh;object-fit:contain;border-radius:8px;display:block;}
+    .lb-x{position:fixed;top:16px;right:16px;color:#fff;font-size:1.8rem;cursor:pointer;background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
+    .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.18);border:none;color:#fff;font-size:1.4rem;padding:12px;border-radius:50%;cursor:pointer;}
+    .lb-prev{left:-50px;} .lb-next{right:-50px;}
+    .lb-bottom{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;}
+
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;padding:20px;}
+    .overlay.open{display:flex;}
+    .modal{background:var(--blanco);border-radius:20px;width:460px;max-width:100%;max-height:92vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+    .modal h2{font-family:var(--fuente-t);font-size:1.3rem;margin-bottom:6px;}
+    .modal h2 span{color:var(--dorado);}
+    .modal-sub{color:var(--gris);font-size:0.83rem;margin-bottom:20px;}
+    .res-fotos{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+    .res-fotos img{width:54px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #eee;}
+    .res-total{background:var(--crema);border-radius:10px;padding:14px;margin-bottom:18px;}
+    .res-linea{display:flex;justify-content:space-between;font-size:0.86rem;padding:3px 0;}
+    .res-linea.total{font-weight:700;font-size:0.98rem;border-top:1px solid #ddd;margin-top:8px;padding-top:10px;}
+    .fg{margin-bottom:14px;}
+    .fg label{display:block;font-size:0.78rem;font-weight:600;color:#444;margin-bottom:5px;}
+    .fg input{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:var(--fuente-c);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+    .fg input:focus{border-color:var(--dorado);}
+    .mp-btn{width:100%;padding:14px;background:linear-gradient(135deg,#009ee3,#007eb5);color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--fuente-c);display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+    .mp-btn:hover{opacity:0.9;}
+    .mp-btn:disabled{opacity:0.6;cursor:not-allowed;}
+
+    .cafe-box{text-align:center;padding:10px 0;}
+    .cafe-ico{font-size:3rem;margin-bottom:12px;}
+    .cafe-box h3{font-family:var(--fuente-t);font-size:1.3rem;margin-bottom:8px;}
+    .cafe-box p{color:var(--gris);font-size:0.87rem;line-height:1.7;margin-bottom:20px;}
+
+    .descarga-header{text-align:center;padding:10px 0 20px;}
+    .descarga-header .ico{font-size:3.5rem;margin-bottom:10px;}
+    .descarga-header h3{font-family:var(--fuente-t);font-size:1.4rem;margin-bottom:6px;}
+    .descarga-header p{color:var(--gris);font-size:0.85rem;line-height:1.6;}
+    .descarga-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:20px 0;}
+    .descarga-item{background:var(--crema);border-radius:10px;overflow:hidden;border:1px solid #eee;}
+    .descarga-item img{width:100%;height:90px;object-fit:cover;display:block;}
+    .descarga-item a{display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;font-size:0.75rem;color:var(--dorado-oscuro);font-weight:600;text-decoration:none;background:var(--blanco);}
+    .descarga-todas{width:100%;padding:14px;background:linear-gradient(135deg,var(--dorado),var(--dorado-claro));color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--fuente-c);margin-bottom:10px;}
+
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);z-index:999;background:var(--negro);color:#fff;padding:12px 22px;border-radius:50px;font-size:0.85rem;opacity:0;transition:all 0.3s;border-left:4px solid var(--dorado);box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .toast.ok{border-left-color:var(--verde);}
+    .toast.error{border-left-color:var(--rojo);}
+
+    @media(max-width:640px){
+      .fotos-sec{padding:20px 14px;}
+      .grilla{grid-template-columns:repeat(2,1fr);gap:10px;}
+      .foto-card img{height:160px;}
+      .lb-prev{left:4px;} .lb-next{right:4px;}
+      .lightbox img{max-height:60vh;}
+      .hero{height:280px;}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="https://ik.imagekit.io/kraplmd9q/logo_rinascere.png" alt="Logo"/>
+  </a>
+  <a href="index.html" class="nav-back">← Volver</a>
+</nav>
+
+<div class="hero" id="hero">
+  <img class="hero-img" id="hero-img" src="" alt="Portada"/>
+  <div class="hero-overlay"></div>
+  <div class="hero-info">
+    <div class="hero-eyebrow">Álbum de fotografías</div>
+    <h1 class="hero-titulo" id="album-nombre">Cargando...</h1>
+    <div class="hero-meta" id="album-meta"></div>
+    <div class="hero-stats" id="album-stats"></div>
+  </div>
+</div>
+
+<div class="instruccion">
+  <strong>¿Cómo funciona?</strong> Tocá una foto para verla en grande · Seleccioná las que más te gusten · Pagá y descargalas en alta calidad 📸
+</div>
+
+<div class="buscador" id="buscador" style="display:none">
+  <input type="text" id="input-dorsal" placeholder="Número de dorsal (ej: 42)" maxlength="6" inputmode="numeric"/>
+  <button class="btn btn-dorado" onclick="filtrarDorsal()">🔍 Buscar</button>
+  <button class="btn btn-outline" onclick="mostrarTodas()">Ver todas</button>
+</div>
+
+<div class="fotos-sec">
+  <div class="fotos-header">
+    <h2 id="fotos-titulo">Fotos del evento</h2>
+    <span id="fotos-contador" style="color:var(--gris);font-size:0.82rem;"></span>
+  </div>
+  <div class="grilla" id="grilla">
+    <div class="loading"><div class="spinner"></div><p style="color:var(--gris)">Cargando fotos...</p></div>
+  </div>
+</div>
+
+<div class="barra" id="barra">
+  <div class="barra-info">
+    <strong id="barra-total">$0</strong>
+    <span id="barra-cant">0 fotos</span>
+  </div>
+  <div class="barra-btns">
+    <button class="btn-limpiar" onclick="limpiarSel()">✕ Limpiar</button>
+    <button class="btn-pagar" id="btn-barra-pagar" onclick="abrirPago()">💳 Comprar y descargar</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-x" onclick="cerrarLb()">✕</button>
+  <div class="lb-wrap">
+    <button class="lb-nav lb-prev" onclick="navLb(-1)">‹</button>
+    <img id="lb-img" src="" alt="Foto"/>
+    <button class="lb-nav lb-next" onclick="navLb(1)">›</button>
+  </div>
+  <div class="lb-bottom">
+    <button class="btn btn-dorado" id="lb-btn-sel" onclick="toggleSelLb()">+ Seleccionar esta foto</button>
+    <button class="btn btn-negro" onclick="cerrarLb()">✕ Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL PAGO FIJO -->
+<div class="overlay" id="overlay-pago">
+  <div class="modal">
+    <h2>Resumen de <span>compra</span></h2>
+    <p class="modal-sub">Revisá tu selección antes de pagar</p>
+    <div class="res-fotos" id="res-fotos"></div>
+    <div class="res-total" id="res-total"></div>
+    <div class="fg">
+      <label>Tu email</label>
+      <input type="email" id="email-input" placeholder="tucorreo@gmail.com" inputmode="email"/>
+    </div>
+    <button class="mp-btn" id="mp-btn" onclick="procesarPago()">💳 Pagar con Mercado Pago</button>
+    <p style="text-align:center;font-size:0.72rem;color:var(--gris);margin-top:10px;">Pago 100% seguro · Sin cuenta de MP requerida</p>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:10px;" onclick="cerrarPago()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL PRECIO LIBRE -->
+<div class="overlay" id="overlay-libre">
+  <div class="modal">
+    <h2>Elegí <span>cuánto pagar</span></h2>
+    <p class="modal-sub">Precio libre 💛 Pagá lo que consideres justo</p>
+    <div class="res-fotos" id="res-fotos-libre"></div>
+    <p style="font-size:0.82rem;font-weight:600;color:#444;margin-bottom:10px;">Sugerencias:</p>
+    <div id="sugerencias-rapidas" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div class="fg">
+      <label>O escribí el monto que querés pagar (ARS)</label>
+      <input type="number" id="monto-libre" placeholder="Ej: 1000" min="0" inputmode="numeric" oninput="actualizarTotalLibre()"/>
+    </div>
+    <div class="res-total" id="res-total-libre" style="margin-bottom:16px;"></div>
+    <div class="fg">
+      <label>Tu email</label>
+      <input type="email" id="email-libre" placeholder="tucorreo@gmail.com" inputmode="email"/>
+    </div>
+    <button class="mp-btn" id="mp-btn-libre" onclick="procesarPagoLibre()">💳 Pagar con Mercado Pago</button>
+    <button class="btn" style="width:100%;justify-content:center;margin-top:8px;background:var(--verde);color:#fff;" onclick="descargarSinPagar()">⬇ Descargar gratis</button>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="document.getElementById('overlay-libre').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL CAFÉ -->
+<div class="overlay" id="overlay-cafe">
+  <div class="modal">
+    <div class="cafe-box">
+      <div class="cafe-ico">☕</div>
+      <h3>¡Fotos gratis!</h3>
+      <p>Estas fotos son de acceso libre 💛<br>Si te gustan podés colaborar con Verónica invitándole un café.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-cafe" style="width:100%;justify-content:center;" onclick="irACafe()">☕ Invitar un café voluntario</button>
+        <button class="btn btn-dorado" style="width:100%;justify-content:center;" onclick="descargarGratis()">⬇ Descargar gratis ahora</button>
+        <button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="document.getElementById('overlay-cafe').classList.remove('open')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESCARGA -->
+<div class="overlay" id="overlay-descarga">
+  <div class="modal">
+    <div class="descarga-header">
+      <div class="ico">🎉</div>
+      <h3>¡Listas para descargar!</h3>
+      <p>Alta calidad sin marca de agua · Links válidos 24 horas</p>
+    </div>
+    <div class="descarga-grid" id="descarga-grid"></div>
+    <button class="descarga-todas" onclick="descargarTodas()">⬇ Descargar todas</button>
+    <p style="text-align:center;font-size:0.75rem;color:var(--gris);">📱 En el celular: tocá cada foto y mantené presionada para guardar</p>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:10px;" onclick="document.getElementById('overlay-descarga').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey||e.metaKey) && ['s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
+    if (e.key === 'PrintScreen' || e.key === 'F12') e.preventDefault();
+  });
+
+  const esCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  let album = null, todasFotos = [], fotosMostradas = [];
+  let seleccionadas = new Set(), lbIdx = 0;
+
+  function getSlug() { return new URLSearchParams(window.location.search).get('slug'); }
+
+  async function verificarPagoURL() {
+    const p = new URLSearchParams(window.location.search);
+    const status = p.get('status') || p.get('collection_status');
+    const pedidoId = p.get('external_reference');
+    if (!pedidoId || status !== 'approved') return;
+    try {
+      const snap = await db.collection('pedidos').doc(pedidoId).get();
+      if (!snap.exists) return;
+      const pedido = snap.data();
+      if (pedido.estado !== 'pagado') await snap.ref.update({ estado:'pagado', fechaPago: new Date().toISOString() });
+      mostrarDescarga(pedido.fotosIds || []);
+    } catch(e) { console.error(e); }
+  }
+
+  async function cargar() {
+    await verificarPagoURL();
+    const slug = getSlug();
+    if (!slug) { document.getElementById('grilla').innerHTML = '<div class="loading"><p>No se especificó ningún álbum.</p></div>'; return; }
+    try {
+      const snap = await db.collection('albumes').where('slug','==',slug).limit(1).get();
+      if (snap.empty) { document.getElementById('grilla').innerHTML = '<div class="loading"><p>Álbum no encontrado.</p></div>'; return; }
+      album = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      todasFotos = album.fotos || [];
+
+      // ✅ PORTADA — usa primera foto si no hay portada
+      const heroImg = document.getElementById('hero-img');
+      const portadaId = album.portadaUrl || (todasFotos.length > 0 ? todasFotos[0] : null);
+      if (portadaId) {
+        heroImg.src = urlPortada(portadaId);
+        heroImg.onerror = () => document.getElementById('hero').style.background = 'linear-gradient(135deg,#2a2020,#1a1a1a)';
+      }
+
+      document.getElementById('album-nombre').textContent = album.nombre;
+      document.title = album.nombre + ' — Ph. Rinascere';
+      document.getElementById('album-meta').textContent =
+        [album.lugar ? '📍 '+album.lugar : '', album.fecha ? '📅 '+album.fecha : ''].filter(Boolean).join(' · ');
+
+      const precio = Number(album.precio || 0);
+      const tipoCobro = album.tipoCobro || (precio === 0 ? 'cafe' : 'fijo');
+      document.getElementById('album-stats').innerHTML = `
+        <div class="hero-stat">📷 ${todasFotos.length} fotos</div>
+        <div class="hero-stat">${precio===0 ? (tipoCobro==='libre'?'🎁 Precio libre':'🆓 Libre + ☕') : '💰 $'+precio.toLocaleString('es-AR')+' c/u'}</div>`;
+
+      const btnBarra = document.getElementById('btn-barra-pagar');
+      if (precio === 0) {
+        btnBarra.textContent = tipoCobro === 'libre' ? '🎁 Elegí cuánto pagar' : '⬇ Descargar gratis';
+        btnBarra.style.background = 'linear-gradient(135deg,#27ae60,#2ecc71)';
+      }
+
+      if (album.identificacion === 'dorsal' || album.identificacion === 'ambos')
+        document.getElementById('buscador').style.display = 'flex';
+
+      renderFotos(todasFotos);
+    } catch(e) {
+      console.error(e);
+      document.getElementById('grilla').innerHTML = '<div class="loading"><p>Error al cargar. Intentá de nuevo.</p></div>';
+    }
+  }
+
+  function renderFotos(fotos) {
+    fotosMostradas = fotos;
+    document.getElementById('fotos-contador').textContent = `${fotos.length} foto${fotos.length!==1?'s':''}`;
+    const g = document.getElementById('grilla');
+    if (fotos.length === 0) { g.innerHTML = '<div class="loading"><p>No se encontraron fotos.</p></div>'; return; }
+    const precio = Number(album?.precio || 0);
+    g.innerHTML = fotos.map((pid, i) => {
+      const sel = seleccionadas.has(pid);
+      return `
+        <div class="foto-card ${sel?'sel':''}" onclick="abrirLb(${i})">
+          <img src="${urlProtegida(pid)}" alt="Foto ${i+1}" loading="${i<6?'eager':'lazy'}"
+            onerror="this.style.background='#f0ede8';this.style.minHeight='200px';"/>
+          <div class="foto-check">✓</div>
+          <div class="foto-pie">
+            <span class="foto-precio">${precio===0?'🆓 Gratis':'$'+precio.toLocaleString('es-AR')}</span>
+            <span class="foto-hint">${sel?'✓ Seleccionada':'Tocá para ver'}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function filtrarDorsal() {
+    const d = document.getElementById('input-dorsal').value.trim();
+    if (!d) { mostrarTodas(); return; }
+    const f = todasFotos.filter(p => p.toLowerCase().includes(d.toLowerCase()));
+    document.getElementById('fotos-titulo').textContent = `Fotos con dorsal #${d}`;
+    if (f.length === 0) { toast('No encontramos ese dorsal.','error'); renderFotos(todasFotos); }
+    else renderFotos(f);
+  }
+  function mostrarTodas() {
+    document.getElementById('fotos-titulo').textContent = 'Fotos del evento';
+    document.getElementById('input-dorsal').value = '';
+    renderFotos(todasFotos);
+  }
+
+  function abrirLb(i) { lbIdx=i; actualizarLb(); document.getElementById('lightbox').classList.add('open'); }
+  function cerrarLb() { document.getElementById('lightbox').classList.remove('open'); }
+  function navLb(d) { lbIdx=(lbIdx+d+fotosMostradas.length)%fotosMostradas.length; actualizarLb(); }
+  function actualizarLb() {
+    const pid = fotosMostradas[lbIdx];
+    document.getElementById('lb-img').src = urlProtegida(pid);
+    const btn = document.getElementById('lb-btn-sel');
+    const sel = seleccionadas.has(pid);
+    btn.textContent = sel ? '✓ Quitar selección' : '+ Seleccionar esta foto';
+    btn.style.background = sel ? '#27ae60' : '';
+  }
+  function toggleSelLb() {
+    const pid = fotosMostradas[lbIdx];
+    seleccionadas.has(pid) ? seleccionadas.delete(pid) : seleccionadas.add(pid);
+    actualizarBarra(); actualizarLb(); renderFotos(fotosMostradas);
+    setTimeout(() => { document.getElementById('lightbox').classList.add('open'); actualizarLb(); }, 10);
+  }
+  document.getElementById('lightbox').addEventListener('click', e => { if (e.target===e.currentTarget) cerrarLb(); });
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key==='ArrowLeft') navLb(-1);
+    if (e.key==='ArrowRight') navLb(1);
+    if (e.key==='Escape') cerrarLb();
+  });
+
+  function actualizarBarra() {
+    const cant = seleccionadas.size;
+    const precio = Number(album?.precio||0);
+    document.getElementById('barra-cant').textContent = `${cant} foto${cant!==1?'s':''} seleccionada${cant!==1?'s':''}`;
+    document.getElementById('barra-total').textContent = precio===0 ? '🆓 Gratis' : '$'+(cant*precio).toLocaleString('es-AR');
+    document.getElementById('barra').classList.toggle('vis', cant>0);
+  }
+  function limpiarSel() { seleccionadas.clear(); actualizarBarra(); renderFotos(fotosMostradas); }
+
+  function abrirPago() {
+    if (seleccionadas.size===0) return;
+    const precio = Number(album?.precio||0);
+    const tipoCobro = album?.tipoCobro || (precio===0?'cafe':'fijo');
+    const fotos = Array.from(seleccionadas);
+
+    if (tipoCobro==='fijo') {
+      const total = fotos.length * precio;
+      document.getElementById('res-fotos').innerHTML = fotos.map(pid=>`<img src="${urlProtegida(pid)}" alt="foto"/>`).join('');
+      document.getElementById('res-total').innerHTML = `
+        <div class="res-linea"><span>${fotos.length} foto${fotos.length!==1?'s':''}</span><span>$${(fotos.length*precio).toLocaleString('es-AR')}</span></div>
+        <div class="res-linea total"><span>Total</span><span>$${total.toLocaleString('es-AR')}</span></div>`;
+      document.getElementById('overlay-pago').classList.add('open');
+    } else if (tipoCobro==='libre') {
+      document.getElementById('res-fotos-libre').innerHTML = fotos.map(pid=>`<img src="${urlProtegida(pid)}" alt="foto"/>`).join('');
+      const precioMin = Number(album?.precioMinimo||0);
+      const sugeridos = [precioMin||500, (precioMin||500)*2, (precioMin||500)*3].filter((v,i,a)=>a.indexOf(v)===i);
+      document.getElementById('sugerencias-rapidas').innerHTML = sugeridos.map(s=>
+        `<button class="btn btn-outline" style="padding:7px 16px;font-size:0.82rem;" onclick="setSugerido(${s})">$${s.toLocaleString('es-AR')}</button>`
+      ).join('');
+      document.getElementById('monto-libre').value = precioMin || '';
+      actualizarTotalLibre();
+      document.getElementById('overlay-libre').classList.add('open');
+    } else {
+      document.getElementById('overlay-cafe').classList.add('open');
+    }
+  }
+  function cerrarPago() { document.getElementById('overlay-pago').classList.remove('open'); }
+
+  function setSugerido(v) { document.getElementById('monto-libre').value=v; actualizarTotalLibre(); }
+  function actualizarTotalLibre() {
+    const monto = Number(document.getElementById('monto-libre').value)||0;
+    const cant = seleccionadas.size;
+    document.getElementById('res-total-libre').innerHTML = `
+      <div class="res-linea"><span>${cant} foto${cant!==1?'s':''}</span><span></span></div>
+      <div class="res-linea total"><span>Total</span><span>$${monto.toLocaleString('es-AR')}</span></div>`;
+  }
+
+  async function procesarPagoLibre() {
+    const monto = Number(document.getElementById('monto-libre').value)||0;
+    const email = document.getElementById('email-libre').value.trim();
+    if (!email||!email.includes('@')) { toast('⚠️ Ingresá tu email','error'); return; }
+    if (monto<=0) { document.getElementById('overlay-libre').classList.remove('open'); mostrarDescarga(Array.from(seleccionadas)); return; }
+    const fotos = Array.from(seleccionadas);
+    const btn = document.getElementById('mp-btn-libre');
+    btn.disabled=true; btn.textContent='⏳ Procesando...';
+    try {
+      const pedidoRef = await db.collection('pedidos').add({ albumId:album.id, albumNombre:album.nombre, fotosIds:fotos, emailCliente:email, total:monto, tipoCobro:'libre', estado:'pendiente', creadoEn:new Date().toISOString() });
+      const base = window.location.origin, slug = getSlug();
+      const res = await fetch('/api/crear-preferencia', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fotos, precio:monto, titulo:album.nombre+' (precio libre)', pedidoId:pedidoRef.id, successUrl:`${base}/exito.html?external_reference=${pedidoRef.id}&status=approved`, failUrl:`${base}/evento.html?slug=${slug}&status=rejected` }) });
+      const data = await res.json();
+      if (!data.init_point) throw new Error(data.error||'Sin init_point');
+      document.getElementById('overlay-libre').classList.remove('open');
+      toast('⏳ Redirigiendo a Mercado Pago...','ok');
+      setTimeout(()=>window.location.href=data.init_point, 800);
+    } catch(e) { toast('❌ Error: '+e.message,'error'); btn.disabled=false; btn.textContent='💳 Pagar con Mercado Pago'; }
+  }
+  function descargarSinPagar() { document.getElementById('overlay-libre').classList.remove('open'); mostrarDescarga(Array.from(seleccionadas)); }
+  function descargarGratis() { document.getElementById('overlay-cafe').classList.remove('open'); mostrarDescarga(Array.from(seleccionadas)); }
+  function irACafe() { window.open(album?.linkCafe || 'https://www.mercadopago.com.ar','_blank'); descargarGratis(); }
+
+  async function procesarPago() {
+    const email = document.getElementById('email-input').value.trim();
+    if (!email||!email.includes('@')) { toast('⚠️ Ingresá tu email','error'); return; }
+    const fotos = Array.from(seleccionadas);
+    const precio = Number(album?.precio||0);
+    const btn = document.getElementById('mp-btn');
+    btn.disabled=true; btn.textContent='⏳ Procesando...';
+    try {
+      const pedidoRef = await db.collection('pedidos').add({ albumId:album.id, albumNombre:album.nombre, fotosIds:fotos, emailCliente:email, total:fotos.length*precio, estado:'pendiente', creadoEn:new Date().toISOString() });
+      const base = window.location.origin, slug = getSlug();
+      const res = await fetch('/api/crear-preferencia', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fotos, precio, titulo:album.nombre, pedidoId:pedidoRef.id, successUrl:`${base}/exito.html?external_reference=${pedidoRef.id}&status=approved`, failUrl:`${base}/evento.html?slug=${slug}&status=rejected` }) });
+      const data = await res.json();
+      if (!data.init_point) throw new Error(data.error||'Sin init_point');
+      cerrarPago();
+      toast('⏳ Redirigiendo a Mercado Pago...','ok');
+      setTimeout(()=>window.location.href=data.init_point, 800);
+    } catch(e) { toast('❌ Error: '+e.message,'error'); btn.disabled=false; btn.textContent='💳 Pagar con Mercado Pago'; }
+  }
+
+  function mostrarDescarga(fotos) {
+    const grid = document.getElementById('descarga-grid');
+    grid.innerHTML = fotos.map((pid,i) => {
+      const nombre = `rinascere_foto_${i+1}`;
+      return `
+        <div class="descarga-item">
+          <img src="${urlProtegida(pid)}" alt="Foto ${i+1}" onerror="this.style.background='#eee';this.style.minHeight='90px';"/>
+          <a href="${urlHD(pid,nombre)}" download="${nombre}.jpg" target="_blank">⬇ Descargar</a>
+        </div>`;
+    }).join('');
+    document.getElementById('overlay-descarga').classList.add('open');
+    seleccionadas.clear(); actualizarBarra(); renderFotos(fotosMostradas);
+  }
+
+  function descargarTodas() {
+    const links = document.querySelectorAll('#descarga-grid a');
+    if (esCelular) { links.forEach((a,i)=>setTimeout(()=>window.open(a.href,'_blank'),i*700)); toast('📱 Abriendo fotos para guardar en tu galería','ok'); }
+    else { links.forEach((a,i)=>setTimeout(()=>{ const t=document.createElement('a'); t.href=a.href; t.download=a.download; document.body.appendChild(t); t.click(); document.body.removeChild(t); },i*900)); toast('⬇ Descargando todas...','ok'); }
+  }
+
+  function toast(msg, tipo='') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show'+(tipo?' '+tipo:'');
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>el.classList.remove('show'), 3500);
+  }
+
+  cargar();
+</script>
+</body>
+</html>

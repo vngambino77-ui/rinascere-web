@@ -1,0 +1,120 @@
+// api/subir-portada.js
+// Sube la foto de portada del álbum a ImageKit
+
+export const config = { api: { bodyParser: false } };
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método no permitido' });
+    }
+
+    try {
+        const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
+        const urlEndpoint = 'https://ik.imagekit.io/kraplmd9q';
+
+        if (!privateKey) {
+            return res.status(500).json({ error: 'Falta IMAGEKIT_PRIVATE_KEY en variables de entorno' });
+        }
+
+        // Leer el body como buffer (multipart)
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        const buffer = Buffer.concat(chunks);
+
+        // Parsear el boundary del Content-Type
+        const contentType = req.headers['content-type'] || '';
+        const boundaryMatch = contentType.match(/boundary=([^\s;]+)/);
+        if (!boundaryMatch) {
+            return res.status(400).json({ error: 'Content-Type inválido' });
+        }
+
+        const boundary = boundaryMatch[1];
+        const parts = parseMultipart(buffer, boundary);
+
+        const filePart = parts.find(p => p.name === 'file');
+        const fileNamePart = parts.find(p => p.name === 'fileName');
+        const folderPart = parts.find(p => p.name === 'folder');
+
+        if (!filePart) {
+            return res.status(400).json({ error: 'No se encontró el archivo' });
+        }
+
+        const fileName = fileNamePart ? fileNamePart.data.toString() : `portada_${Date.now()}.jpg`;
+        const folder = folderPart ? folderPart.data.toString() : '/portadas';
+
+        // Convertir imagen a base64
+        const base64File = filePart.data.toString('base64');
+        const mimeType = filePart.contentType || 'image/jpeg';
+
+        // Subir a ImageKit via API
+        const formData = new URLSearchParams();
+        formData.append('file', `data:${mimeType};base64,${base64File}`);
+        formData.append('fileName', fileName);
+        formData.append('folder', folder);
+        formData.append('useUniqueFileName', 'true');
+
+        const auth = Buffer.from(`${privateKey}:`).toString('base64');
+
+        const ikResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
+        });
+
+        const ikData = await ikResponse.json();
+
+        if (!ikResponse.ok) {
+            console.error('Error ImageKit:', ikData);
+            return res.status(500).json({ error: ikData.message || 'Error al subir a ImageKit' });
+        }
+
+        return res.status(200).json({
+            url: ikData.url,
+            fileId: ikData.fileId,
+            name: ikData.name
+        });
+
+    } catch (error) {
+        console.error('Error en subir-portada:', error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+// Parser multipart mínimo
+function parseMultipart(buffer, boundary) {
+    const parts = [];
+    const boundaryBuf = Buffer.from('--' + boundary);
+    let start = 0;
+
+    while (start < buffer.length) {
+        const boundaryIdx = buffer.indexOf(boundaryBuf, start);
+        if (boundaryIdx === -1) break;
+
+        const headerStart = boundaryIdx + boundaryBuf.length + 2;
+        const headerEnd = buffer.indexOf(Buffer.from('\r\n\r\n'), headerStart);
+        if (headerEnd === -1) break;
+
+        const headerStr = buffer.slice(headerStart, headerEnd).toString();
+        const dataStart = headerEnd + 4;
+        const nextBoundary = buffer.indexOf(boundaryBuf, dataStart);
+        const dataEnd = nextBoundary === -1 ? buffer.length : nextBoundary - 2;
+
+        const nameMatch = headerStr.match(/name="([^"]+)"/);
+        const contentTypeMatch = headerStr.match(/Content-Type:\s*([^\r\n]+)/i);
+
+        if (nameMatch) {
+            parts.push({
+                name: nameMatch[1],
+                contentType: contentTypeMatch ? contentTypeMatch[1].trim() : null,
+                data: buffer.slice(dataStart, dataEnd)
+            });
+        }
+
+        start = nextBoundary === -1 ? buffer.length : nextBoundary;
+    }
+
+    return parts;
+}
