@@ -1107,9 +1107,21 @@
 
                 await addDoc(collection(db, 'albumes'), albumData);
 
-        // ══════════════════════════════════════════════════════════
-        // GUARDAR ÁLBUM CON GOOGLE DRIVE
-        // ══════════════════════════════════════════════════════════
+                // ✅ Éxito
+                mostrarToast('✅ Álbum creado correctamente', 'success');
+                cerrarModal();
+                cargarAlbumes();
+
+            } catch (error) {
+                console.error('Error al guardar álbum:', error);
+                mostrarToast('❌ Error: ' + error.message, 'error');
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = 'Crear álbum';
+            }
+        }
+
+        window.guardarAlbum = guardarAlbum;
 
         // ══════════════════════════════════════════════════════════
         // FUNCIONES AUXILIARES
