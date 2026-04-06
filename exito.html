@@ -17,7 +17,7 @@
       appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
     });
     const db = firebase.firestore();
-    const CLOUD = "dwqvqpkbe";
+    const IK_URL = "https://ik.imagekit.io/kraplmd9q";
   </script>
   <style>
     :root {
@@ -63,18 +63,17 @@
 </div>
 
 <script>
-  // ✅ urlHD correcta con fl_attachment para forzar descarga
+  // URL para descarga en alta calidad
   function urlHD(pid, nombre) {
-    const n = encodeURIComponent(nombre || 'rinascere_foto');
-    return `https://res.cloudinary.com/${CLOUD}/image/upload/fl_attachment:${n}/q_100/f_jpg/${pid}`;
+    if (!pid) return '';
+    // Si ya es URL completa (ImageKit o Drive), usarla directamente
+    if (pid.startsWith('http')) return pid;
+    return `${IK_URL}/${pid}?tr=q-100,f-jpg`;
   }
 
   function limpiarId(id) {
     if (!id) return '';
-    if (id.startsWith('http')) {
-      const m = id.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
-      return m ? m[1] : id;
-    }
+    if (id.startsWith('http')) return id; // URL completa, devolver igual
     return id.replace(/\.\w+$/, '');
   }
 
@@ -146,12 +145,12 @@
     const esCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
     const grid = fotos.map((pid, i) => {
-      const limpio = limpiarId(pid);
       const nombre = `rinascere_foto_${i + 1}`;
+      const thumbUrl = pid.startsWith('http') ? pid : `${IK_URL}/${pid}?tr=w-300,q-80`;
       return `
         <div class="descarga-item">
-          <img src="https://res.cloudinary.com/${CLOUD}/image/upload/q_90/f_auto/w_300/${limpio}" alt="Foto ${i+1}" onerror="this.style.background='#eee';this.style.minHeight='80px';"/>
-          <a href="${urlHD(limpio, nombre)}" download="${nombre}.jpg" target="_blank">⬇ Foto ${i+1}</a>
+          <img src="${thumbUrl}" alt="Foto ${i+1}" onerror="this.style.background='#eee';this.style.minHeight='80px';"/>
+          <a href="${urlHD(pid, nombre)}" download="${nombre}.jpg" target="_blank">⬇ Foto ${i+1}</a>
         </div>`;
     }).join('');
 
@@ -163,7 +162,7 @@
 
     // Guardar referencia para descargarTodas()
     window._fotosDescarga = fotos.map((pid, i) => ({
-      url: urlHD(limpiarId(pid), `rinascere_foto_${i+1}`),
+      url: urlHD(pid, `rinascere_foto_${i+1}`),
       nombre: `rinascere_foto_${i+1}.jpg`
     }));
     window._esCelular = esCelular;
