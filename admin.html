@@ -616,7 +616,7 @@
     <!-- ═════════════════════════════════════════════════════════ -->
     <aside class="sidebar">
         <div class="logo">
-            <img src="https://res.cloudinary.com/dw1jw9yey/image/upload/v1736364876/logo_rinascere_qnv9rj.png" alt="Ph. Rinascere">
+            <img src="https://ik.imagekit.io/kraplmd9q/logo_rinascere.png" alt="Ph. Rinascere">
             <h2>PANEL ADMIN</h2>
         </div>
         <nav>
@@ -788,7 +788,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ═════════════════════════════════════════════════════════ -->
-    <!-- FIREBASE + CLOUDINARY                                      -->
+    <!-- FIREBASE + IMAGEKIT                                      -->
     <!-- ═════════════════════════════════════════════════════════ -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -829,10 +829,10 @@
         window.serverTimestamp = serverTimestamp;
 
         // ══════════════════════════════════════════════════════════
-        // CLOUDINARY CONFIG
+        // IMAGEKIT CONFIG
         // ══════════════════════════════════════════════════════════
-        window.CLOUDINARY_CLOUD_NAME = 'dw1jw9yey';
-        window.CLOUDINARY_UPLOAD_PRESET = 'rinascere_preset';
+        
+        window.IMAGEKIT_URL = 'https://ik.imagekit.io/kraplmd9q';
 
         // Cargar álbumes al iniciar
         cargarAlbumes();
@@ -928,15 +928,15 @@
         }
 
         // ══════════════════════════════════════════════════════════
-        // ELIMINAR ÁLBUM (FIREBASE + CLOUDINARY SINCRONIZADO)
+        // ELIMINAR ÁLBUM (FIREBASE + IMAGEKIT)
         // ══════════════════════════════════════════════════════════
         async function eliminarAlbum(id) {
-            if (!confirm('¿Estás segura de eliminar este álbum? Se eliminarán también todas las fotos de Cloudinary.')) return;
+            if (!confirm('¿Estás segura de eliminar este álbum?')) return;
 
             mostrarToast('Eliminando álbum...', 'info');
 
             try {
-                // 1️⃣ Obtener el álbum desde Firebase para sacar los public_ids de Cloudinary
+                // 1️⃣ Obtener el álbum desde Firebase
                 const albumRef = doc(db, 'albumes', id);
                 const albumSnap = await getDoc(albumRef);
 
@@ -944,30 +944,17 @@
                     throw new Error('El álbum no existe en Firebase');
                 }
 
+                // 2️⃣ Si la portada es de ImageKit, eliminarla
                 const albumData = albumSnap.data();
-                const fotos = albumData.fotos || [];
-
-                // 2️⃣ Eliminar fotos de Cloudinary usando la función serverless
-                if (fotos.length > 0) {
-                    mostrarToast(`Eliminando ${fotos.length} fotos de Cloudinary...`, 'info');
-                    
-                    const public_ids = fotos.map(f => f.public_id).filter(Boolean);
-                    
-                    if (public_ids.length > 0) {
-                        const response = await fetch('/api/eliminar-fotos', {
+                if (albumData.portada && albumData.portada.fileId) {
+                    try {
+                        await fetch('/api/eliminar-portada', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ public_ids })
+                            body: JSON.stringify({ fileId: albumData.portada.fileId })
                         });
-
-                        const result = await response.json();
-                        
-                        if (!result.success) {
-                            console.warn('Algunas fotos no se pudieron eliminar:', result);
-                            mostrarToast('⚠️ Algunas fotos no se eliminaron, pero continuamos...', 'info');
-                        } else {
-                            console.log('Todas las fotos eliminadas de Cloudinary:', result);
-                        }
+                    } catch(e) {
+                        console.warn('No se pudo eliminar la portada de ImageKit:', e);
                     }
                 }
 
@@ -1073,20 +1060,22 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // 1️⃣ Subir solo la foto de portada a Cloudinary
-                const formData = new FormData();
-                formData.append('file', fotoPortada);
-                formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
+                // 1️⃣ Subir solo la foto de portada a ImageKit via servidor
+                const formDataPortada = new FormData();
+                formDataPortada.append('file', fotoPortada);
+                formDataPortada.append('fileName', 'portada_' + Date.now() + '.jpg');
+                formDataPortada.append('folder', '/portadas');
 
-                const response = await fetch(
-                    `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`,
-                    { method: 'POST', body: formData }
-                );
+                const response = await fetch('/api/subir-portada', {
+                    method: 'POST',
+                    body: formDataPortada
+                });
 
                 const data = await response.json();
+                if (!data.url) throw new Error(data.error || 'Error subiendo portada');
                 const portada = {
-                    url: data.secure_url,
-                    public_id: data.public_id
+                    url: data.url,
+                    fileId: data.fileId
                 };
 
                 btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
