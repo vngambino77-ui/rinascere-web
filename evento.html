@@ -18,37 +18,36 @@
     });
     const db = firebase.firestore();
 
-    const CLOUD = "dwqvqpkbe";
-    const LOGO  = "y9ukn66j0hvwsauv4efg";   // logo PNG transparente
+    const IK_URL = "https://ik.imagekit.io/kraplmd9q";
 
-    function limpiarId(id) {
-      if (!id) return '';
-      if (id.startsWith('http')) {
-        const m = id.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
-        return m ? m[1] : id;
-      }
-      return id.replace(/\.\w+$/, '');
-    }
-
-    // ✅ PROTEGIDA — logo en mosaico sobre toda la foto (fl_tile = tile automático)
-    // Sintaxis correcta Cloudinary: l_ID,opciones/fl_tile/fl_layer_apply
+    // Devuelve URL lista para mostrar (puede ser IK o URL directa de Drive/externa)
     function urlProtegida(id) {
       if (!id) return '';
-      const pid = limpiarId(id);
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/l_${LOGO},w_1.0,o_35,g_center/fl_layer_apply/${pid}`;
+      // Si ya es una URL completa (de ImageKit o cualquier otra), la usamos directamente
+      if (id.startsWith('http')) {
+        // Si es ImageKit, agregamos marca de agua via transformación de texto
+        if (id.includes('ik.imagekit.io')) {
+          return id + '?tr=w-600,q-80,l-text,i-©%20Rinascere,fs-24,co-FFFFFF,a-center,o-40,l-end';
+        }
+        return id;
+      }
+      // Si es un public_id legacy de Cloudinary, construir URL de IK
+      return `${IK_URL}/${id}?tr=w-600,q-80`;
     }
 
-    // ✅ ALTA CALIDAD sin logo — solo post pago
+    // URL en alta calidad para descarga post-pago
     function urlHD(id, nombre) {
-      const pid = limpiarId(id);
-      const n = encodeURIComponent(nombre || 'rinascere_foto');
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/fl_attachment:${n}/q_100/f_jpg/${pid}`;
+      if (!id) return '';
+      // Si ya es URL completa, devolver directamente para descarga
+      if (id.startsWith('http')) return id;
+      return `${IK_URL}/${id}?tr=q-100,f-jpg`;
     }
 
+    // URL para la portada del hero
     function urlPortada(id) {
       if (!id) return '';
-      const pid = limpiarId(id);
-      return `https://res.cloudinary.com/${CLOUD}/image/upload/w_1200,q_80,f_auto/${pid}`;
+      if (id.startsWith('http')) return id;
+      return `${IK_URL}/${id}?tr=w-1200,q-80,f-auto`;
     }
   </script>
   <style>
@@ -184,7 +183,7 @@
 
 <nav>
   <a href="index.html" class="nav-logo">
-    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo"/>
+    <img src="https://ik.imagekit.io/kraplmd9q/logo_rinascere.png" alt="Logo"/>
   </a>
   <a href="index.html" class="nav-back">← Volver</a>
 </nav>
@@ -544,7 +543,7 @@
       const nombre = `rinascere_foto_${i+1}`;
       return `
         <div class="descarga-item">
-          <img src="https://res.cloudinary.com/${CLOUD}/image/upload/q_90/f_auto/w_800/${limpiarId(pid)}" alt="Foto ${i+1}" onerror="this.style.background='#eee';this.style.minHeight='90px';"/>
+          <img src="${urlProtegida(pid)}" alt="Foto ${i+1}" onerror="this.style.background='#eee';this.style.minHeight='90px';"/>
           <a href="${urlHD(pid,nombre)}" download="${nombre}.jpg" target="_blank">⬇ Descargar</a>
         </div>`;
     }).join('');
