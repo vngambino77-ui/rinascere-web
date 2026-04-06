@@ -750,26 +750,34 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Fotos del álbum</label>
-                    <div class="upload-area" onclick="document.getElementById('input-fotos').click()">
-                        <p>📸 Hacé clic para seleccionar fotos</p>
-                        <small style="color: #999;">Podés seleccionar varias a la vez</small>
-                        <input type="file" id="input-fotos" accept="image/*" multiple>
+                    <label>📸 Foto de portada del álbum</label>
+                    <div class="upload-area" onclick="document.getElementById('input-portada').click()">
+                        <p>Seleccioná 1 foto para la portada</p>
+                        <small style="color: #999;">Esta foto se verá en la lista de álbumes</small>
+                        <input type="file" id="input-portada" accept="image/*" required>
                     </div>
-                    <div class="preview-grid" id="preview-grid"></div>
+                    <div id="preview-portada" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>📂 Link de la carpeta de Google Drive</label>
+                    <input type="url" name="drive_link" required placeholder="https://drive.google.com/drive/folders/...">
+                    <small style="color: #999;">
+                        1. Subí las fotos a una carpeta en Google Drive<br>
+                        2. Hacé clic derecho en la carpeta → Compartir → "Cualquiera con el enlace"<br>
+                        3. Copiá y pegá el link completo acá
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad de fotos en la carpeta</label>
+                    <input type="number" name="cantidad_fotos" value="1" min="1" required placeholder="Ej: 400">
+                    <small style="color: #999;">Para estadísticas del álbum</small>
                 </div>
 
                 <button type="submit" class="btn-submit" id="btn-guardar">
                     Crear álbum
                 </button>
-
-                <!-- Barra de progreso -->
-                <div id="progress-container" style="display: none; margin-top: 1rem;">
-                    <div style="background: #f0f0f0; border-radius: 8px; overflow: hidden; height: 30px; position: relative;">
-                        <div id="progress-bar" style="background: linear-gradient(135deg, #d4af37 0%, #c09c2e 100%); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-                        <div id="progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #2c2c2c; font-weight: 600; font-size: 0.9rem;">0%</div>
-                    </div>
-                </div>
             </form>
         </div>
     </div>
@@ -835,11 +843,6 @@
     <!-- ═════════════════════════════════════════════════════════ -->
     <script>
         // ══════════════════════════════════════════════════════════
-        // VARIABLES GLOBALES
-        // ══════════════════════════════════════════════════════════
-        let fotosSeleccionadas = [];
-
-        // ══════════════════════════════════════════════════════════
         // CARGAR ÁLBUMES DESDE FIREBASE
         // ══════════════════════════════════════════════════════════
         async function cargarAlbumes() {
@@ -854,7 +857,7 @@
                 // Actualizar estadísticas
                 const publicos = albumes.filter(a => a.tipo === 'libre').length;
                 const privados = albumes.filter(a => a.tipo === 'privado').length;
-                const totalFotos = albumes.reduce((sum, a) => sum + (a.fotos?.length || 0), 0);
+                const totalFotos = albumes.reduce((sum, a) => sum + (a.cantidad_fotos || a.fotos?.length || 0), 0);
 
                 document.getElementById('stat-albumes').textContent = albumes.length;
                 document.getElementById('stat-publicos').textContent = publicos;
@@ -875,7 +878,11 @@
                 }
 
                 tbody.innerHTML = albumes.map(album => {
-                    const portada = album.fotos && album.fotos[0] ? album.fotos[0].url : 'https://via.placeholder.com/60';
+                    // Usar la portada si existe, sino placeholder
+                    const portada = album.portada && album.portada.url 
+                        ? album.portada.url 
+                        : (album.fotos && album.fotos[0] ? album.fotos[0].url : 'https://via.placeholder.com/60');
+                    
                     const badge = album.tipo === 'libre' 
                         ? '<span class="badge libre">🔓 Libre</span>' 
                         : '<span class="badge privado">🔒 Privado</span>';
@@ -892,13 +899,16 @@
                         // Para álbumes viejos sin metodo_pago definido
                         metodoPago = album.precio > 0 ? `$${album.precio}` : 'Gratis';
                     }
+
+                    // Cantidad de fotos (de Drive o de fotos viejas de Cloudinary)
+                    const cantidadFotos = album.cantidad_fotos || album.fotos?.length || 0;
                     
                     return `
                         <tr>
                             <td><img src="${portada}" class="album-thumb" alt="${album.nombre}"></td>
                             <td>${album.nombre}</td>
                             <td>${album.fecha || 'Sin fecha'}</td>
-                            <td>${album.fotos?.length || 0}</td>
+                            <td>${cantidadFotos}</td>
                             <td>${metodoPago}</td>
                             <td>${badge}</td>
                             <td class="actions">
@@ -1024,44 +1034,29 @@
         });
 
         // ══════════════════════════════════════════════════════════
-        // SELECCIÓN DE FOTOS
+        // PREVIEW DE FOTO DE PORTADA
         // ══════════════════════════════════════════════════════════
-        document.getElementById('input-fotos').addEventListener('change', function(e) {
-            const archivos = Array.from(e.target.files);
-            fotosSeleccionadas = archivos;
-
-            const previewGrid = document.getElementById('preview-grid');
-            previewGrid.innerHTML = '';
-
-            archivos.forEach((archivo, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <button type="button" class="remove-preview" onclick="removerFoto(${index})">×</button>
-                    `;
-                    previewGrid.appendChild(div);
-                };
-                reader.readAsDataURL(archivo);
-            });
+        let fotoPortada = null;
+        
+        document.getElementById('input-portada').addEventListener('change', function(e) {
+            const archivo = e.target.files[0];
+            if (!archivo) return;
+            
+            fotoPortada = archivo;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-portada').innerHTML = `
+                    <div style="max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                        <img src="${e.target.result}" style="width: 100%; display: block;" alt="Portada">
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(archivo);
         });
 
-        window.removerFoto = function(index) {
-            fotosSeleccionadas.splice(index, 1);
-            document.getElementById('input-fotos').value = '';
-            const dt = new DataTransfer();
-            fotosSeleccionadas.forEach(file => dt.items.add(file));
-            document.getElementById('input-fotos').files = dt.files;
-            
-            // Regenerar preview
-            const event = new Event('change');
-            document.getElementById('input-fotos').dispatchEvent(event);
-        };
-
         // ══════════════════════════════════════════════════════════
-        // GUARDAR ÁLBUM
+        // GUARDAR ÁLBUM CON GOOGLE DRIVE
         // ══════════════════════════════════════════════════════════
         async function guardarAlbum(event) {
             event.preventDefault();
@@ -1069,59 +1064,34 @@
             const form = event.target;
             const btnGuardar = document.getElementById('btn-guardar');
             
+            if (!fotoPortada) {
+                mostrarToast('❌ Seleccioná una foto de portada', 'error');
+                return;
+            }
+            
             btnGuardar.disabled = true;
-            btnGuardar.innerHTML = '<span class="loader"></span> Subiendo...';
+            btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // Mostrar barra de progreso
-                document.getElementById('progress-container').style.display = 'block';
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
+                // 1️⃣ Subir solo la foto de portada a Cloudinary
+                const formData = new FormData();
+                formData.append('file', fotoPortada);
+                formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
 
-                // Subir fotos por lotes para evitar colgar el navegador
-                const LOTE_SIZE = 10; // Subir 10 fotos a la vez
-                const fotosSubidas = [];
-                const totalFotos = fotosSeleccionadas.length;
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    { method: 'POST', body: formData }
+                );
 
-                for (let i = 0; i < totalFotos; i += LOTE_SIZE) {
-                    const lote = fotosSeleccionadas.slice(i, i + LOTE_SIZE);
-                    const fotasEnLote = Math.min(LOTE_SIZE, totalFotos - i);
-                    
-                    const porcentaje = Math.round(((i + fotasEnLote) / totalFotos) * 100);
-                    progressBar.style.width = porcentaje + '%';
-                    progressText.textContent = `${i + fotasEnLote}/${totalFotos} fotos (${porcentaje}%)`;
-                    btnGuardar.innerHTML = `<span class="loader"></span> Subiendo...`;
+                const data = await response.json();
+                const portada = {
+                    url: data.secure_url,
+                    public_id: data.public_id
+                };
 
-                    // Subir este lote en paralelo
-                    const promesasLote = lote.map(async (archivo) => {
-                        const formData = new FormData();
-                        formData.append('file', archivo);
-                        formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
+                btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
 
-                        const response = await fetch(
-                            `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`,
-                            { method: 'POST', body: formData }
-                        );
-
-                        const data = await response.json();
-                        return {
-                            url: data.secure_url,
-                            public_id: data.public_id
-                        };
-                    });
-
-                    // Esperar que este lote termine
-                    const resultadosLote = await Promise.all(promesasLote);
-                    fotosSubidas.push(...resultadosLote);
-
-                    // Pequeña pausa para no saturar
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-                
-                progressText.textContent = 'Guardando álbum...';
-                btnGuardar.innerHTML = '<span class="loader"></span> Guardando álbum...';
-
-                // Guardar en Firebase
+                // 2️⃣ Guardar en Firebase
                 const metodoPago = form.metodo_pago.value;
                 
                 const albumData = {
@@ -1129,17 +1099,17 @@
                     fecha: form.fecha.value,
                     tipo: form.tipo.value,
                     metodo_pago: metodoPago,
-                    fotos: fotosSubidas,
+                    portada: portada,
+                    drive_link: form.drive_link.value,
+                    cantidad_fotos: parseInt(form.cantidad_fotos.value) || 1,
                     createdAt: serverTimestamp()
                 };
 
                 // Agregar precio solo si el método es "precio_fijo"
                 if (metodoPago === 'precio_fijo') {
                     albumData.precio = parseInt(form.precio.value) || 500;
-                } else if (metodoPago === 'gratis') {
+                } else {
                     albumData.precio = 0;
-                } else if (metodoPago === 'cafecito') {
-                    albumData.precio = 0; // No tiene precio fijo
                 }
 
                 if (form.tipo.value === 'privado') {
@@ -1148,23 +1118,9 @@
 
                 await addDoc(collection(db, 'albumes'), albumData);
 
-                mostrarToast('✅ Álbum creado correctamente', 'success');
-                cerrarModal();
-                document.getElementById('progress-container').style.display = 'none';
-                document.getElementById('progress-bar').style.width = '0%';
-                cargarAlbumes();
-
-            } catch (error) {
-                console.error('Error al guardar:', error);
-                mostrarToast('❌ Error al crear el álbum', 'error');
-                document.getElementById('progress-container').style.display = 'none';
-            } finally {
-                btnGuardar.disabled = false;
-                btnGuardar.innerHTML = 'Crear álbum';
-            }
-        }
-
-        window.guardarAlbum = guardarAlbum;
+        // ══════════════════════════════════════════════════════════
+        // GUARDAR ÁLBUM CON GOOGLE DRIVE
+        // ══════════════════════════════════════════════════════════
 
         // ══════════════════════════════════════════════════════════
         // FUNCIONES AUXILIARES
