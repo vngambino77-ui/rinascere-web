@@ -1060,16 +1060,28 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // 1️⃣ Convertir portada a base64 y guardar directo
+                // 1️⃣ Comprimir portada y guardar como base64 pequeño
                 const dataUrl = await new Promise((resolve, reject) => {
+                    const img = new Image();
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
+                    reader.onload = (e) => {
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const maxW = 600;
+                            const ratio = Math.min(maxW / img.width, maxW / img.height, 1);
+                            canvas.width = Math.round(img.width * ratio);
+                            canvas.height = Math.round(img.height * ratio);
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.65));
+                        };
+                        img.onerror = reject;
+                        img.src = e.target.result;
+                    };
                     reader.onerror = reject;
                     reader.readAsDataURL(fotoPortada);
                 });
-                const portada = {
-                    url: dataUrl
-                };
+                const portada = { url: dataUrl };
 
                 btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
 
