@@ -1,6 +1,3 @@
-// api/eliminar-portada.js
-// Elimina la foto de portada de ImageKit al borrar un álbum
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
