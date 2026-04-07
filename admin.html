@@ -750,12 +750,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>📸 URL de la foto de portada</label>
-                    <input type="url" name="portada_url" id="portada-url" required 
-                        placeholder="https://drive.google.com/file/d/.../view">
-                    <small style="color: #999;">
-                        En Google Drive: clic derecho en la foto → Compartir → "Cualquiera con el enlace" → copiá el link
-                    </small>
+                    <label>📸 Foto de portada del álbum</label>
+                    <div class="upload-area" onclick="document.getElementById('input-portada').click()">
+                        <p>Seleccioná 1 foto para la portada</p>
+                        <small style="color: #999;">Esta foto se verá en la lista de álbumes</small>
+                        <input type="file" id="input-portada" accept="image/*" required>
+                    </div>
                     <div id="preview-portada" style="margin-top: 1rem;"></div>
                 </div>
 
@@ -827,6 +827,12 @@
         window.doc = doc;
         window.getDoc = getDoc;
         window.serverTimestamp = serverTimestamp;
+
+        // ══════════════════════════════════════════════════════════
+        // IMAGEKIT CONFIG
+        // ══════════════════════════════════════════════════════════
+        
+        window.IMAGEKIT_URL = 'https://ik.imagekit.io/kraplmd9q';
 
         // Cargar álbumes al iniciar
         cargarAlbumes();
@@ -938,7 +944,21 @@
                     throw new Error('El álbum no existe en Firebase');
                 }
 
-                // 2️⃣ Eliminar el documento de Firebase
+                // 2️⃣ Si la portada es de ImageKit, eliminarla
+                const albumData = albumSnap.data();
+                if (albumData.portada && albumData.portada.fileId) {
+                    try {
+                        await fetch('/api/eliminar-portada', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ fileId: albumData.portada.fileId })
+                        });
+                    } catch(e) {
+                        console.warn('No se pudo eliminar la portada de ImageKit:', e);
+                    }
+                }
+
+                // 3️⃣ Eliminar el documento de Firebase
                 mostrarToast('Eliminando álbum de Firebase...', 'info');
                 await deleteDoc(albumRef);
 
@@ -1001,28 +1021,25 @@
         });
 
         // ══════════════════════════════════════════════════════════
-        // PREVIEW DE FOTO DE PORTADA (URL de Drive)
+        // PREVIEW DE FOTO DE PORTADA
         // ══════════════════════════════════════════════════════════
-        function convertirUrlDrive(url) {
-            if (!url) return '';
-            // Convertir link de Drive a URL directa de imagen
-            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) {
-                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
-            }
-            return url;
-        }
-
-        document.getElementById('portada-url').addEventListener('input', function() {
-            const url = this.value.trim();
-            if (!url) { document.getElementById('preview-portada').innerHTML = ''; return; }
-            const imgUrl = convertirUrlDrive(url);
-            document.getElementById('preview-portada').innerHTML = `
-                <div style="max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                    <img src="${imgUrl}" style="width: 100%; display: block;" alt="Portada"
-                        onerror="this.parentElement.innerHTML='<p style=color:#c9302c;font-size:0.85rem>No se pudo cargar la imagen. Verificá el link.</p>'">
-                </div>
-            `;
+        let fotoPortada = null;
+        
+        document.getElementById('input-portada').addEventListener('change', function(e) {
+            const archivo = e.target.files[0];
+            if (!archivo) return;
+            
+            fotoPortada = archivo;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-portada').innerHTML = `
+                    <div style="max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                        <img src="${e.target.result}" style="width: 100%; display: block;" alt="Portada">
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(archivo);
         });
 
         // ══════════════════════════════════════════════════════════
@@ -1034,16 +1051,24 @@
             const form = event.target;
             const btnGuardar = document.getElementById('btn-guardar');
             
+            if (!fotoPortada) {
+                mostrarToast('❌ Seleccioná una foto de portada', 'error');
+                return;
+            }
+            
             btnGuardar.disabled = true;
-            btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
+            btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // 1️⃣ Obtener URL de portada desde Drive
-                const portadaUrlRaw = form.portada_url.value.trim();
-                if (!portadaUrlRaw) throw new Error('Ingresá la URL de la portada');
+                // 1️⃣ Convertir portada a base64 y guardar directo
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(fotoPortada);
+                });
                 const portada = {
-                    url: convertirUrlDrive(portadaUrlRaw),
-                    urlOriginal: portadaUrlRaw
+                    url: dataUrl
                 };
 
                 btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
