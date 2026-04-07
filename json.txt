@@ -1,8 +1,1 @@
-{
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
-  ],
-  "env": {
-    "MP_ACCESS_TOKEN": "@mp_access_token"
-  }
-}
+
