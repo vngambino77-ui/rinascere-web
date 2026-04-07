@@ -802,6 +802,13 @@
             getDoc,
             serverTimestamp 
         } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import {
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
         // ══════════════════════════════════════════════════════════
         // CONFIGURACIÓN FIREBASE
@@ -818,8 +825,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Exportar db globalmente
+        // Exportar globalmente
+        const storage = getStorage(app);
         window.db = db;
+        window.storage = storage;
+        window.storageRef = ref;
+        window.uploadBytes = uploadBytes;
+        window.getDownloadURL = getDownloadURL;
+        window.deleteObject = deleteObject;
         window.collection = collection;
         window.getDocs = getDocs;
         window.addDoc = addDoc;
@@ -827,12 +840,6 @@
         window.doc = doc;
         window.getDoc = getDoc;
         window.serverTimestamp = serverTimestamp;
-
-        // ══════════════════════════════════════════════════════════
-        // IMAGEKIT CONFIG
-        // ══════════════════════════════════════════════════════════
-        
-        window.IMAGEKIT_URL = 'https://ik.imagekit.io/kraplmd9q';
 
         // Cargar álbumes al iniciar
         cargarAlbumes();
@@ -944,17 +951,14 @@
                     throw new Error('El álbum no existe en Firebase');
                 }
 
-                // 2️⃣ Si la portada es de ImageKit, eliminarla
+                // 2️⃣ Si la portada tiene path de Storage, eliminarla
                 const albumData = albumSnap.data();
-                if (albumData.portada && albumData.portada.fileId) {
+                if (albumData.portada && albumData.portada.path) {
                     try {
-                        await fetch('/api/eliminar-portada', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ fileId: albumData.portada.fileId })
-                        });
+                        const portadaRef = storageRef(storage, albumData.portada.path);
+                        await deleteObject(portadaRef);
                     } catch(e) {
-                        console.warn('No se pudo eliminar la portada de ImageKit:', e);
+                        console.warn('No se pudo eliminar la portada de Storage:', e);
                     }
                 }
 
@@ -1060,29 +1064,14 @@
             btnGuardar.innerHTML = '<span class="loader"></span> Subiendo portada...';
 
             try {
-                // 1️⃣ Convertir portada a base64 y subir a ImageKit
-                const base64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(fotoPortada);
-                });
-
-                const response = await fetch('/api/subir-portada', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fileBase64: base64,
-                        fileName: 'portada_' + Date.now() + '.jpg',
-                        mimeType: fotoPortada.type || 'image/jpeg'
-                    })
-                });
-
-                const data = await response.json();
-                if (!data.url) throw new Error(data.error || 'Error subiendo portada');
+                // 1️⃣ Subir portada a Firebase Storage
+                const nombreArchivo = 'portadas/' + Date.now() + '_' + fotoPortada.name;
+                const storageReference = storageRef(storage, nombreArchivo);
+                const snapshot = await uploadBytes(storageReference, fotoPortada);
+                const urlPortada = await getDownloadURL(snapshot.ref);
                 const portada = {
-                    url: data.url,
-                    fileId: data.fileId
+                    url: urlPortada,
+                    path: nombreArchivo
                 };
 
                 btnGuardar.innerHTML = '<span class="loader"></span> Creando álbum...';
