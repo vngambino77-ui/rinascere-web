@@ -1,0 +1,48 @@
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método no permitido' });
+    }
+
+    try {
+        const { fileBase64, fileName, mimeType } = req.body;
+        const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
+
+        if (!privateKey) {
+            return res.status(500).json({ error: 'Falta IMAGEKIT_PRIVATE_KEY' });
+        }
+        if (!fileBase64) {
+            return res.status(400).json({ error: 'Falta fileBase64' });
+        }
+
+        const auth = Buffer.from(`${privateKey}:`).toString('base64');
+
+        const body = new URLSearchParams();
+        body.append('file', `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`);
+        body.append('fileName', fileName || `portada_${Date.now()}.jpg`);
+        body.append('folder', '/portadas');
+        body.append('useUniqueFileName', 'true');
+
+        const ikRes = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body.toString()
+        });
+
+        const data = await ikRes.json();
+
+        if (!ikRes.ok) {
+            return res.status(500).json({ error: data.message || 'Error ImageKit' });
+        }
+
+        return res.status(200).json({
+            url: data.url,
+            fileId: data.fileId
+        });
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+}
