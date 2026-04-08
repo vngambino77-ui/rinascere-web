@@ -215,7 +215,7 @@
 
         <div class="section-title">
             Mis <span style="color: #d4af37;">álbumes</span>
-            <button class="btn-nuevo" onclick="nuevoAlbum()">+ Nuevo álbum</button>
+            <a href="subir.html" class="btn-nuevo">+ Nuevo álbum</a>
         </div>
 
         <table>
@@ -252,7 +252,7 @@
             orderBy 
         } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        // Configuración Firebase
+        // ✅ Configuración Firebase UNIFICADA
         const firebaseConfig = {
             apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
             authDomain: "rinascere-fotos.firebaseapp.com",
@@ -308,7 +308,7 @@
         async function cargarAlbumes() {
             try {
                 const albumesRef = collection(db, 'albumes');
-                const q = query(albumesRef, orderBy('fecha', 'desc'));
+                const q = query(albumesRef, orderBy('createdAt', 'desc'));
                 const snapshot = await getDocs(q);
 
                 const tbody = document.getElementById('albumesTableBody');
@@ -375,14 +375,14 @@
             }
         }
 
-        // Función para ver álbum
+        // ✅ CORRECCIÓN: Función para ver álbum (ahora apunta a ver-album.html)
         window.verAlbum = function(albumId) {
             window.location.href = `ver-album.html?id=${albumId}`;
         };
 
         // Función para generar código QR
         window.generarQR = function(albumId) {
-            const url = `${window.location.origin}/evento.html?album=${albumId}`;
+            const url = `${window.location.origin}/evento.html?id=${albumId}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
             
             const ventana = window.open('', 'QR Code', 'width=400,height=450');
@@ -474,11 +474,6 @@
                 console.error('Error:', error);
                 alert('Error al eliminar el álbum');
             }
-        };
-
-        // Función para crear nuevo álbum
-        window.nuevoAlbum = function() {
-            window.location.href = 'subir.html';
         };
 
         // Función de cerrar sesión
