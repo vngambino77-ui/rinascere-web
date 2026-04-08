@@ -8,46 +8,37 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
+    // ✅ FIREBASE CORREGIDO - UNIFICADO CON ADMIN
     firebase.initializeApp({
-      apiKey: "AIzaSyA-OR-akYl4oyedREi6HH59MZrsXD4ULYg",
-      authDomain: "rinascere-fotografias.firebaseapp.com",
-      projectId: "rinascere-fotografias",
-      storageBucket: "rinascere-fotografias.firebasestorage.app",
-      messagingSenderId: "234239060454",
-      appId: "1:234239060454:web:99f35e14e47f0bcdbf8e27"
+      apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
+      authDomain: "rinascere-fotos.firebaseapp.com",
+      projectId: "rinascere-fotos",
+      storageBucket: "rinascere-fotos.firebasestorage.app",
+      messagingSenderId: "844732353699",
+      appId: "1:844732353699:web:7654d5fc2b85754a123456"
     });
     const db = firebase.firestore();
 
-    const IK_URL = "https://ik.imagekit.io/kraplmd9q";
-
-    // Devuelve URL lista para mostrar (puede ser IK o URL directa de Drive/externa)
-    function urlProtegida(id) {
-      if (!id) return '';
-      // Si ya es una URL completa (de ImageKit o cualquier otra), la usamos directamente
-      if (id.startsWith('http')) {
-        // Si es ImageKit, agregamos marca de agua via transformación de texto
-        if (id.includes('ik.imagekit.io')) {
-          return id + '?tr=w-600,q-80,l-text,i-©%20Rinascere,fs-24,co-FFFFFF,a-center,o-40,l-end';
-        }
-        return id;
-      }
-      // Si es un public_id legacy de Cloudinary, construir URL de IK
-      return `${IK_URL}/${id}?tr=w-600,q-80`;
+    // ✅ SISTEMA DE IMÁGENES SIMPLIFICADO - SOLO CLOUDINARY
+    const CLOUD_NAME = "dwqvqpkbe";
+    
+    // URL para mostrar fotos con marca de agua
+    function urlProtegida(url) {
+      if (!url) return '';
+      // Si ya es una URL completa de Cloudinary, la usamos directamente
+      return url;
     }
 
     // URL en alta calidad para descarga post-pago
-    function urlHD(id, nombre) {
-      if (!id) return '';
-      // Si ya es URL completa, devolver directamente para descarga
-      if (id.startsWith('http')) return id;
-      return `${IK_URL}/${id}?tr=q-100,f-jpg`;
+    function urlHD(url, nombre) {
+      if (!url) return '';
+      return url;
     }
 
     // URL para la portada del hero
-    function urlPortada(id) {
-      if (!id) return '';
-      if (id.startsWith('http')) return id;
-      return `${IK_URL}/${id}?tr=w-1200,q-80,f-auto`;
+    function urlPortada(url) {
+      if (!url) return '';
+      return url;
     }
   </script>
   <style>
