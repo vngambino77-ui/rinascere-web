@@ -26,9 +26,9 @@ export default async function handler(req, res) {
       })),
 
       back_urls: {
-        success: "https://tuweb.com/gracias.html",
-        failure: "https://tuweb.com/error.html",
-        pending: "https://tuweb.com/pendiente.html"
+        success: "https://rinascere-web.vercel.app/gracias.html",
+        failure: "https://rinascere-web.vercel.app/error.html",
+        pending: "https://rinascere-web.vercel.app/pendiente.html"
       },
 
       auto_return: "approved"
