@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descarga de Fotos</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #1a1a1a;
+  color: white;
+  text-align: center;
+  padding: 40px;
+}
+
+button {
+  padding: 15px;
+  background: gold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>✅ Pago aprobado</h1>
+<p>Gracias por tu compra</p>
+
+<button onclick="descargar()">📥 Descargar fotos</button>
+
+<script>
+function descargar() {
+
+  const fotos = JSON.parse(localStorage.getItem("fotosCompradas") || "[]");
+
+  if (fotos.length === 0) {
+    alert("No hay fotos");
+    return;
+  }
+
+  fotos.forEach((url, i) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "foto_" + i + ".jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+}
+</script>
+
+</body>
+</html>
