@@ -8,7 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
-    // ✅ FIREBASE CORREGIDO - UNIFICADO CON ADMIN
+    // ✅ FIREBASE UNIFICADO — CORREGIDO
     firebase.initializeApp({
       apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
       authDomain: "rinascere-fotos.firebaseapp.com",
@@ -20,8 +20,8 @@
     const db = firebase.firestore();
     const CLOUD = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
-    const LOGO_ID = "rinascere";
-  </script>
+    // ✅ ID correcto del logo sin espacios
+    const LOGO_ID = "rinascere";  </script>
   <style>
     :root {
       --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
