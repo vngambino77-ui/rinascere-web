@@ -308,7 +308,7 @@
         async function cargarAlbumes() {
             try {
                 const albumesRef = collection(db, 'albumes');
-                const q = query(albumesRef, orderBy('createdAt', 'desc'));
+                const q = query(albumesRef, orderBy('fecha', 'desc'));
                 const snapshot = await getDocs(q);
 
                 const tbody = document.getElementById('albumesTableBody');
@@ -375,7 +375,7 @@
             }
         }
 
-        // ✅ CORRECCIÓN: Función para ver álbum (ahora apunta a ver-album.html)
+        // ✅ FUNCIÓN CORREGIDA: Ver álbum en ver-album.html
         window.verAlbum = function(albumId) {
             window.location.href = `ver-album.html?id=${albumId}`;
         };
