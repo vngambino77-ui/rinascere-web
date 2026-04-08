@@ -1,6 +1,3 @@
-// ✅ api/verificar-pago.js
-// Verifica el estado de un pago en Mercado Pago
-
 import { MercadoPagoConfig, Payment } from "mercadopago";
 
 const client = new MercadoPagoConfig({
