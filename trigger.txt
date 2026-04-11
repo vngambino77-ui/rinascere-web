@@ -1,0 +1,4 @@
+# Trigger para redeploy en Vercel
+# Este archivo fuerza un nuevo deployment cuando se hace push a GitHub
+# Fecha: 2026-04-11
+# Sistema: Ph. Rinascere - Google Drive + 3 métodos de pago implementados
