@@ -135,9 +135,8 @@ async function cargarAlbumes() {
     }
 }
 
-// Función para ver álbum (CORREGIDA)
+// ✅ CORREGIDO: Redirige a ver-album.html
 window.verAlbum = function(albumId) {
-    // Redirigir a la página de visualización del álbum
     window.location.href = `ver-album.html?id=${albumId}`;
 };
 
@@ -146,7 +145,6 @@ window.generarQR = function(albumId) {
     const url = `${window.location.origin}/evento.html?album=${albumId}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
     
-    // Mostrar QR en modal o nueva ventana
     const ventana = window.open('', 'QR Code', 'width=400,height=450');
     ventana.document.write(`
         <html>
@@ -241,7 +239,7 @@ window.eliminarAlbum = async function(albumId) {
     }
 };
 
-// Función para crear nuevo álbum (botón "+ Nuevo álbum")
+// Función para crear nuevo álbum
 window.nuevoAlbum = function() {
     window.location.href = 'subir.html';
 };
