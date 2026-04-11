@@ -1,3 +1,6 @@
+// api/eliminar-fotos.js
+// Elimina fotos de Cloudinary
+
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
