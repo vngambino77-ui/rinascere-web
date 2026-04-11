@@ -1,38 +1,5 @@
-# Dependencias
 node_modules/
-package-lock.json
-
-# Variables de entorno
 .env
-.env.local
-.env.production
-
-# Archivos de sistema
 .DS_Store
-Thumbs.db
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Archivos temporales
 *.log
-*.tmp
-.cache/
-
-# Vercel
 .vercel
-
-# Archivos innecesarios (limpieza)
-Nombre_de_la_nube.txt
-cliente[nombre]page.js
-Galeria.js
-descargapage.js
-driveroute.js
-imagenesroute.js
-crearPago.html
-crearPago.js
-subir-portada.js
-eliminar-portada.js
