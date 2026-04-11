@@ -1,4 +1,3 @@
-// api/crear-preferencia.js
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
@@ -34,9 +33,9 @@ export default async function handler(req, res) {
                 unit_price: Number(precioFinal)
             }],
             back_urls: {
-                success: `https://rinascere-web-3cvf.vercel.app/exito.html?album=${albumId}`,
-                failure: `https://rinascere-web-3cvf.vercel.app/evento.html?album=${albumId}`,
-                pending: `https://rinascere-web-3cvf.vercel.app/evento.html?album=${albumId}`
+                success: `https://vngambino77-ui-rinascere-web.vercel.app/exito.html?album=${albumId}`,
+                failure: `https://vngambino77-ui-rinascere-web.vercel.app/evento.html?album=${albumId}`,
+                pending: `https://vngambino77-ui-rinascere-web.vercel.app/evento.html?album=${albumId}`
             },
             auto_return: 'approved',
             external_reference: albumId
