@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - Ph. Rinascere</title>
+    <title>Admin - Ph. Rinascere</title>
     <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    
     <style>
         * {
             margin: 0;
@@ -27,6 +28,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
@@ -38,24 +42,46 @@
             color: #d4af37;
         }
 
-        .btn-cerrar {
-            background: #dc2626;
-            color: white;
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
         }
 
-        .btn-cerrar:hover {
-            background: #b91c1c;
+        .btn-primary {
+            background: #d4af37;
+            color: #1a1a1a;
+        }
+
+        .btn-primary:hover {
+            background: #f0c14b;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
         }
 
         .container {
             max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 20px;
+            margin: 40px auto;
+            padding: 0 20px;
         }
 
         .stats {
@@ -69,102 +95,92 @@
             background: rgba(255,255,255,0.05);
             padding: 30px;
             border-radius: 10px;
-            border: 2px solid #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.3);
             text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            color: #d4af37;
+            font-weight: bold;
+            margin: 10px 0;
         }
 
         .stat-label {
             color: #999;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 2.5em;
-            color: #d4af37;
-            font-weight: bold;
+            font-size: 1.1em;
         }
 
         .section-title {
-            font-size: 1.5em;
+            font-size: 1.8em;
             color: #d4af37;
-            margin: 40px 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
         }
 
-        .btn-nuevo {
-            background: #d4af37;
-            color: #1a1a1a;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .btn-nuevo:hover {
-            background: #f0c14b;
+        .table-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
         table {
             width: 100%;
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            overflow: hidden;
             border-collapse: collapse;
         }
 
-        thead {
-            background: rgba(212, 175, 55, 0.2);
-        }
-
         th {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
             padding: 15px;
             text-align: left;
-            color: #d4af37;
             font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.85em;
         }
 
         td {
             padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         tr:hover {
             background: rgba(255,255,255,0.05);
         }
 
-        button {
-            margin: 0 5px;
+        .btn-ver, .btn-qr, .btn-cobro, .btn-eliminar {
             padding: 8px 15px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 0.9em;
+            margin-right: 5px;
+            transition: all 0.3s ease;
         }
 
         .btn-ver {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-ver:hover {
-            background: #2563eb;
-        }
-
-        .btn-qr {
             background: #10b981;
             color: white;
         }
 
-        .btn-qr:hover {
+        .btn-ver:hover {
             background: #059669;
+        }
+
+        .btn-qr {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-qr:hover {
+            background: #2563eb;
         }
 
         .btn-cobro {
@@ -184,305 +200,82 @@
         .btn-eliminar:hover {
             background: #b91c1c;
         }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.3em;
+            color: #d4af37;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
         <h1>Panel de Administración</h1>
-        <button class="btn-cerrar" onclick="cerrarSesion()">Cerrar Sesión</button>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="nuevoAlbum()">+ Nuevo Álbum</button>
+            <a href="index.html" class="btn btn-secondary">← Volver al sitio</a>
+            <button class="btn btn-secondary" onclick="cerrarSesion()">Salir</button>
+        </div>
     </div>
 
     <div class="container">
+        <!-- Estadísticas -->
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">Álbumes</div>
-                <div class="stat-value" id="totalAlbumes">0</div>
+                <div class="stat-label">Total de Álbumes</div>
+                <div class="stat-number" id="totalAlbumes">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Públicos</div>
-                <div class="stat-value" id="totalPublicos">0</div>
+                <div class="stat-label">Álbumes Públicos</div>
+                <div class="stat-number" id="totalPublicos">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Privados</div>
-                <div class="stat-value" id="totalPrivados">0</div>
+                <div class="stat-label">Álbumes Privados</div>
+                <div class="stat-number" id="totalPrivados">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Fotos Totales</div>
-                <div class="stat-value" id="totalFotos">0</div>
+                <div class="stat-label">Total de Fotos</div>
+                <div class="stat-number" id="totalFotos">0</div>
             </div>
         </div>
 
-        <div class="section-title">
-            Mis <span style="color: #d4af37;">álbumes</span>
-            <a href="subir.html" class="btn-nuevo">+ Nuevo álbum</a>
+        <!-- Lista de álbumes -->
+        <h2 class="section-title">Álbumes</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Portada</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Fotos</th>
+                        <th>Método</th>
+                        <th>Cobro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="albumesTableBody">
+                    <tr>
+                        <td colspan="7" class="loading">Cargando álbumes</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Portada</th>
-                    <th>Nombre</th>
-                    <th>Fecha</th>
-                    <th>Fotos</th>
-                    <th>Método</th>
-                    <th>Cobro</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="albumesTableBody">
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px;">Cargando álbumes...</td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs, 
-            doc, 
-            getDoc,
-            updateDoc,
-            deleteDoc,
-            query, 
-            orderBy 
-        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-
-        // ✅ Configuración Firebase UNIFICADA
-        const firebaseConfig = {
-            apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
-            authDomain: "rinascere-fotos.firebaseapp.com",
-            projectId: "rinascere-fotos",
-            storageBucket: "rinascere-fotos.firebasestorage.app",
-            messagingSenderId: "844732353699",
-            appId: "1:844732353699:web:7654d5fc2b85754a123456"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Cargar estadísticas y álbumes al iniciar
-        document.addEventListener('DOMContentLoaded', async () => {
-            await cargarEstadisticas();
-            await cargarAlbumes();
-        });
-
-        // Función para cargar estadísticas
-        async function cargarEstadisticas() {
-            try {
-                const albumesSnapshot = await getDocs(collection(db, 'albumes'));
-                
-                let totalPublicos = 0;
-                let totalPrivados = 0;
-                let totalFotos = 0;
-
-                for (const albumDoc of albumesSnapshot.docs) {
-                    const albumData = albumDoc.data();
-                    const fotosSnapshot = await getDocs(collection(db, 'albumes', albumDoc.id, 'fotos'));
-                    const numFotos = fotosSnapshot.size;
-                    
-                    totalFotos += numFotos;
-                    
-                    if (albumData.esPublico) {
-                        totalPublicos++;
-                    } else {
-                        totalPrivados++;
-                    }
-                }
-
-                document.getElementById('totalAlbumes').textContent = albumesSnapshot.size;
-                document.getElementById('totalPublicos').textContent = totalPublicos;
-                document.getElementById('totalPrivados').textContent = totalPrivados;
-                document.getElementById('totalFotos').textContent = totalFotos;
-
-            } catch (error) {
-                console.error('Error al cargar estadísticas:', error);
-            }
-        }
-
-        // Función para cargar lista de álbumes
-        async function cargarAlbumes() {
-            try {
-                const albumesRef = collection(db, 'albumes');
-                const q = query(albumesRef, orderBy('fecha', 'desc'));
-                const snapshot = await getDocs(q);
-
-                const tbody = document.getElementById('albumesTableBody');
-                tbody.innerHTML = '';
-
-                if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No hay álbumes creados aún</td></tr>';
-                    return;
-                }
-
-                for (const albumDoc of snapshot.docs) {
-                    const album = albumDoc.data();
-                    const albumId = albumDoc.id;
-
-                    // Contar fotos del álbum
-                    const fotosSnapshot = await getDocs(collection(db, 'albumes', albumId, 'fotos'));
-                    const numFotos = fotosSnapshot.size;
-
-                    // Obtener URL de portada (primera foto)
-                    let portadaUrl = '';
-                    if (!fotosSnapshot.empty) {
-                        portadaUrl = fotosSnapshot.docs[0].data().url;
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>
-                            ${portadaUrl ? `<img src="${portadaUrl}" alt="Portada" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">` : '<div style="width: 60px; height: 60px; background: #333; border-radius: 5px;"></div>'}
-                        </td>
-                        <td>${album.nombre || 'Sin nombre'}</td>
-                        <td>${album.fecha || 'Sin fecha'}</td>
-                        <td>${numFotos}</td>
-                        <td>
-                            <span style="background: ${album.metodo === 'cafecito' ? '#7c3aed' : '#10b981'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
-                                ${album.metodo === 'cafecito' ? '● Cafecito' : '✓ Libre'}
-                            </span>
-                        </td>
-                        <td>
-                            ${album.cobro === 'cobrado' 
-                                ? '<span style="color: #10b981;">✓ Cobrado</span>' 
-                                : '<span style="color: #f59e0b;">⏳ Pendiente</span>'}
-                        </td>
-                        <td>
-                            <button class="btn-ver" onclick="verAlbum('${albumId}')" title="Ver álbum">
-                                👁️ Ver
-                            </button>
-                            <button class="btn-qr" onclick="generarQR('${albumId}')" title="Generar código QR">
-                                📱 QR
-                            </button>
-                            <button class="btn-cobro" onclick="marcarCobro('${albumId}')" title="Marcar como cobrado">
-                                💰 Cobro
-                            </button>
-                            <button class="btn-eliminar" onclick="eliminarAlbum('${albumId}')" title="Eliminar álbum">
-                                🗑️
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                }
-
-            } catch (error) {
-                console.error('Error al cargar álbumes:', error);
-                alert('Error al cargar los álbumes. Revisa la consola para más detalles.');
-            }
-        }
-
-        // ✅ FUNCIÓN CORREGIDA: Ver álbum en ver-album.html
-        window.verAlbum = function(albumId) {
-            window.location.href = `ver-album.html?id=${albumId}`;
-        };
-
-        // Función para generar código QR
-        window.generarQR = function(albumId) {
-            const url = `${window.location.origin}/evento.html?id=${albumId}`;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-            
-            const ventana = window.open('', 'QR Code', 'width=400,height=450');
-            ventana.document.write(`
-                <html>
-                <head>
-                    <title>Código QR - Álbum</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            text-align: center;
-                            padding: 20px;
-                            background: #1a1a1a;
-                            color: #fff;
-                        }
-                        img {
-                            margin: 20px 0;
-                            border: 3px solid #d4af37;
-                            border-radius: 10px;
-                        }
-                        .url {
-                            background: #2d2d2d;
-                            padding: 10px;
-                            border-radius: 5px;
-                            word-break: break-all;
-                            margin: 20px 0;
-                        }
-                        button {
-                            background: #d4af37;
-                            color: #1a1a1a;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            margin: 5px;
-                        }
-                        button:hover {
-                            background: #f0c14b;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h2>Código QR del Álbum</h2>
-                    <img src="${qrUrl}" alt="QR Code">
-                    <div class="url">${url}</div>
-                    <button onclick="window.print()">🖨️ Imprimir</button>
-                    <button onclick="window.close()">✕ Cerrar</button>
-                </body>
-                </html>
-            `);
-        };
-
-        // Función para marcar como cobrado
-        window.marcarCobro = async function(albumId) {
-            if (!confirm('¿Marcar este álbum como cobrado?')) return;
-            
-            try {
-                await updateDoc(doc(db, 'albumes', albumId), {
-                    cobro: 'cobrado',
-                    fechaCobro: new Date().toISOString()
-                });
-                alert('✓ Álbum marcado como cobrado');
-                await cargarAlbumes();
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al actualizar el estado de cobro');
-            }
-        };
-
-        // Función para eliminar álbum
-        window.eliminarAlbum = async function(albumId) {
-            if (!confirm('⚠️ ¿Estás segura de eliminar este álbum? Esta acción no se puede deshacer.')) return;
-            
-            try {
-                // Primero eliminar todas las fotos del álbum
-                const fotosSnapshot = await getDocs(collection(db, 'albumes', albumId, 'fotos'));
-                for (const fotoDoc of fotosSnapshot.docs) {
-                    await deleteDoc(doc(db, 'albumes', albumId, 'fotos', fotoDoc.id));
-                }
-                
-                // Luego eliminar el álbum
-                await deleteDoc(doc(db, 'albumes', albumId));
-                
-                alert('✓ Álbum eliminado correctamente');
-                await cargarEstadisticas();
-                await cargarAlbumes();
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al eliminar el álbum');
-            }
-        };
-
-        // Función de cerrar sesión
-        window.cerrarSesion = function() {
-            if (confirm('¿Segura que querés cerrar sesión?')) {
-                localStorage.removeItem('adminLoggedIn');
-                window.location.href = 'login.html';
-            }
-        };
-    </script>
+    <script type="module" src="js/admin.js"></script>
 </body>
 </html>
