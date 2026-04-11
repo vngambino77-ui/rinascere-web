@@ -1,822 +1,273 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ph. Rinascere Fotografías — by Verónica Gambino</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    // ✅ FIREBASE UNIFICADO — CORREGIDO
-    firebase.initializeApp({
-      apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
-      authDomain: "rinascere-fotos.firebaseapp.com",
-      projectId: "rinascere-fotos",
-      storageBucket: "rinascere-fotos.firebasestorage.app",
-      messagingSenderId: "844732353699",
-      appId: "1:844732353699:web:7654d5fc2b85754a123456"
-    });
-    const db = firebase.firestore();
-    const CLOUD = "dwqvqpkbe";
-    const UPLOAD_PRESET = "rinascere_upload";
-    // ✅ ID correcto del logo sin espacios
-    const LOGO_ID = "rinascere";  </script>
-  <style>
-    :root {
-      --dorado:#C9A84C; --dorado-claro:#E8C97A; --dorado-oscuro:#A07830;
-      --blanco:#fff; --crema:#FAF8F4; --gris-claro:#F5F5F0; --gris:#888; --negro:#1A1A1A;
-      --fuente-t:'Playfair Display',serif; --fuente-c:'Inter',sans-serif;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body { font-family:var(--fuente-c); background:var(--blanco); color:var(--negro); user-select:none; }
-    img { pointer-events:none; -webkit-user-drag:none; }
-
-    /* NAV */
-    nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(255,255,255,0.97); backdrop-filter:blur(10px); border-bottom:1px solid #eee; padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
-    .nav-logo { display:flex; align-items:center; text-decoration:none; }
-    .nav-logo img { height:42px; mix-blend-mode:multiply; }
-    .nav-links { display:flex; gap:22px; align-items:center; }
-    .nav-links a { text-decoration:none; color:var(--negro); font-size:0.84rem; transition:color 0.2s; }
-    .nav-links a:hover { color:var(--dorado); }
-    .nav-wa { background:linear-gradient(135deg,#25D366,#128C7E); color:#fff!important; padding:7px 16px; border-radius:50px; font-weight:600!important; }
-    .nav-admin { background:var(--negro); color:#fff!important; padding:7px 14px; border-radius:50px; font-weight:600!important; font-size:0.78rem!important; }
-    .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:4px; }
-    .hamburger span { width:24px; height:2px; background:var(--negro); border-radius:2px; display:block; }
-
-    /* HERO */
-    .hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:100px 32px 60px; background:var(--crema); position:relative; overflow:hidden; }
-    .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.1) 0%,transparent 70%); }
-    .hero-con { position:relative; z-index:2; max-width:700px; }
-    .hero-logo { width:260px; height:auto; margin:0 auto 8px; mix-blend-mode:multiply; animation:fadeDown 0.8s ease both; }
-    @keyframes fadeDown { from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);} }
-    .hero-nombre { font-family:var(--fuente-t); font-size:clamp(1.6rem,4vw,2.4rem); font-weight:700; letter-spacing:1px; animation:fadeUp 0.9s ease 0.2s both; }
-    .hero-sub { font-size:0.76rem; color:var(--dorado-oscuro); letter-spacing:3px; text-transform:uppercase; font-weight:600; margin-bottom:8px; animation:fadeUp 0.9s ease 0.3s both; }
-    .sep { width:60px; height:2px; background:linear-gradient(90deg,var(--dorado),var(--dorado-claro)); margin:14px auto; border-radius:2px; animation:fadeUp 0.9s ease 0.35s both; }
-    .hero-bienvenida { font-family:var(--fuente-t); font-style:italic; font-size:clamp(1rem,2.5vw,1.25rem); color:#444; line-height:1.8; margin:0 auto 10px; animation:fadeUp 0.9s ease 0.4s both; }
-    .hero-bienvenida span { color:var(--dorado); }
-    .hero-tagline { font-size:0.87rem; color:var(--gris); margin-bottom:36px; line-height:1.7; animation:fadeUp 0.9s ease 0.45s both; }
-    .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; animation:fadeUp 0.9s ease 0.5s both; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
-
-    /* BOTONES */
-    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:50px; border:none; font-family:var(--fuente-c); font-size:0.87rem; font-weight:600; cursor:pointer; transition:all 0.25s; text-decoration:none; }
-    .btn-dorado { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; box-shadow:0 4px 18px rgba(201,168,76,0.35); }
-    .btn-dorado:hover { transform:translateY(-2px); }
-    .btn-outline { background:transparent; color:var(--negro); border:2px solid var(--dorado); }
-    .btn-outline:hover { background:var(--dorado); color:#fff; }
-    .btn-wa { background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
-    .btn-wa:hover { transform:translateY(-2px); }
-
-    /* SECCIONES */
-    section { padding:80px 32px; }
-    .sec-titulo { text-align:center; margin-bottom:48px; }
-    .sec-titulo h2 { font-family:var(--fuente-t); font-size:2rem; margin-bottom:10px; }
-    .sec-titulo h2::after { content:''; display:block; width:50px; height:2px; background:var(--dorado); margin:12px auto 0; }
-    .sec-titulo p { color:var(--gris); font-size:0.93rem; max-width:500px; margin:0 auto; }
-
-    /* BUSCADOR */
-    .buscador-sec { background:var(--blanco); padding:50px 32px; }
-    .buscador-box { max-width:580px; margin:0 auto; text-align:center; }
-    .buscador-inputs { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:14px; }
-    .buscador-inputs input { border:2px solid #ddd; border-radius:50px; padding:11px 20px; font-size:0.9rem; outline:none; width:210px; transition:border-color 0.2s; font-family:var(--fuente-c); }
-    .buscador-inputs input:focus { border-color:var(--dorado); }
-
-    /* ÁLBUMES */
-    .albumes-sec { background:var(--crema); }
-    .grilla-albumes { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:22px; max-width:1100px; margin:0 auto; }
-    .tarjeta { border-radius:14px; overflow:hidden; background:var(--blanco); box-shadow:0 2px 16px rgba(0,0,0,0.07); transition:transform 0.25s,box-shadow 0.25s; text-decoration:none; color:inherit; display:block; }
-    .tarjeta:hover { transform:translateY(-5px); box-shadow:0 14px 36px rgba(0,0,0,0.13); }
-    .t-img { height:185px; background:#ddd; position:relative; overflow:hidden; }
-    .t-img img { width:100%; height:100%; object-fit:cover; }
-    .t-badge { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:#fff; font-size:0.7rem; padding:3px 10px; border-radius:20px; }
-    .t-priv { position:absolute; top:10px; left:10px; background:rgba(201,168,76,0.85); color:#fff; font-size:0.68rem; padding:3px 10px; border-radius:20px; font-weight:600; }
-    .t-info { padding:15px 18px; }
-    .t-fecha { font-size:0.7rem; color:var(--dorado-oscuro); font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
-    .t-nombre { font-family:var(--fuente-t); font-size:1rem; font-weight:700; margin-bottom:4px; }
-    .t-lugar { font-size:0.8rem; color:var(--gris); }
-    .t-pie { display:flex; justify-content:space-between; align-items:center; padding:10px 18px; background:var(--gris-claro); border-top:1px solid #eee; }
-    .t-precio { font-weight:700; font-size:0.88rem; color:var(--dorado-oscuro); }
-    .t-cta { font-size:0.74rem; color:var(--dorado); font-weight:600; }
-
-    /* ══ SOBRE MÍ — FOTO OCUPA TODO EL ESPACIO ══ */
-    .sobre-mi { background:var(--blanco); padding:0; }
-    .sobre-grid { display:grid; grid-template-columns:1fr 1fr; min-height:600px; }
-
-    /* Columna izquierda: foto a pantalla completa */
-    .sobre-foto-col {
-      position:relative;
-      overflow:hidden;
-      background:linear-gradient(135deg,#1a1a1a,#2a2a2a);
-      min-height:500px;
-    }
-    .sobre-foto-col img.foto-personal {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      object-position:center top;
-      display:block;
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-    }
-    /* Placeholder cuando no hay foto */
-    .sobre-placeholder {
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:16px;
-      padding:40px;
-    }
-    .sobre-placeholder img { width:140px; opacity:0.15; mix-blend-mode:screen; }
-    .sobre-placeholder p { color:rgba(255,255,255,0.4); font-size:0.85rem; text-align:center; font-style:italic; }
-
-    /* Botón para subir foto (solo visible para vos) */
-    .btn-subir-foto {
-      position:absolute;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      background:rgba(201,168,76,0.9);
-      color:#fff;
-      border:none;
-      padding:10px 20px;
-      border-radius:50px;
-      font-size:0.82rem;
-      font-weight:600;
-      cursor:pointer;
-      font-family:var(--fuente-c);
-      display:flex;
-      align-items:center;
-      gap:6px;
-      white-space:nowrap;
-      z-index:10;
-      transition:background 0.2s;
-    }
-    .btn-subir-foto:hover { background:var(--dorado); }
-    .subir-progreso {
-      position:absolute;
-      bottom:0;
-      left:0;
-      height:4px;
-      background:var(--dorado);
-      border-radius:0;
-      width:0%;
-      transition:width 0.3s;
-      z-index:11;
-    }
-
-    /* Columna derecha: texto */
-    .sobre-texto-col {
-      padding:70px 56px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      background:var(--blanco);
-    }
-    .sobre-eyebrow { font-size:0.72rem; color:var(--dorado); letter-spacing:3px; text-transform:uppercase; font-weight:600; margin-bottom:12px; }
-    .sobre-h2 { font-family:var(--fuente-t); font-size:2.2rem; margin-bottom:6px; line-height:1.2; }
-    .sobre-h2 span { color:var(--dorado); }
-    .sobre-sep { width:50px; height:2px; background:var(--dorado); margin:16px 0; border-radius:2px; }
-    .sobre-p { color:#555; line-height:1.9; font-size:0.94rem; margin-bottom:14px; font-weight:300; }
-    .sobre-p em { color:var(--negro); font-style:italic; font-weight:500; }
-    .sobre-datos { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
-    .sobre-dato { display:flex; align-items:center; gap:10px; font-size:0.87rem; color:#444; }
-    .sobre-dato a { color:var(--dorado); text-decoration:none; font-size:0.87rem; }
-    .sobre-dato a:hover { text-decoration:underline; }
-    .sobre-btns { display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; }
-
-    /* RESERVAS */
-    .reservas-sec { background:var(--crema); }
-    .reservas-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; max-width:900px; margin:0 auto; }
-    .res-info h3 { font-family:var(--fuente-t); font-size:1.5rem; margin-bottom:14px; }
-    .res-info p { color:#555; line-height:1.8; font-size:0.92rem; margin-bottom:20px; font-weight:300; }
-    .res-items { display:flex; flex-direction:column; gap:10px; }
-    .res-item { display:flex; align-items:flex-start; gap:12px; font-size:0.88rem; color:#444; }
-    .cal-box { background:var(--blanco); border-radius:16px; padding:28px; box-shadow:0 4px 20px rgba(0,0,0,0.08); text-align:center; }
-    .cal-box .ico { font-size:2.5rem; margin-bottom:12px; }
-    .cal-box h3 { font-family:var(--fuente-t); font-size:1.2rem; margin-bottom:8px; }
-    .cal-box p { color:var(--gris); font-size:0.84rem; margin-bottom:18px; }
-    .cal-btn { display:block; width:100%; padding:14px; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; border:none; border-radius:12px; font-family:var(--fuente-c); font-size:0.93rem; font-weight:600; cursor:pointer; text-decoration:none; text-align:center; transition:all 0.2s; box-shadow:0 4px 16px rgba(201,168,76,0.3); }
-    .cal-btn:hover { transform:translateY(-1px); }
-    .cal-nota { font-size:0.74rem; color:var(--gris); margin-top:10px; }
-
-    /* HERO CON FOTO */
-
-    /* PORTFOLIO */
-    .portfolio-sec { background:var(--blanco); }
-    .portfolio-box { max-width:1100px; margin:0 auto; }
-    .portfolio-intro { text-align:center; margin-bottom:32px; }
-    .portfolio-intro p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 20px; font-size:0.92rem; }
-    .portfolio-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
-    .portfolio-foto { border-radius:12px; overflow:hidden; aspect-ratio:4/3; background:#ede8dc; cursor:pointer; }
-    .portfolio-foto img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s; }
-    .portfolio-foto:hover img { transform:scale(1.04); }
-    .portfolio-foto-vacia { border-radius:12px; aspect-ratio:4/3; background:var(--crema); border:2px dashed #ddd; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:#bbb; font-size:0.78rem; cursor:pointer; transition:border-color 0.2s; }
-    .portfolio-foto-vacia:hover { border-color:var(--dorado); color:var(--dorado-oscuro); }
-    .portfolio-cta { text-align:center; }
-
-    /* TESTIMONIOS */
-    .test-sec { background:var(--crema); }
-    .test-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; max-width:960px; margin:0 auto; }
-    .test-card { background:var(--blanco); border-radius:16px; padding:26px 24px; box-shadow:0 2px 14px rgba(0,0,0,0.06); }
-    .test-estrellas { color:var(--dorado); font-size:0.9rem; margin-bottom:12px; letter-spacing:2px; }
-    .test-texto { font-family:'Playfair Display',serif; font-style:italic; font-size:1rem; line-height:1.8; color:#333; margin-bottom:16px; }
-    .test-autor { display:flex; align-items:center; gap:10px; }
-    .test-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:0.85rem; flex-shrink:0; }
-    .test-nombre { font-weight:600; font-size:0.88rem; }
-    .test-sesion { font-size:0.75rem; color:var(--gris); }
-
-    /* FOOTER */
-    footer { background:var(--negro); color:#aaa; padding:48px 32px 28px; }
-    .footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:40px; max-width:1000px; margin:0 auto 32px; }
-    .footer-col h4 { font-family:var(--fuente-t); color:#fff; font-size:1rem; margin-bottom:14px; }
-    .footer-col p, .footer-col a { font-size:0.82rem; line-height:1.9; color:#888; text-decoration:none; display:block; }
-    .footer-col a:hover { color:var(--dorado); }
-    .footer-bottom { text-align:center; border-top:1px solid #2a2a2a; padding-top:20px; font-size:0.77rem; color:#555; }
-    .footer-bottom span { color:var(--dorado); }
-
-    /* BOT LUZ */
-    .bot-btn { position:fixed; bottom:24px; right:24px; z-index:500; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(201,168,76,0.5); display:flex; align-items:center; justify-content:center; font-size:1.4rem; transition:transform 0.2s; animation:pulse 2.5s infinite; }
-    .bot-btn:hover { transform:scale(1.1); }
-    @keyframes pulse { 0%,100%{box-shadow:0 4px 20px rgba(201,168,76,0.5);}50%{box-shadow:0 4px 32px rgba(201,168,76,0.75);} }
-    .bot-ventana { position:fixed; bottom:92px; right:24px; z-index:500; width:330px; max-height:500px; background:#fff; border-radius:20px; box-shadow:0 12px 48px rgba(0,0,0,0.18); display:flex; flex-direction:column; overflow:hidden; transform:scale(0.9) translateY(10px); opacity:0; pointer-events:none; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-    .bot-ventana.abierto { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
-    .bot-header { background:linear-gradient(135deg,var(--negro),#2a2a2a); padding:14px 16px; display:flex; align-items:center; gap:10px; }
-    .bot-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
-    .bot-htxt { flex:1; }
-    .bot-htxt strong { color:#fff; font-size:0.85rem; display:block; }
-    .bot-htxt span { color:var(--dorado-claro); font-size:0.7rem; }
-    .bot-x { background:none; border:none; color:#aaa; cursor:pointer; font-size:1rem; }
-    .bot-msgs { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:8px; background:#fafaf8; max-height:280px; }
-    .msg { max-width:85%; padding:9px 13px; border-radius:16px; font-size:0.82rem; line-height:1.55; animation:msgIn 0.25s ease; white-space:pre-line; }
-    @keyframes msgIn { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
-    .msg-bot { background:#fff; color:var(--negro); border-radius:4px 16px 16px 16px; box-shadow:0 1px 6px rgba(0,0,0,0.07); align-self:flex-start; }
-    .msg-user { background:linear-gradient(135deg,var(--dorado),var(--dorado-claro)); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
-    .bot-typing { align-self:flex-start; background:#fff; padding:10px 14px; border-radius:4px 16px 16px 16px; box-shadow:0 1px 6px rgba(0,0,0,0.07); }
-    .dot { display:inline-block; width:6px; height:6px; background:#ccc; border-radius:50%; margin:0 2px; animation:typing 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay:0.2s; }
-    .dot:nth-child(3) { animation-delay:0.4s; }
-    @keyframes typing { 0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);} }
-    .bot-ops { display:flex; flex-wrap:wrap; gap:5px; padding:0 12px 8px; }
-    .bot-op { background:#fff; border:1.5px solid var(--dorado); color:var(--dorado-oscuro); border-radius:20px; padding:5px 11px; font-size:0.75rem; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:var(--fuente-c); }
-    .bot-op:hover { background:var(--dorado); color:#fff; }
-    .bot-inp-wrap { display:flex; gap:7px; padding:10px 12px; border-top:1px solid #eee; background:#fff; }
-    .bot-inp { flex:1; border:1.5px solid #eee; border-radius:20px; padding:8px 12px; font-size:0.81rem; outline:none; font-family:var(--fuente-c); }
-    .bot-inp:focus { border-color:var(--dorado); }
-    .bot-send { background:var(--dorado); color:#fff; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-
-    /* TOAST */
-    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:999; background:var(--negro); color:#fff; padding:11px 20px; border-radius:50px; font-size:0.83rem; opacity:0; transition:all 0.3s; border-left:4px solid var(--dorado); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    .toast.ok { border-left-color:#27ae60; }
-
-    /* RESPONSIVE */
-    @media(max-width:900px) {
-      .sobre-grid { grid-template-columns:1fr; }
-      .sobre-foto-col { min-height:400px; }
-      .sobre-texto-col { padding:40px 28px; }
-      .reservas-grid { grid-template-columns:1fr; }
-      .footer-grid { grid-template-columns:1fr 1fr; }
-    }
-    @media(max-width:640px) {
-      nav { padding:0 16px; }
-      .nav-links { display:none; position:absolute; top:64px; left:0; right:0; background:#fff; flex-direction:column; padding:20px; box-shadow:0 8px 24px rgba(0,0,0,0.1); gap:16px; }
-      .nav-links.open { display:flex; }
-      .hamburger { display:flex; }
-      section { padding:60px 16px; }
-      .hero { padding:90px 20px 50px; }
-      .hero-logo { width:180px; }
-      .sobre-foto-col { min-height:320px; }
-      .sobre-texto-col { padding:32px 20px; }
-      .footer-grid { grid-template-columns:1fr; gap:28px; }
-      .bot-ventana { width:calc(100vw - 32px); right:16px; }
-      .portfolio-grilla { grid-template-columns:repeat(2,1fr); gap:8px; }
-      .test-grilla { grid-template-columns:1fr; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ph. Rinascere Fotografías - by Verónica Gambino</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #f5f5f5;
+        }
+        .header {
+            background: rgba(0,0,0,0.9);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #d4af37;
+        }
+        .logo {
+            height: 50px;
+        }
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+        .hero h1 {
+            font-size: 3em;
+            color: #d4af37;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 1.3em;
+            color: #ccc;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #d4af37;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #f0c14b;
+            transform: scale(1.05);
+        }
+        .search-section {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 2px solid #d4af37;
+        }
+        .search-section h2 {
+            color: #d4af37;
+            margin-bottom: 20px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #d4af37;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            font-size: 1.1em;
+        }
+        .search-box button {
+            padding: 15px 30px;
+            background: #d4af37;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .albums-section {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        .albums-section h2 {
+            color: #d4af37;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .album-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .album-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+        .album-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .album-info {
+            padding: 20px;
+        }
+        .album-title {
+            color: #d4af37;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        .album-date {
+            color: #999;
+        }
+        .footer {
+            background: rgba(0,0,0,0.9);
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 2px solid #d4af37;
+            margin-top: 60px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+    </style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav>
-  <a href="#inicio" class="nav-logo">
-    <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Ph. Rinascere Fotografías"/>
-  </a>
-  <div class="nav-links" id="nav-links">
-    <a href="#albumes">Álbumes</a>
-    <a href="#reservas">Reservas</a>
-    <a href="#sobre-mi">Sobre mí</a>
-    <a href="#testimonios">Testimonios</a>
-    <a href="#portfolio">Portfolio</a>
-    <a href="https://wa.me/542966346212" target="_blank" class="nav-wa">💬 WhatsApp</a>
-    <a href="admin.html" class="nav-admin">⚙️ Admin</a>
-  </div>
-  <button class="hamburger" onclick="toggleNav()">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="inicio">
-  <div class="hero-con">
-    <img class="hero-logo" src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Ph. Rinascere Fotografías"/>
-    <div class="hero-nombre">Ph. Rinascere Fotografías</div>
-    <div class="hero-sub">by Verónica Gambino</div>
-    <div class="sep"></div>
-    <p class="hero-bienvenida">Hay momentos que no vuelven…<br><span>pero pueden quedarse para siempre</span></p>
-    <p class="hero-tagline">En Rinascere capturo lo que es real: miradas, emociones y detalles<br>que muchas veces pasan desapercibidos. Cada imagen es una forma de volver a sentir ✨</p>
-    <div class="hero-btns">
-      <a href="#albumes" class="btn btn-dorado">📷 Ver álbumes</a>
-      <a href="#reservas" class="btn btn-outline">📅 Reservar sesión</a>
-      <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 WhatsApp</a>
-    </div>
-  </div>
-</section>
-
-<!-- BUSCADOR -->
-<section class="buscador-sec" id="buscar">
-  <div class="sec-titulo">
-    <h2>Buscá tu foto</h2>
-    <p>Ingresá tu número de dorsal para encontrar tus imágenes del evento</p>
-  </div>
-  <div class="buscador-box">
-    <div class="buscador-inputs">
-      <input type="text" id="inputDorsal" placeholder="Número de dorsal (ej: 342)" maxlength="6" inputmode="numeric"/>
-      <button class="btn btn-dorado" onclick="buscarDorsal()">🔍 Buscar</button>
-    </div>
-    <button class="btn btn-outline" style="margin:0 auto;display:flex;" onclick="alert('📸 Próximamente: búsqueda por selfie')">📸 Buscarme por selfie</button>
-  </div>
-</section>
-
-<!-- ÁLBUMES -->
-<section class="albumes-sec" id="albumes">
-  <div class="sec-titulo">
-    <h2>Álbumes recientes</h2>
-    <p>Hacé clic en el evento para ver y comprar tus fotos</p>
-  </div>
-  <div class="grilla-albumes" id="grilla"></div>
-</section>
-
-<!-- SOBRE MÍ -->
-<section class="sobre-mi" id="sobre-mi">
-  <div class="sobre-grid">
-
-    <!-- COLUMNA FOTO — ocupa todo el espacio disponible -->
-    <div class="sobre-foto-col" id="sobre-foto-col">
-
-      <!-- Imagen personal (oculta hasta que se suba una) -->
-      <img class="foto-personal" id="foto-personal-img" src="" alt="Verónica Gambino" style="display:none"/>
-
-      <!-- Placeholder mientras no hay foto -->
-      <div class="sobre-placeholder" id="sobre-placeholder">
-        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo"/>
-        <p>Tu foto personal<br>va a aparecer acá ✨</p>
-      </div>
-
-      <!-- Botón para subir foto (tocá acá desde el celular o desktop) -->
-      <button class="btn-subir-foto" onclick="document.getElementById('input-foto-personal').click()">
-        📷 Subir mi foto
-      </button>
-      <div class="subir-progreso" id="subir-prog"></div>
-
-      <!-- Input de archivo — acepta cámara en celular y archivos en desktop -->
-      <input type="file" id="input-foto-personal" accept="image/*" style="display:none"
-        onchange="subirFotoPersonal(this.files[0])"/>
+    <div class="header">
+        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Ph. Rinascere" class="logo">
     </div>
 
-    <!-- COLUMNA TEXTO -->
-    <div class="sobre-texto-col">
-      <div class="sobre-eyebrow">Sobre mí</div>
-      <h2 class="sobre-h2">Verónica <span>Gambino</span></h2>
-      <div class="sobre-sep"></div>
-      <p class="sobre-p">Soy Verónica, fotógrafa y creadora de <strong>Rinascere Fotografías</strong>.</p>
-      <p class="sobre-p">Mi forma de ver la fotografía nace desde la sensibilidad… desde lo simple, lo real y lo que muchas veces pasa desapercibido.</p>
-      <p class="sobre-p"><em>No busco fotos perfectas, busco momentos honestos</em> — miradas que dicen algo, gestos que se sienten y recuerdos que perduran. ✨📸</p>
-      <div class="sobre-datos">
-        <div class="sobre-dato"><span>📍</span><span>Río Gallegos, Santa Cruz · Toda la región patagónica</span></div>
-        <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank">+54 9 2966 346212</a></div>
-        <div class="sobre-dato"><span>🌐</span><span>Cobertura en toda Argentina</span></div>
-      </div>
-      <div class="sobre-btns">
-        <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 Escribime</a>
-        <a href="#reservas" class="btn btn-outline">📅 Reservar sesión</a>
-      </div>
+    <div class="hero">
+        <h1>Ph. Rinascere Fotografías</h1>
+        <p>Hay momentos que no vuelven… pero pueden quedarse para siempre ✨</p>
+        <a href="#albumes" class="btn">📷 Ver álbumes</a>
+        <a href="buscar.html" class="btn">🔍 Buscar por dorsal</a>
+        <a href="https://wa.me/542966346212" class="btn">💬 WhatsApp</a>
+        <a href="login.html" class="btn" style="background: rgba(255,255,255,0.1);">⚙️ Admin</a>
     </div>
-  </div>
-</section>
 
-<!-- RESERVAS -->
-<section class="reservas-sec" id="reservas">
-  <div class="sec-titulo">
-    <h2>Reservá tu sesión</h2>
-    <p>Cupos limitados para garantizar la calidad de cada sesión</p>
-  </div>
-  <div class="reservas-grid">
-    <div class="res-info">
-      <h3>Una experiencia<br><span style="color:var(--dorado)">pensada para vos</span></h3>
-      <p>Trabajo con sesiones personalizadas, acompañándote desde la planificación hasta la entrega. La idea es que disfrutes el proceso y no solo el resultado. ✨</p>
-      <div class="res-items">
-        <div class="res-item"><span>✨</span><span>Acompañamiento previo a la sesión</span></div>
-        <div class="res-item"><span>📸</span><span>Guía y dirección durante la sesión</span></div>
-        <div class="res-item"><span>🎨</span><span>Edición cuidada con estética personal</span></div>
-        <div class="res-item"><span>💛</span><span>Entrega digital de alta resolución</span></div>
-        <div class="res-item"><span>📍</span><span>Sesiones en Río Gallegos y toda la región</span></div>
-      </div>
+    <div class="search-section">
+        <h2>Buscá tu foto</h2>
+        <p style="color: #999; margin-bottom: 20px;">Ingresá tu número de dorsal para encontrar tus imágenes del evento</p>
+        <div class="search-box">
+            <input type="text" id="dorsalInput" placeholder="Ej: 123" maxlength="5">
+            <button onclick="buscarDorsal()">🔍 Buscar</button>
+        </div>
+        <p style="margin-top: 15px; text-align: center;">
+            <a href="buscar.html" style="color: #d4af37; text-decoration: none;">📸 Búsqueda avanzada</a>
+        </p>
     </div>
-    <div class="cal-box">
-      <div class="ico">📅</div>
-      <h3>Elegí tu fecha</h3>
-      <p>Seleccioná el día y horario que mejor te quede. Confirmación inmediata.</p>
-      <a href="https://calendar.app.google/tbUKQMJbpSDcCqs88" target="_blank" class="cal-btn">📅 Ver disponibilidad y reservar</a>
-      <p class="cal-nota">Cupos limitados · Confirmación por WhatsApp</p>
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
-        <a href="https://wa.me/542966346212?text=Hola%20Ver%C3%B3nica!%20Quiero%20reservar%20una%20sesi%C3%B3n%20fotogr%C3%A1fica%20%F0%9F%93%B8" target="_blank" class="btn btn-wa" style="width:100%;justify-content:center;">💬 Consultar por WhatsApp</a>
-      </div>
+
+    <div class="albums-section" id="albumes">
+        <h2>Álbumes recientes</h2>
+        <div id="albumsGrid" class="albums-grid">
+            <div class="empty-state">Cargando álbumes...</div>
+        </div>
     </div>
-  </div>
-</section>
 
-<!-- TESTIMONIOS -->
-<section class="test-sec" id="testimonios">
-  <div class="sec-titulo">
-    <h2>Lo que dicen mis clientes</h2>
-    <p>Experiencias reales de personas que eligieron Rinascere para capturar sus momentos</p>
-  </div>
-  <div class="test-grilla" id="test-grilla">
-    <div class="test-card">
-      <div class="test-estrellas">★★★★★</div>
-      <p class="test-texto">"Verónica capturó exactamente lo que yo quería pero no sabía cómo pedirle. Las fotos tienen una luz y una emoción increíble. Las voy a atesorar para siempre."</p>
-      <div class="test-autor">
-        <div class="test-avatar">MA</div>
-        <div><div class="test-nombre">María A.</div><div class="test-sesion">Sesión familiar · Río Gallegos</div></div>
-      </div>
+    <div class="footer">
+        <p>© 2025 Ph. Rinascere Fotografías · by Verónica Gambino</p>
+        <p style="margin-top: 10px;">📍 Río Gallegos, Santa Cruz · 🌐 Toda la región patagónica</p>
+        <p style="margin-top: 10px;">
+            <a href="https://wa.me/542966346212" style="color: #d4af37; text-decoration: none;">💬 +54 9 2966 346212</a>
+        </p>
     </div>
-    <div class="test-card">
-      <div class="test-estrellas">★★★★★</div>
-      <p class="test-texto">"Nunca me había sentido tan cómoda frente a una cámara. Vero tiene una sensibilidad especial para hacerte relajar y el resultado fue hermoso."</p>
-      <div class="test-autor">
-        <div class="test-avatar">LC</div>
-        <div><div class="test-nombre">Laura C.</div><div class="test-sesion">Sesión individual · El Calafate</div></div>
-      </div>
-    </div>
-    <div class="test-card">
-      <div class="test-estrellas">★★★★★</div>
-      <p class="test-texto">"Las fotos de la maratón llegaron súper rápido y son increíbles. Se nota que ama lo que hace. Ya le encargué la próxima edición."</p>
-      <div class="test-autor">
-        <div class="test-avatar">RG</div>
-        <div><div class="test-nombre">Rodrigo G.</div><div class="test-sesion">Maratón Ciudad · Río Gallegos</div></div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- PORTFOLIO -->
-<section class="portfolio-sec" id="portfolio">
-  <div class="sec-titulo">
-    <h2>Mi portfolio</h2>
-    <p>Una selección de trabajos que reflejan mi forma de ver y sentir la fotografía</p>
-  </div>
-  <div class="portfolio-box">
-    <div class="portfolio-grilla" id="portfolio-grilla"></div>
-    <div class="portfolio-cta">
-      <a href="https://vngambino77.myportfolio.com" target="_blank" class="btn btn-outline">🎨 Ver portfolio completo en Adobe</a>
-    </div>
-  </div>
-</section>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div class="footer-col">
-      <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" style="height:48px;mix-blend-mode:screen;margin-bottom:12px;" alt="Logo"/>
-      <p>Fotografía profesional que captura momentos honestos y emociones reales.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Navegación</h4>
-      <a href="#inicio">Inicio</a>
-      <a href="#albumes">Álbumes</a>
-      <a href="#reservas">Reservas</a>
-      <a href="#sobre-mi">Sobre mí</a>
-      <a href="#testimonios">Testimonios</a>
-      <a href="#portfolio">Portfolio</a>
-    </div>
-    <div class="footer-col">
-      <h4>Contacto</h4>
-      <a href="https://wa.me/542966346212" target="_blank">💬 +54 9 2966 346212</a>
-      <p>📍 Río Gallegos, Santa Cruz</p>
-      <p>🌐 Toda la región patagónica</p>
-      <p style="margin-top:10px;color:var(--dorado);">✨ Cupos limitados</p>
-    </div>
-  </div>
-  <div class="footer-bottom">© 2025 <span>Ph. Rinascere Fotografías</span> · by Verónica Gambino · Todos los derechos reservados</div>
-</footer>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
+            authDomain: "rinascere-fotos.firebaseapp.com",
+            projectId: "rinascere-fotos",
+            storageBucket: "rinascere-fotos.firebasestorage.app",
+            messagingSenderId: "844732353699",
+            appId: "1:844732353699:web:7654d5fc2b85754a123456"
+        };
 
-<!-- BOT LUZ -->
-<button class="bot-btn" onclick="toggleBot()" title="Hablar con Luz">✨</button>
-<div class="bot-ventana" id="bot-ventana">
-  <div class="bot-header">
-    <div class="bot-av">💛</div>
-    <div class="bot-htxt"><strong>Luz Rinascere</strong><span>● en línea ahora</span></div>
-    <button class="bot-x" onclick="toggleBot()">✕</button>
-  </div>
-  <div class="bot-msgs" id="bot-msgs"></div>
-  <div class="bot-ops" id="bot-ops"></div>
-  <div class="bot-inp-wrap">
-    <input class="bot-inp" id="bot-inp" placeholder="Escribí tu mensaje..." onkeydown="if(event.key==='Enter')enviarMsg()"/>
-    <button class="bot-send" onclick="enviarMsg()">➤</button>
-  </div>
-</div>
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-<div class="toast" id="toast"></div>
+        document.addEventListener('DOMContentLoaded', cargarAlbumes);
 
-<script>
-  // Protección
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey||e.metaKey) && ['s','p','u','a'].includes(e.key.toLowerCase())) e.preventDefault();
-    if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault();
-  });
+        async function cargarAlbumes() {
+            try {
+                const q = query(
+                    collection(db, 'albumes'),
+                    where('esPublico', '==', true),
+                    orderBy('fecha', 'desc'),
+                    limit(6)
+                );
+                
+                const snapshot = await getDocs(q);
+                const grid = document.getElementById('albumsGrid');
 
-  function toggleNav() {
-    document.getElementById('nav-links').classList.toggle('open');
-  }
+                if (snapshot.empty) {
+                    grid.innerHTML = '<div class="empty-state">No hay álbumes disponibles aún</div>';
+                    return;
+                }
 
-  // ── Subir foto personal a Cloudinary ──────────────────
-  async function subirFotoPersonal(archivo) {
-    if (!archivo) return;
-    const prog = document.getElementById('subir-prog');
-    prog.style.width = '0%';
+                grid.innerHTML = '';
 
-    const fd = new FormData();
-    fd.append('file', archivo);
-    fd.append('upload_preset', UPLOAD_PRESET);
-    fd.append('folder', 'perfil');
-    fd.append('public_id', 'foto_veronika');
+                for (const albumDoc of snapshot.docs) {
+                    const album = { id: albumDoc.id, ...albumDoc.data() };
+                    
+                    // Obtener primera foto como portada
+                    const fotosSnapshot = await getDocs(collection(db, 'albumes', album.id, 'fotos'));
+                    const portadaUrl = album.portadaUrl || "https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere";
 
-    const xhr = new XMLHttpRequest();
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) prog.style.width = Math.round(e.loaded/e.total*100) + '%';
-    };
-    xhr.onload = () => {
-      const data = JSON.parse(xhr.responseText);
-      if (data.secure_url) {
-        const img = document.getElementById('foto-personal-img');
-        img.src = data.secure_url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
-        prog.style.width = '100%';
-        setTimeout(() => prog.style.width = '0%', 1500);
-        toast('✅ Foto subida correctamente', 'ok');
-        // Guardar URL en Firebase para que persista
-        db.collection('configuracion').doc('sitio').set({ fotoPersonalUrl: data.secure_url }, { merge: true });
-      } else {
-        toast('❌ Error al subir la foto');
-        prog.style.width = '0%';
-      }
-    };
-    xhr.onerror = () => { toast('❌ Error de red'); prog.style.width = '0%'; };
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`);
-    xhr.send(fd);
-  }
+                    const card = document.createElement('div');
+                    card.className = 'album-card';
+                    card.onclick = () => window.location.href = `evento.html?album=${album.id}`;
+                    card.innerHTML = `
+                        <img src="${portadaUrl}" alt="${album.nombre}" class="album-img">
+                        <div class="album-info">
+                            <div class="album-title">${album.nombre}</div>
+                            <div class="album-date">${album.fecha}</div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
 
-  // ── Cargar foto personal guardada ─────────────────────
-  async function cargarFotoPersonal() {
-    try {
-      const doc = await db.collection('configuracion').doc('sitio').get();
-      if (doc.exists && doc.data().fotoPersonalUrl) {
-        const url = doc.data().fotoPersonalUrl;
-        const img = document.getElementById('foto-personal-img');
-        img.src = url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
-      }
-    } catch(e) { /* silencioso */ }
-  }
-
-  // ── Cargar álbumes desde Firebase ─────────────────────
-  async function cargarAlbumes() {
-    try {
-      const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      renderAlbumes(lista.length > 0 ? lista : albumesEj);
-    } catch(e) { renderAlbumes(albumesEj); }
-  }
-
-  const albumesEj = [
-    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80" },
-    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
-    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
-  ];
-
-  function renderAlbumes(lista) {
-    const g = document.getElementById('grilla');
-    g.innerHTML = lista.length === 0
-      ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
-      : lista.map(a => {
-          // ✅ Construir URL de portada correctamente
-          // portadaUrl puede ser: public_id limpio (nuevo) o URL completa (viejo)
-          let imgSrc = '';
-          if (a.portadaUrl) {
-            if (a.portadaUrl.startsWith('http')) {
-              // URL completa guardada antes de la corrección
-              imgSrc = a.portadaUrl;
-            } else {
-              // ✅ public_id limpio — construimos la URL bien
-              imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.portadaUrl}`;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('albumsGrid').innerHTML = '<div class="empty-state">Error al cargar álbumes</div>';
             }
-          } else if (a.fotos && a.fotos.length > 0) {
-            // Si no hay portada, usamos la primera foto del array
-            imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
-          }
-          return `
-        <a class="tarjeta" href="evento.html?slug=${a.slug}">
-          <div class="t-img">
-            ${imgSrc
-              ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
-                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f0ede8,#ddd)';"/>`
-              : ''}
-            <div class="t-badge">📷 ${a.cantidadFotos||0} fotos</div>
-            ${!a.publico ? '<div class="t-priv">🔒 Privado</div>' : ''}
-          </div>
-          <div class="t-info">
-            <div class="t-fecha">${a.fecha||''}</div>
-            <div class="t-nombre">${a.nombre}</div>
-            <div class="t-lugar">📍 ${a.lugar||''}</div>
-          </div>
-          <div class="t-pie">
-            <span class="t-precio">Desde ${Number(a.precio||0).toLocaleString('es-AR')}</span>
-            <span class="t-cta">Ver fotos →</span>
-          </div>
-        </a>`;
-        }).join('');
-  }
+        }
 
-  function buscarDorsal() {
-    const d = document.getElementById('inputDorsal').value.trim();
-    if (!d) { alert('Ingresá tu número de dorsal'); return; }
-    window.location.href = `evento.html?dorsal=${d}`;
-  }
+        window.buscarDorsal = function() {
+            const dorsal = document.getElementById('dorsalInput').value.trim();
+            if (!dorsal) {
+                alert('Ingresá tu número de dorsal');
+                return;
+            }
+            window.location.href = `buscar.html?dorsal=${dorsal}`;
+        };
 
-
-  // ── Cargar portfolio desde Firebase ───────────────────
-  async function cargarPortfolio() {
-    const grilla = document.getElementById('portfolio-grilla');
-    const SLOTS = 9;
-    try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
-      const fotos = snap.docs.map(d => d.data());
-      let html = fotos.map(f => {
-        const url = f.url.startsWith('http') ? f.url
-          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
-        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
-      }).join('');
-      // Completar slots vacíos con placeholders de carga
-      const vacios = SLOTS - fotos.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-      }
-      grilla.innerHTML = html;
-    } catch(e) {
-      // Sin Firebase → mostrar placeholders
-      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-    }
-  }
-
-  // ── Cargar testimonios desde Firebase (opcional) ──────
-  async function cargarTestimonios() {
-    try {
-      const snap = await db.collection('testimonios').orderBy('orden').limit(6).get();
-      if (snap.empty) return; // Mantiene los testimonios estáticos por defecto
-      const lista = snap.docs.map(d => d.data());
-      document.getElementById('test-grilla').innerHTML = lista.map(t => `
-        <div class="test-card">
-          <div class="test-estrellas">${'★'.repeat(t.estrellas||5)}</div>
-          <p class="test-texto">"${t.texto}"</p>
-          <div class="test-autor">
-            <div class="test-avatar">${t.nombre.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div>
-            <div><div class="test-nombre">${t.nombre}</div><div class="test-sesion">${t.sesion||''}</div></div>
-          </div>
-        </div>`).join('');
-    } catch(e) { /* mantiene estáticos */ }
-  }
-
-  // ── Iniciar ───────────────────────────────────────────
-  cargarAlbumes();
-  cargarFotoPersonal();
-  cargarPortfolio();
-  cargarTestimonios();
-
-  // ══ BOT LUZ ══════════════════════════════════════════
-  let botAbierto=false, etapa=0, tipoConsulta=null;
-  const WA="542966346212";
-
-  const flujos={
-    sesion:[
-      {bot:"Qué lindo lo que me contás ✨\nCada sesión es única, pensada para reflejar tu esencia y que te sientas cómoda en todo momento 🤍\n¿Es para vos, pareja, familia o algo especial?",ops:["Para mí sola 💫","En pareja 💑","Familia 👨‍👩‍👧","Algo especial ✨"]},
-      {bot:"Hermoso 💛 Trabajo con sesiones completamente personalizadas:\n\n✨ Acompañamiento previo\n✨ Guía durante la sesión\n✨ Edición cuidada y estética real\n\n¿Querés que te cuente sobre disponibilidad?",ops:["Sí, quiero saber más 💛","¿Dónde son las sesiones?","Quiero reservar 📅"]},
-      {bot:"Trabajo con cupos limitados para cuidar cada sesión ✨\n¿Preferís ver el calendario o que te escriba Verónica directamente?",ops:["Ver calendario 📅","Hablar con Verónica 💬"]},
-      {bot:"Va a ser un momento muy especial 💛\nTe conecto con Verónica ahora ✨",ops:[],accion:"wa_sesion"}
-    ],
-    fotos:[
-      {bot:"Tus fotos ya están listas ✨\n¿Cómo querés buscarlas?",ops:["Por número de dorsal 🔢","Ver todos los álbumes 📷","Necesito ayuda 🙋"]},
-      {bot:"Cuando encuentres tus favoritas 💛\nPodés comprarlas y descargarlas al instante en alta calidad ✨\n¿Necesitás ayuda para encontrarlas?",ops:["Sí, ayudame 🙋","Ya las encontré 💳","Hablar con Verónica 💬"]},
-      {bot:"El proceso es muy simple 💛\n1️⃣ Seleccionás las fotos\n2️⃣ Pagás con Mercado Pago\n3️⃣ Descargás en alta calidad ✨\n¿Vamos a los álbumes?",ops:["Ir a los álbumes 📷","Hablar con Verónica 💬"]}
-    ]
-  };
-
-  function toggleBot(){
-    botAbierto=!botAbierto;
-    document.getElementById('bot-ventana').classList.toggle('abierto',botAbierto);
-    if(botAbierto&&document.getElementById('bot-msgs').children.length===0) iniciarBot();
-  }
-
-  function iniciarBot(){
-    etapa=0;tipoConsulta=null;
-    typing(()=>{
-      msg('bot',"Hola 🤍 soy Luz Rinascere\nGracias por escribir ✨ Estoy para acompañarte en una experiencia fotográfica pensada desde lo auténtico y lo emocional 💛\n\n¿En qué puedo ayudarte?");
-      ops(["📸 Quiero una sesión fotográfica","🖼 Buscar mis fotos de un evento","💬 Consulta general","💰 Información sobre precios"]);
-    });
-  }
-
-  function msg(quien,txt){
-    const d=document.createElement('div');
-    d.className=`msg msg-${quien}`;
-    d.textContent=txt;
-    const m=document.getElementById('bot-msgs');
-    m.appendChild(d);m.scrollTop=m.scrollHeight;
-  }
-
-  function typing(cb){
-    const m=document.getElementById('bot-msgs');
-    const t=document.createElement('div');
-    t.className='bot-typing';
-    t.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    m.appendChild(t);m.scrollTop=m.scrollHeight;
-    setTimeout(()=>{t.remove();cb();},850);
-  }
-
-  function ops(lista){
-    document.getElementById('bot-ops').innerHTML=lista.map(o=>`<button class="bot-op" onclick="clickOp('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('');
-  }
-
-  function clickOp(op){
-    document.getElementById('bot-ops').innerHTML='';
-    msg('user',op);
-    if(op.includes('Verónica')||op.includes('WhatsApp')||op.includes('Escribir')){
-      typing(()=>{msg('bot',"¡Perfecto! 💛 Te llevo con Verónica ✨");setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Vi tu sitio y quiero consultar 📸')}`,'_blank'),1000);});return;
-    }
-    if(op.includes('calendario')||op.includes('Reservar')){
-      typing(()=>{msg('bot',"Te llevo al calendario 📅");setTimeout(()=>document.getElementById('reservas').scrollIntoView({behavior:'smooth'}),800);});return;
-    }
-    if(op.includes('álbumes')||op.includes('Álbumes')){
-      typing(()=>{msg('bot',"¡Vamos! 📷");setTimeout(()=>document.getElementById('albumes').scrollIntoView({behavior:'smooth'}),800);});return;
-    }
-    if(op.includes('precios')||op.includes('Precios')){
-      typing(()=>{msg('bot',"Los precios varían según el evento 💛\nGeneralmente entre $1.500 y $2.500 ARS por foto ✨\nVer el precio exacto en cada álbum 🤍");ops(["Ver álbumes 📷","Hablar con Verónica 💬"]);});return;
-    }
-    if(!tipoConsulta){
-      if(op.includes('sesión')){tipoConsulta='sesion';etapa=0;}
-      else if(op.includes('fotos')){tipoConsulta='fotos';etapa=0;}
-      else{typing(()=>{msg('bot',"Con gusto te ayudo 🤍\n¿Sobre qué te puedo contar? 💛");ops(["📸 Sesiones fotográficas","🖼 Mis fotos","💰 Precios","💬 Hablar con Verónica"]);});return;}
-      const paso=flujos[tipoConsulta][0];
-      typing(()=>{msg('bot',paso.bot);ops(paso.ops);});
-      return;
-    }
-    const flujo=flujos[tipoConsulta];
-    etapa=Math.min(etapa+1,flujo.length-1);
-    const paso=flujo[etapa];
-    typing(()=>{
-      msg('bot',paso.bot);
-      if(paso.accion==='wa_sesion'){setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent('Hola Verónica! Quiero reservar una sesión 📸')}`,'_blank'),1000);}
-      else ops(paso.ops||[]);
-    });
-  }
-
-  function enviarMsg(){
-    const inp=document.getElementById('bot-inp');
-    const txt=inp.value.trim();
-    if(!txt)return;
-    inp.value='';
-    msg('user',txt);
-    document.getElementById('bot-ops').innerHTML='';
-    typing(()=>{
-      msg('bot',"Gracias por escribir 🤍\nLe voy a pasar tu consulta a Verónica para que te responda personalmente ✨");
-      setTimeout(()=>window.open(`https://wa.me/${WA}?text=${encodeURIComponent(`Hola Verónica! Mensaje del bot del sitio: "${txt}"`)}`, '_blank'),1500);
-    });
-  }
-
-  function toast(msg,tipo=''){
-    const el=document.getElementById('toast');
-    el.textContent=msg;
-    el.className='toast show'+(tipo?' '+tipo:'');
-    clearTimeout(el._t);
-    el._t=setTimeout(()=>el.classList.remove('show'),3500);
-  }
-</script>
+        document.getElementById('dorsalInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') buscarDorsal();
+            return /[0-9]/.test(e.key);
+        });
+    </script>
 </body>
 </html>
