@@ -3,276 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Gracias! - Ph. Rinascere</title>
+    <title>Pago Exitoso - Ph. Rinascere</title>
     <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #f5f5f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
-
         .container {
-            max-width: 700px;
-            margin: 40px 20px;
-            padding: 60px 40px;
+            max-width: 600px;
+            text-align: center;
             background: rgba(255,255,255,0.05);
+            padding: 60px 40px;
             border-radius: 20px;
             border: 2px solid #d4af37;
-            text-align: center;
         }
-
-        .logo {
-            width: 120px;
-            margin-bottom: 30px;
-        }
-
-        .success-icon {
+        .icon {
             font-size: 5em;
             margin-bottom: 20px;
         }
-
         h1 {
-            font-size: 2.5em;
             color: #d4af37;
+            font-size: 2.5em;
             margin-bottom: 15px;
         }
-
-        .message {
-            font-size: 1.2em;
+        p {
             color: #ccc;
-            margin-bottom: 40px;
+            font-size: 1.2em;
             line-height: 1.6;
-        }
-
-        .download-section {
-            background: rgba(212, 175, 55, 0.1);
-            padding: 30px;
-            border-radius: 10px;
             margin-bottom: 30px;
-            border: 1px solid rgba(212, 175, 55, 0.3);
         }
-
-        .photo-list {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .photo-item {
-            background: rgba(255,255,255,0.05);
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-download-all {
-            width: 100%;
-            padding: 20px;
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
             background: #d4af37;
             color: #1a1a1a;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.3em;
+            text-decoration: none;
+            border-radius: 5px;
             font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
+            font-size: 1.1em;
+            margin: 10px;
         }
-
-        .btn-download-all:hover {
+        .btn:hover {
             background: #f0c14b;
             transform: scale(1.05);
         }
-
-        .btn-home {
-            display: inline-block;
-            padding: 15px 30px;
+        .btn-secondary {
             background: rgba(255,255,255,0.1);
             color: #d4af37;
-            text-decoration: none;
-            border-radius: 5px;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            margin-top: 20px;
-            transition: all 0.3s ease;
         }
-
-        .btn-home:hover {
+        .btn-secondary:hover {
             background: rgba(255,255,255,0.2);
-            border-color: #d4af37;
-        }
-
-        .note {
-            font-size: 0.95em;
-            color: #999;
-            margin-top: 30px;
-            line-height: 1.5;
-        }
-
-        .loading {
-            font-size: 1.2em;
-            color: #d4af37;
-        }
-
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
-        
-        <div class="success-icon">✨</div>
-        
-        <h1>¡Gracias por tu apoyo!</h1>
-        
-        <p class="message">
-            Tu contribución significa mucho para mí.<br>
-            Ya podés descargar tus fotos en alta resolución 📸
+        <div class="icon">✅</div>
+        <h1>¡Pago Exitoso!</h1>
+        <p>
+            Gracias por tu compra ✨<br>
+            Ya podés acceder a las fotos del evento desde Google Drive
         </p>
-
-        <div class="download-section">
-            <div class="loading" id="loading">Preparando tus fotos</div>
-            
-            <div id="downloadContent" style="display: none;">
-                <h3 style="color: #d4af37; margin-bottom: 20px;">
-                    Tus fotos (<span id="photoCount">0</span>)
-                </h3>
-                
-                <div class="photo-list" id="photoList"></div>
-
-                <button class="btn-download-all" onclick="descargarTodas()">
-                    📥 Descargar todas las fotos
-                </button>
-
-                <p class="note">
-                    💡 <strong>Tip:</strong> Las fotos se descargarán una por una.<br>
-                    Podés guardarlas en tu computadora o celular ✨
-                </p>
-            </div>
-        </div>
-
-        <a href="index.html" class="btn-home">← Volver al inicio</a>
-
-        <p class="note">
-            ¿Dudas o consultas?<br>
-            <a href="https://wa.me/542966346212" style="color: #d4af37; text-decoration: none;">
-                💬 Escribime por WhatsApp
-            </a>
-        </p>
+        <a href="#" id="btnDrive" class="btn">📁 Ir a Google Drive</a>
+        <a href="index.html" class="btn btn-secondary">← Volver al inicio</a>
     </div>
 
-    <script>
-        let photos = [];
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPhotos();
-        });
+        const firebaseConfig = {
+            apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
+            authDomain: "rinascere-fotos.firebaseapp.com",
+            projectId: "rinascere-fotos",
+            storageBucket: "rinascere-fotos.firebasestorage.app",
+            messagingSenderId: "844732353699",
+            appId: "1:844732353699:web:7654d5fc2b85754a123456"
+        };
 
-        function loadPhotos() {
-            const fotosDescarga = localStorage.getItem('fotosDescarga');
-            
-            if (!fotosDescarga) {
-                document.getElementById('loading').textContent = 'No hay fotos seleccionadas';
-                return;
-            }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const albumId = urlParams.get('album');
+
+        if (albumId) {
+            cargarAlbum(albumId);
+        }
+
+        async function cargarAlbum(albumId) {
             try {
-                photos = JSON.parse(fotosDescarga);
+                const albumDoc = await getDoc(doc(db, 'albumes', albumId));
                 
-                if (photos.length === 0) {
-                    document.getElementById('loading').textContent = 'No hay fotos seleccionadas';
-                    return;
+                if (albumDoc.exists()) {
+                    const albumData = albumDoc.data();
+                    if (albumData.driveLink) {
+                        document.getElementById('btnDrive').href = albumData.driveLink;
+                    }
                 }
-
-                renderPhotoList();
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('downloadContent').style.display = 'block';
-
             } catch (error) {
-                console.error('Error al cargar fotos:', error);
-                document.getElementById('loading').textContent = 'Error al cargar las fotos';
+                console.error('Error:', error);
             }
         }
-
-        function renderPhotoList() {
-            const photoList = document.getElementById('photoList');
-            const photoCount = document.getElementById('photoCount');
-            
-            photoCount.textContent = photos.length;
-            photoList.innerHTML = '';
-
-            photos.forEach((photo, index) => {
-                const item = document.createElement('div');
-                item.className = 'photo-item';
-                item.innerHTML = `
-                    <span>${photo.dorsal ? `Dorsal ${photo.dorsal}` : `Foto #${index + 1}`}</span>
-                    <button 
-                        onclick="descargarUna(${index})" 
-                        style="padding: 5px 15px; background: #d4af37; color: #1a1a1a; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;"
-                    >
-                        ⬇ Descargar
-                    </button>
-                `;
-                photoList.appendChild(item);
-            });
-        }
-
-        window.descargarUna = function(index) {
-            const photo = photos[index];
-            if (!photo) return;
-
-            const a = document.createElement('a');
-            a.href = photo.url;
-            a.download = `rinascere_${photo.dorsal || index + 1}.jpg`;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-
-        window.descargarTodas = function() {
-            if (photos.length === 0) {
-                alert('No hay fotos para descargar');
-                return;
-            }
-
-            // Descargar todas con delay para evitar bloqueo del navegador
-            photos.forEach((photo, index) => {
-                setTimeout(() => {
-                    const a = document.createElement('a');
-                    a.href = photo.url;
-                    a.download = `rinascere_${photo.dorsal || index + 1}.jpg`;
-                    a.target = '_blank';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }, index * 500);
-            });
-        };
     </script>
 </body>
 </html>
