@@ -90,7 +90,7 @@ async function cargarAlbumes() {
             // Obtener URL de portada (primera foto)
             let portadaUrl = '';
             if (!fotosSnapshot.empty) {
-                portadaUrl = fotosSnapshot.docs[0].data().url;
+            let portadaUrl = album.portadaUrl || "";
             }
 
             const tr = document.createElement('tr');
