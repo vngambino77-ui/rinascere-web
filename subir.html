@@ -3,57 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir Fotos - Ph. Rinascere</title>
+    <title>Crear Álbum - Ph. Rinascere</title>
     <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #f5f5f5;
             min-height: 100vh;
         }
-
         .header {
             background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
             padding: 20px 40px;
             border-bottom: 2px solid #d4af37;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .logo {
-            height: 50px;
-        }
-
-        h1 {
-            font-size: 2em;
-            color: #d4af37;
-        }
-
+        .logo { height: 50px; }
+        h1 { font-size: 2em; color: #d4af37; }
         .btn-volver {
             background: #d4af37;
             color: #1a1a1a;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
             font-weight: bold;
             text-decoration: none;
+            cursor: pointer;
         }
-
-        .btn-volver:hover {
-            background: #f0c14b;
-        }
-
+        .btn-volver:hover { background: #f0c14b; }
         .container {
             max-width: 800px;
             margin: 40px auto;
@@ -62,18 +42,13 @@
             border-radius: 10px;
             border: 2px solid #d4af37;
         }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
+        .form-group { margin-bottom: 25px; }
         label {
             display: block;
             margin-bottom: 8px;
             color: #d4af37;
             font-weight: bold;
         }
-
         input, select, textarea {
             width: 100%;
             padding: 12px;
@@ -83,66 +58,38 @@
             color: #f5f5f5;
             font-size: 1em;
         }
-
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #f0c14b;
             background: rgba(255,255,255,0.15);
         }
-
-        .upload-area {
+        .upload-portada {
             border: 2px dashed #d4af37;
             border-radius: 10px;
             padding: 40px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
         }
-
-        .upload-area:hover {
+        .upload-portada:hover {
             border-color: #f0c14b;
             background: rgba(212, 175, 55, 0.1);
         }
-
-        .upload-area.dragover {
-            background: rgba(212, 175, 55, 0.2);
-            border-color: #f0c14b;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .file-list {
-            margin-top: 20px;
+        #fileInput { display: none; }
+        .preview-portada {
+            max-width: 300px;
             max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .file-item {
-            background: rgba(255,255,255,0.1);
-            padding: 10px;
-            margin-bottom: 10px;
+            margin: 15px auto;
             border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: none;
+            border: 2px solid #d4af37;
         }
-
-        .btn-eliminar {
-            background: #dc2626;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
+        .precio-container {
+            display: none;
+            margin-top: 15px;
         }
-
-        .btn-eliminar:hover {
-            background: #b91c1c;
-        }
-
+        .precio-container.active { display: block; }
         .btn-subir {
             width: 100%;
             padding: 15px;
@@ -155,88 +102,64 @@
             cursor: pointer;
             margin-top: 20px;
         }
-
-        .btn-subir:hover {
-            background: #f0c14b;
-        }
-
+        .btn-subir:hover { background: #f0c14b; }
         .btn-subir:disabled {
             background: #666;
             cursor: not-allowed;
         }
-
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #d4af37, #f0c14b);
-            width: 0%;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1a1a1a;
-            font-weight: bold;
-        }
-
-        .status-message {
-            margin-top: 20px;
+        .info-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
             padding: 15px;
             border-radius: 5px;
-            display: none;
+            margin-bottom: 20px;
         }
-
-        .status-message.success {
+        .info-box h3 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+        .info-box p {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+        .status { display: none; margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .status.success {
             background: rgba(16, 185, 129, 0.2);
             border: 1px solid #10b981;
             color: #10b981;
         }
-
-        .status-message.error {
+        .status.error {
             background: rgba(220, 38, 38, 0.2);
             border: 1px solid #dc2626;
             color: #fca5a5;
-        }
-
-        .preview-portada {
-            max-width: 300px;
-            max-height: 300px;
-            margin: 15px auto;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .precio-container {
-            display: none;
-            margin-top: 15px;
-        }
-
-        .precio-container.active {
-            display: block;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
-        <h1>Subir Fotos</h1>
+        <h1>Crear Nuevo Álbum</h1>
         <a href="admin.html" class="btn-volver">← Volver al Admin</a>
     </div>
 
     <div class="container">
+        <div class="info-box">
+            <h3>📁 Cómo funciona</h3>
+            <p>
+                1. Creá una carpeta en Google Drive con el nombre del evento<br>
+                2. Subí todas las fotos a esa carpeta<br>
+                3. Clic derecho → Compartir → "Cualquier persona con el enlace"<br>
+                4. Copiá el enlace y pegalo acá abajo<br>
+                5. Elegí el método de venta
+            </p>
+        </div>
+
         <form id="uploadForm">
             <div class="form-group">
                 <label for="portadaUpload">Foto de Portada del Álbum *</label>
-                <div class="upload-area" id="uploadPortada">
-                    <p>📸 Click para seleccionar la foto de portada</p>
+                <div class="upload-portada" id="uploadPortada">
+                    <p style="font-size: 1.3em; color: #d4af37;">📸 Click para seleccionar foto de portada</p>
                     <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Esta imagen aparecerá en la galería principal</p>
                 </div>
                 <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/webp">
@@ -245,7 +168,7 @@
 
             <div class="form-group">
                 <label for="albumNombre">Nombre del Álbum *</label>
-                <input type="text" id="albumNombre" required placeholder="Ej: Carrera Nocturna 2024">
+                <input type="text" id="albumNombre" required placeholder="Ej: Maratón Nocturna 2024">
             </div>
 
             <div class="form-group">
@@ -262,7 +185,7 @@
                     placeholder="https://drive.google.com/drive/folders/..."
                 >
                 <p style="color: #999; font-size: 0.9em; margin-top: 5px;">
-                    Pegá el enlace de la carpeta de Google Drive con todas las fotos del evento
+                    Pegá el enlace de la carpeta de Google Drive
                 </p>
             </div>
 
@@ -270,9 +193,9 @@
                 <label for="albumMetodo">Método de Venta *</label>
                 <select id="albumMetodo" required onchange="mostrarPrecio()">
                     <option value="">Seleccioná un método</option>
-                    <option value="gratis">🎁 Gratis (Descarga directa)</option>
-                    <option value="cafecito">☕ Cafecito (Cliente elige precio)</option>
-                    <option value="precio_fijo">💰 Precio Fijo (Vos ponés precio)</option>
+                    <option value="gratis">🎁 Gratis (descarga directa)</option>
+                    <option value="cafecito">☕ Cafecito (cliente elige precio)</option>
+                    <option value="precio_fijo">💰 Precio Fijo (vos ponés precio)</option>
                 </select>
 
                 <div id="precioContainer" class="precio-container">
@@ -297,13 +220,11 @@
                 ></textarea>
             </div>
 
-            <button type="submit" class="btn-subir" id="btnSubir">📤 Subir Álbum</button>
+            <button type="submit" class="btn-subir" id="btnSubir">
+                📤 Crear Álbum
+            </button>
 
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill">0%</div>
-            </div>
-
-            <div class="status-message" id="statusMessage"></div>
+            <div class="status" id="statusMessage"></div>
         </form>
     </div>
 
@@ -311,7 +232,6 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        // Configuración Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
             authDomain: "rinascere-fotos.firebaseapp.com",
@@ -367,7 +287,6 @@
             }
         };
 
-        // Subir a Cloudinary
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
@@ -376,24 +295,23 @@
 
             const response = await fetch(
                 'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload',
-                {
-                    method: 'POST',
-                    body: formData
-                }
+                { method: 'POST', body: formData }
             );
 
-            if (!response.ok) throw new Error('Error al subir portada');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Error al subir portada');
+            }
             
             const data = await response.json();
             return data.secure_url;
         }
 
-        // Enviar formulario
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             if (!portadaFile) {
-                mostrarMensaje('error', 'Por favor seleccioná una foto de portada');
+                mostrarMensaje('error', '⚠️ Seleccioná una foto de portada');
                 return;
             }
 
@@ -412,20 +330,13 @@
             }
 
             document.getElementById('btnSubir').disabled = true;
-            document.getElementById('progressBar').style.display = 'block';
-            document.getElementById('statusMessage').style.display = 'none';
+            document.getElementById('btnSubir').textContent = '⏳ Subiendo portada...';
 
             try {
-                document.getElementById('progressFill').style.width = '30%';
-                document.getElementById('progressFill').textContent = '30%';
-
-                // Subir portada a Cloudinary
                 const portadaUrl = await uploadToCloudinary(portadaFile);
 
-                document.getElementById('progressFill').style.width = '60%';
-                document.getElementById('progressFill').textContent = '60%';
+                document.getElementById('btnSubir').textContent = '⏳ Creando álbum...';
 
-                // Crear álbum en Firestore
                 const albumData = {
                     nombre: nombre,
                     fecha: fecha,
@@ -441,9 +352,6 @@
 
                 await addDoc(collection(db, 'albumes'), albumData);
 
-                document.getElementById('progressFill').style.width = '100%';
-                document.getElementById('progressFill').textContent = '100%';
-
                 mostrarMensaje('success', `✓ Álbum "${nombre}" creado exitosamente`);
                 
                 setTimeout(() => {
@@ -452,8 +360,17 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                mostrarMensaje('error', 'Error al crear el álbum: ' + error.message);
+                let errorMsg = 'Error al crear el álbum';
+                
+                if (error.message.includes('upload_preset')) {
+                    errorMsg = '⚠️ Falta configurar el Upload Preset en Cloudinary';
+                } else {
+                    errorMsg = '⚠️ ' + error.message;
+                }
+                
+                mostrarMensaje('error', errorMsg);
                 document.getElementById('btnSubir').disabled = false;
+                document.getElementById('btnSubir').textContent = '📤 Crear Álbum';
             }
         });
 
@@ -464,7 +381,7 @@
 
         function mostrarMensaje(tipo, texto) {
             const statusMessage = document.getElementById('statusMessage');
-            statusMessage.className = `status-message ${tipo}`;
+            statusMessage.className = `status ${tipo}`;
             statusMessage.textContent = texto;
             statusMessage.style.display = 'block';
         }
