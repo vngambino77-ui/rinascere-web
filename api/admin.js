@@ -1,3 +1,5 @@
+// admin.js - Script actualizado para el panel de administración
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
     getFirestore, 
@@ -35,14 +37,9 @@ async function cargarEstadisticas() {
         
         let totalPublicos = 0;
         let totalPrivados = 0;
-        let totalFotos = 0;
 
         for (const albumDoc of albumesSnapshot.docs) {
             const albumData = albumDoc.data();
-            const fotosSnapshot = await getDocs(collection(db, 'albumes', albumDoc.id, 'fotos'));
-            const numFotos = fotosSnapshot.size;
-            
-            totalFotos += numFotos;
             
             if (albumData.esPublico) {
                 totalPublicos++;
@@ -55,7 +52,7 @@ async function cargarEstadisticas() {
         document.getElementById('totalAlbumes').textContent = albumesSnapshot.size;
         document.getElementById('totalPublicos').textContent = totalPublicos;
         document.getElementById('totalPrivados').textContent = totalPrivados;
-        document.getElementById('totalFotos').textContent = totalFotos;
+        document.getElementById('totalFotos').textContent = 0;
 
     } catch (error) {
         console.error('Error al cargar estadísticas:', error);
@@ -81,9 +78,8 @@ async function cargarAlbumes() {
             const album = albumDoc.data();
             const albumId = albumDoc.id;
 
-            // Contar fotos del álbum
-            const fotosSnapshot = await getDocs(collection(db, 'albumes', albumId, 'fotos'));
-            const numFotos = fotosSnapshot.size;
+            // Mostrar 0 fotos ya que usamos Google Drive
+            const numFotos = 0;
 
             // Obtener URL de portada
             const portadaUrl = album.portadaUrl || "";
