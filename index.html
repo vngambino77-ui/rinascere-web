@@ -841,7 +841,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, doc, getDoc, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -855,7 +855,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        document.addEventListener('DOMContentLoaded', cargarAlbumes);
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarAlbumes();
+            cargarFotosPortfolio();
+        });
 
         async function cargarAlbumes() {
             try {
@@ -896,6 +899,37 @@
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('albumsGrid').innerHTML = '<div class="empty-state">Error al cargar álbumes</div>';
+            }
+        }
+
+        async function cargarFotosPortfolio() {
+            try {
+                const docRef = doc(db, 'config', 'portfolio');
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Actualizar foto de perfil
+                    if (data.profileUrl) {
+                        const imgPerfil = document.querySelector('.about-image');
+                        if (imgPerfil) {
+                            imgPerfil.src = data.profileUrl;
+                        }
+                    }
+
+                    // Actualizar portfolio
+                    if (data.portfolioUrls && data.portfolioUrls.length > 0) {
+                        const portfolioItems = document.querySelectorAll('.portfolio-item img');
+                        data.portfolioUrls.forEach((url, index) => {
+                            if (portfolioItems[index]) {
+                                portfolioItems[index].src = url;
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar portfolio:', error);
             }
         }
 
