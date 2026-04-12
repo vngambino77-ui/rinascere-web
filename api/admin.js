@@ -1,5 +1,3 @@
-// admin.js - Script actualizado para el panel de administración
-
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
     getFirestore, 
@@ -13,12 +11,12 @@ import {
 
 // Configuración Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
-    authDomain: "rinascere-fotos.firebaseapp.com",
-    projectId: "rinascere-fotos",
-    storageBucket: "rinascere-fotos.firebasestorage.app",
-    messagingSenderId: "844732353699",
-    appId: "1:844732353699:web:7654d5fc2b85754a123456"
+    apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+    authDomain: "rinascere-web-2025.firebaseapp.com",
+    projectId: "rinascere-web-2025",
+    storageBucket: "rinascere-web-2025.firebasestorage.app",
+    messagingSenderId: "781300280640",
+    appId: "1:781300280640:web:34c98efa7780a8218cdea5"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -87,11 +85,8 @@ async function cargarAlbumes() {
             const fotosSnapshot = await getDocs(collection(db, 'albumes', albumId, 'fotos'));
             const numFotos = fotosSnapshot.size;
 
-            // Obtener URL de portada (primera foto)
-            let portadaUrl = '';
-            if (!fotosSnapshot.empty) {
-            let portadaUrl = album.portadaUrl || "";
-            }
+            // Obtener URL de portada
+            const portadaUrl = album.portadaUrl || "";
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -102,8 +97,8 @@ async function cargarAlbumes() {
                 <td>${album.fecha || 'Sin fecha'}</td>
                 <td>${numFotos}</td>
                 <td>
-                    <span style="background: ${album.metodo === 'cafecito' ? '#7c3aed' : '#10b981'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
-                        ${album.metodo === 'cafecito' ? '● Cafecito' : '✓ Libre'}
+                    <span style="background: ${album.metodo === 'gratis' ? '#10b981' : album.metodo === 'cafecito' ? '#f59e0b' : '#7c3aed'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
+                        ${album.metodo === 'gratis' ? '🎁 Gratis' : album.metodo === 'cafecito' ? '☕ Cafecito' : '💰 $' + (album.precio || 0)}
                     </span>
                 </td>
                 <td>
