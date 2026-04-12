@@ -1,3 +1,3 @@
-# Trigger redeploy
-# Fecha: 2026-04-11
-# Actualización: Sistema de subir álbum con Cloudinary + Google Drive
+# Forzar redeploy
+# Fecha: 2026-04-11 23:45
+# Razón: Actualizar subir.html con campo de portada
