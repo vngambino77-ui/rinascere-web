@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Fotos Portfolio - Rinascere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f5f5f5;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #d4af37;
+        }
+
+        h1 {
+            color: #d4af37;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .section {
+            background: rgba(255,255,255,0.03);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .upload-box {
+            border: 2px dashed #d4af37;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-box:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #f0c14b;
+        }
+
+        .upload-box.dragover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #f0c14b;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #d4af37;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .preview-item .remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #d4af37;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background: #f0c14b;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+
+        .status.error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid #dc2626;
+            color: #fca5a5;
+        }
+
+        .status.info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #d4af37;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .file-name {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .urls-output {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .urls-output textarea {
+            width: 100%;
+            min-height: 150px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #d4af37;
+            color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .copy-btn {
+            background: #10b981;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Subir Fotos Portfolio</h1>
+
+        <div class="info-box">
+            <h3>📋 Instrucciones:</h3>
+            <p>
+                1. <strong>Tu foto (Sobre mí):</strong> Subí 1 foto tuya<br>
+                2. <strong>Portfolio:</strong> Subí 6 fotos de tu trabajo<br>
+                3. Las fotos se subirán automáticamente a Cloudinary<br>
+                4. Al final te doy las URLs para actualizar el index.html
+            </p>
+        </div>
+
+        <!-- Foto perfil -->
+        <div class="section">
+            <h2>1️⃣ Tu Foto (Sobre mí)</h2>
+            <div class="upload-box" id="uploadProfile" onclick="document.getElementById('profileInput').click()">
+                <p style="font-size: 2em;">📸</p>
+                <p style="font-size: 1.2em; color: #d4af37;">Click o arrastrá tu foto</p>
+                <p style="color: #999; margin-top: 10px;">Formato: JPG, PNG</p>
+            </div>
+            <input type="file" id="profileInput" accept="image/jpeg,image/jpg,image/png">
+            <div class="preview-grid" id="profilePreview"></div>
+            <button class="btn" id="btnUploadProfile" style="display: none;">⬆️ Subir Foto de Perfil</button>
+            <div class="progress-bar" id="profileProgress">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="status" id="statusProfile"></div>
+        </div>
+
+        <!-- Fotos portfolio -->
+        <div class="section">
+            <h2>2️⃣ Fotos Portfolio (6 fotos)</h2>
+            <div class="upload-box" id="uploadPortfolio" onclick="document.getElementById('portfolioInput').click()">
+                <p style="font-size: 2em;">🖼️</p>
+                <p style="font-size: 1.2em; color: #d4af37;">Click o arrastrá tus fotos</p>
+                <p style="color: #999; margin-top: 10px;">Seleccioná 6 fotos · JPG, PNG</p>
+            </div>
+            <input type="file" id="portfolioInput" accept="image/jpeg,image/jpg,image/png" multiple>
+            <div class="preview-grid" id="portfolioPreview"></div>
+            <button class="btn" id="btnUploadPortfolio" style="display: none;">⬆️ Subir Fotos Portfolio</button>
+            <div class="progress-bar" id="portfolioProgress">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="status" id="statusPortfolio"></div>
+        </div>
+
+        <!-- URLs resultado -->
+        <div class="urls-output" id="urlsOutput">
+            <h3 style="color: #d4af37; margin-bottom: 15px;">✅ URLs de tus fotos:</h3>
+            <textarea id="urlsText" readonly></textarea>
+            <button class="btn copy-btn" onclick="copyUrls()">📋 Copiar URLs</button>
+            <p style="color: #10b981; margin-top: 15px; text-align: center;">
+                Mandame estas URLs y actualizo tu index.html
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload';
+        const UPLOAD_PRESET = 'rinascere_fotos';
+
+        let profileFile = null;
+        let portfolioFiles = [];
+        let uploadedUrls = {
+            profile: null,
+            portfolio: []
+        };
+
+        // ========== FOTO PERFIL ==========
+        const profileInput = document.getElementById('profileInput');
+        const profilePreview = document.getElementById('profilePreview');
+        const btnUploadProfile = document.getElementById('btnUploadProfile');
+        const uploadProfileBox = document.getElementById('uploadProfile');
+
+        profileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                profileFile = file;
+                showProfilePreview(file);
+            }
+        });
+
+        // Drag & Drop perfil
+        uploadProfileBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadProfileBox.classList.add('dragover');
+        });
+
+        uploadProfileBox.addEventListener('dragleave', () => {
+            uploadProfileBox.classList.remove('dragover');
+        });
+
+        uploadProfileBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadProfileBox.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                profileFile = file;
+                showProfilePreview(file);
+            }
+        });
+
+        function showProfilePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                profilePreview.innerHTML = `
+                    <div class="preview-item">
+                        <img src="${e.target.result}" alt="Preview">
+                        <button class="remove" onclick="removeProfile()">×</button>
+                        <div class="file-name">${file.name}</div>
+                    </div>
+                `;
+                btnUploadProfile.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.removeProfile = function() {
+            profileFile = null;
+            profilePreview.innerHTML = '';
+            btnUploadProfile.style.display = 'none';
+            profileInput.value = '';
+        };
+
+        btnUploadProfile.addEventListener('click', uploadProfile);
+
+        async function uploadProfile() {
+            if (!profileFile) return;
+
+            const formData = new FormData();
+            formData.append('file', profileFile);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            formData.append('folder', 'rinascere');
+            formData.append('public_id', 'vero-profile');
+
+            btnUploadProfile.disabled = true;
+            btnUploadProfile.textContent = '⏳ Subiendo...';
+            document.getElementById('profileProgress').style.display = 'block';
+
+            try {
+                const response = await fetch(CLOUDINARY_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Error al subir');
+
+                const data = await response.json();
+                uploadedUrls.profile = data.secure_url;
+
+                showStatus('statusProfile', 'success', '✅ Foto de perfil subida exitosamente');
+                btnUploadProfile.textContent = '✅ Subida';
+                updateUrlsOutput();
+
+            } catch (error) {
+                showStatus('statusProfile', 'error', '❌ Error: ' + error.message);
+                btnUploadProfile.disabled = false;
+                btnUploadProfile.textContent = '⬆️ Subir Foto de Perfil';
+            } finally {
+                document.getElementById('profileProgress').style.display = 'none';
+            }
+        }
+
+        // ========== FOTOS PORTFOLIO ==========
+        const portfolioInput = document.getElementById('portfolioInput');
+        const portfolioPreview = document.getElementById('portfolioPreview');
+        const btnUploadPortfolio = document.getElementById('btnUploadPortfolio');
+        const uploadPortfolioBox = document.getElementById('uploadPortfolio');
+
+        portfolioInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files).slice(0, 6);
+            if (files.length > 0) {
+                portfolioFiles = files;
+                showPortfolioPreview(files);
+            }
+        });
+
+        // Drag & Drop portfolio
+        uploadPortfolioBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadPortfolioBox.classList.add('dragover');
+        });
+
+        uploadPortfolioBox.addEventListener('dragleave', () => {
+            uploadPortfolioBox.classList.remove('dragover');
+        });
+
+        uploadPortfolioBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadPortfolioBox.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files)
+                .filter(f => f.type.startsWith('image/'))
+                .slice(0, 6);
+            if (files.length > 0) {
+                portfolioFiles = files;
+                showPortfolioPreview(files);
+            }
+        });
+
+        function showPortfolioPreview(files) {
+            portfolioPreview.innerHTML = '';
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Portfolio ${index + 1}">
+                        <button class="remove" onclick="removePortfolio(${index})">×</button>
+                        <div class="file-name">portfolio-${index + 1}.jpg</div>
+                    `;
+                    portfolioPreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+            btnUploadPortfolio.style.display = 'block';
+        }
+
+        window.removePortfolio = function(index) {
+            portfolioFiles.splice(index, 1);
+            if (portfolioFiles.length === 0) {
+                portfolioPreview.innerHTML = '';
+                btnUploadPortfolio.style.display = 'none';
+                portfolioInput.value = '';
+            } else {
+                showPortfolioPreview(portfolioFiles);
+            }
+        };
+
+        btnUploadPortfolio.addEventListener('click', uploadPortfolio);
+
+        async function uploadPortfolio() {
+            if (portfolioFiles.length === 0) return;
+
+            btnUploadPortfolio.disabled = true;
+            btnUploadPortfolio.textContent = `⏳ Subiendo 0/${portfolioFiles.length}...`;
+            document.getElementById('portfolioProgress').style.display = 'block';
+
+            uploadedUrls.portfolio = [];
+
+            try {
+                for (let i = 0; i < portfolioFiles.length; i++) {
+                    const formData = new FormData();
+                    formData.append('file', portfolioFiles[i]);
+                    formData.append('upload_preset', UPLOAD_PRESET);
+                    formData.append('folder', 'rinascere');
+                    formData.append('public_id', `portfolio-${i + 1}`);
+
+                    const response = await fetch(CLOUDINARY_URL, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error(`Error en foto ${i + 1}`);
+
+                    const data = await response.json();
+                    uploadedUrls.portfolio.push(data.secure_url);
+
+                    btnUploadPortfolio.textContent = `⏳ Subiendo ${i + 1}/${portfolioFiles.length}...`;
+                    
+                    const progress = ((i + 1) / portfolioFiles.length) * 100;
+                    document.querySelector('#portfolioProgress .progress-fill').style.width = progress + '%';
+                }
+
+                showStatus('statusPortfolio', 'success', `✅ ${portfolioFiles.length} fotos subidas exitosamente`);
+                btnUploadPortfolio.textContent = '✅ Subidas';
+                updateUrlsOutput();
+
+            } catch (error) {
+                showStatus('statusPortfolio', 'error', '❌ Error: ' + error.message);
+                btnUploadPortfolio.disabled = false;
+                btnUploadPortfolio.textContent = '⬆️ Subir Fotos Portfolio';
+            } finally {
+                document.getElementById('portfolioProgress').style.display = 'none';
+            }
+        }
+
+        // ========== UTILIDADES ==========
+        function showStatus(elementId, type, message) {
+            const status = document.getElementById(elementId);
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+
+        function updateUrlsOutput() {
+            if (!uploadedUrls.profile && uploadedUrls.portfolio.length === 0) return;
+
+            let urlsText = '=== URLs PARA TU INDEX.HTML ===\n\n';
+
+            if (uploadedUrls.profile) {
+                urlsText += `TU FOTO (Sobre mí):\n${uploadedUrls.profile}\n\n`;
+            }
+
+            if (uploadedUrls.portfolio.length > 0) {
+                urlsText += 'PORTFOLIO:\n';
+                uploadedUrls.portfolio.forEach((url, i) => {
+                    urlsText += `portfolio-${i + 1}: ${url}\n`;
+                });
+            }
+
+            document.getElementById('urlsText').value = urlsText;
+            document.getElementById('urlsOutput').style.display = 'block';
+
+            // Scroll a las URLs
+            setTimeout(() => {
+                document.getElementById('urlsOutput').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        window.copyUrls = function() {
+            const textarea = document.getElementById('urlsText');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ URLs copiadas al portapapeles');
+        };
+    </script>
+</body>
+</html>
