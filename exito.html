@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Exitoso - Ph. Rinascere</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 60px 40px;
+            border-radius: 20px;
+            border: 2px solid #d4af37;
+        }
+        .icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #d4af37;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #ccc;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #d4af37;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px;
+        }
+        .btn:hover {
+            background: #f0c14b;
+            transform: scale(1.05);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #d4af37;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✅</div>
+        <h1>¡Pago Exitoso!</h1>
+        <p>
+            Gracias por tu compra ✨<br>
+            Ya podés acceder a las fotos del evento desde Google Drive
+        </p>
+        <a href="#" id="btnDrive" class="btn">📁 Ir a Google Drive</a>
+        <a href="index.html" class="btn btn-secondary">← Volver al inicio</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCikmYa4r3LwdWDUZX9_RL9lx_EqGUF1Bg",
+            authDomain: "rinascere-fotos.firebaseapp.com",
+            projectId: "rinascere-fotos",
+            storageBucket: "rinascere-fotos.firebasestorage.app",
+            messagingSenderId: "844732353699",
+            appId: "1:844732353699:web:7654d5fc2b85754a123456"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const albumId = urlParams.get('album');
+
+        if (albumId) {
+            cargarAlbum(albumId);
+        }
+
+        async function cargarAlbum(albumId) {
+            try {
+                const albumDoc = await getDoc(doc(db, 'albumes', albumId));
+                
+                if (albumDoc.exists()) {
+                    const albumData = albumDoc.data();
+                    if (albumData.driveLink) {
+                        document.getElementById('btnDrive').href = albumData.driveLink;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
