@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ph. Rinascere Fotografías - Momentos que no vuelven, pero quedan para siempre">
+    <title>Ph. Rinascere Fotografías — by Verónica Gambino</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere/favicon.ico">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dorado: #c9a961;
+            --crema: #f5f3f0;
+            --negro: #2c2c2c;
+            --gris: #666;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background-color: var(--crema);
+            color: var(--negro);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            height: 60px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--negro);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--dorado);
+        }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+                        url('https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere/hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--dorado);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: var(--dorado);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #b08850;
+        }
+
+        /* SECTIONS */
+        section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--dorado);
+            text-align: center;
+        }
+
+        /* BÚSQUEDA DORSAL */
+        .busqueda {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .busqueda input {
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid var(--dorado);
+            border-radius: 5px;
+            width: 300px;
+            margin-right: 1rem;
+        }
+
+        /* ÁLBUMES */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .album-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .album-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .album-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .album-info {
+            padding: 1.5rem;
+        }
+
+        .album-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--negro);
+        }
+
+        .album-date {
+            color: var(--gris);
+            margin-bottom: 1rem;
+        }
+
+        .album-precio {
+            background: var(--dorado);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--gris);
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--negro);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .albums-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere/logo.png" alt="Ph. Rinascere" class="logo">
+            <ul>
+                <li><a href="#albumes">Álbumes</a></li>
+                <li><a href="#reservas">Reservar</a></li>
+                <li><a href="#sobre-mi">Sobre mí</a></li>
+                <li><a href="https://wa.me/542966346212">💬 WhatsApp</a></li>
+                <li><a href="login.html">⚙️ Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <h1>Ph. Rinascere Fotografías</h1>
+        <p>Hay momentos que no vuelven… pero pueden quedarse para siempre</p>
+        <a href="#albumes" class="btn">📷 Ver álbumes</a>
+        <a href="#reservas" class="btn">📅 Reservar sesión</a>
+    </div>
+
+    <section id="buscar">
+        <h2>Buscá tu foto</h2>
+        <div class="busqueda">
+            <p>Ingresá tu número de dorsal para encontrar tus imágenes del evento</p>
+            <input type="number" id="dorsalInput" placeholder="Ej: 1234">
+            <button class="btn" onclick="buscarPorDorsal()">🔍 Buscar</button>
+        </div>
+    </section>
+
+    <section id="albumes">
+        <h2>Álbumes recientes</h2>
+        <p style="text-align: center; color: var(--gris); margin-bottom: 2rem;">
+            Descubrí los momentos que hemos capturado para vos
+        </p>
+        <div id="albumsGrid" class="albums-grid">
+            <div class="loading">Cargando álbumes...</div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere/logo.png" alt="Logo" class="footer-logo">
+            <p>&copy; 2025 Ph. Rinascere Fotografías — por Verónica Gambino</p>
+            <p>📍 Río Gallegos · Toda la región patagónica</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function cargarAlbumes() {
+            const grid = document.getElementById('albumsGrid');
+
+            try {
+                const q = query(
+                    collection(db, 'albumes'),
+                    where('esPublico', '==', true),
+                    orderBy('fecha', 'desc')
+                );
+                
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    grid.innerHTML = '<div class="loading">No hay álbumes públicos disponibles</div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+
+                snapshot.forEach(doc => {
+                    const album = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'album-card';
+                    card.onclick = () => window.location.href = `album.html?id=${doc.id}`;
+                    
+                    let precioTexto = 'Gratis';
+                    if (album.metodo === 'cafecito') precioTexto = '☕ Vale un cafecito';
+                    if (album.metodo === 'precio_fijo') precioTexto = `$${album.precio}`;
+                    
+                    card.innerHTML = `
+                        <img src="${album.portadaUrl || 'https://via.placeholder.com/300x250'}" 
+                             alt="${album.nombre}" 
+                             class="album-img"
+                             onerror="this.src='https://via.placeholder.com/300x250?text=Sin+Imagen'">
+                        <div class="album-info">
+                            <div class="album-title">${album.nombre}</div>
+                            <div class="album-date">📅 ${album.fecha}</div>
+                            <span class="album-precio">${precioTexto}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                grid.innerHTML = '<div class="loading">Error al cargar álbumes. Intentá de nuevo.</div>';
+            }
+        }
+
+        window.buscarPorDorsal = function() {
+            const dorsal = document.getElementById('dorsalInput').value;
+            if (dorsal) {
+                window.location.href = `buscar.html?dorsal=${dorsal}`;
+            }
+        }
+
+        cargarAlbumes();
+    </script>
+</body>
+</html>
