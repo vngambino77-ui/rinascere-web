@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Ph. Rinascere</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-bottom: 2px solid #d4af37;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #d4af37;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #d4af37;
+            color: #1a1a1a;
+        }
+
+        .btn-primary:hover {
+            background: #f0c14b;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            color: #d4af37;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #d4af37;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .table-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .btn-ver, .btn-qr, .btn-cobro, .btn-eliminar {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ver {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-ver:hover {
+            background: #059669;
+        }
+
+        .btn-qr {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-qr:hover {
+            background: #2563eb;
+        }
+
+        .btn-cobro {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-cobro:hover {
+            background: #d97706;
+        }
+
+        .btn-eliminar {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-eliminar:hover {
+            background: #b91c1c;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.3em;
+            color: #d4af37;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
+        <h1>Panel de Administración</h1>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="nuevoAlbum()">+ Nuevo Álbum</button>
+            <a href="index.html" class="btn btn-secondary">← Volver al sitio</a>
+            <button class="btn btn-secondary" onclick="cerrarSesion()">Salir</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total de Álbumes</div>
+                <div class="stat-number" id="totalAlbumes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Álbumes Públicos</div>
+                <div class="stat-number" id="totalPublicos">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Álbumes Privados</div>
+                <div class="stat-number" id="totalPrivados">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total de Fotos</div>
+                <div class="stat-number" id="totalFotos">0</div>
+            </div>
+        </div>
+
+        <!-- Lista de álbumes -->
+        <h2 class="section-title">Álbumes</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Portada</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Fotos</th>
+                        <th>Método</th>
+                        <th>Cobro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="albumesTableBody">
+                    <tr>
+                        <td colspan="7" class="loading">Cargando álbumes</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, orderBy, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarEstadisticas();
+            await cargarAlbumes();
+        });
+
+        async function cargarEstadisticas() {
+            try {
+                const snapshot = await getDocs(collection(db, 'albumes'));
+                
+                let publicos = 0;
+                let privados = 0;
+
+                snapshot.forEach(doc => {
+                    if (doc.data().esPublico) publicos++;
+                    else privados++;
+                });
+
+                document.getElementById('totalAlbumes').textContent = snapshot.size;
+                document.getElementById('totalPublicos').textContent = publicos;
+                document.getElementById('totalPrivados').textContent = privados;
+                document.getElementById('totalFotos').textContent = 0;
+
+            } catch (error) {
+                console.error('Error estadísticas:', error);
+            }
+        }
+
+        async function cargarAlbumes() {
+            const tbody = document.getElementById('albumesTableBody');
+            
+            try {
+                const q = query(collection(db, 'albumes'), orderBy('fecha', 'desc'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No hay álbumes creados</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+
+                snapshot.forEach(docSnap => {
+                    const album = docSnap.data();
+                    const id = docSnap.id;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            ${album.portadaUrl ? `<img src="${album.portadaUrl}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">` : '<div style="width: 60px; height: 60px; background: #333; border-radius: 5px;"></div>'}
+                        </td>
+                        <td>${album.nombre || 'Sin nombre'}</td>
+                        <td>${album.fecha || '-'}</td>
+                        <td>0</td>
+                        <td>
+                            <span style="background: ${album.metodo === 'gratis' ? '#10b981' : album.metodo === 'cafecito' ? '#f59e0b' : '#7c3aed'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
+                                ${album.metodo === 'gratis' ? '🎁 Gratis' : album.metodo === 'cafecito' ? '☕ Cafecito' : '💰 $' + (album.precio || 0)}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="color: #f59e0b;">⏳ Pendiente</span>
+                        </td>
+                        <td>
+                            <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                👁️ Ver
+                            </button>
+                            <button onclick="eliminarAlbum('${id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🗑️
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Error cargar álbumes:', error);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: #dc2626;">Error: ${error.message}</td></tr>`;
+            }
+        }
+
+        window.verAlbum = function(id) {
+            window.location.href = `evento.html?album=${id}`;
+        };
+
+        window.eliminarAlbum = async function(id) {
+            if (!confirm('¿Eliminar este álbum?')) return;
+            
+            try {
+                await deleteDoc(doc(db, 'albumes', id));
+                alert('Álbum eliminado');
+                location.reload();
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        };
+    </script>
+    <script>
+        // Función para botón Nuevo Álbum
+        function nuevoAlbum() {
+            window.location.href = 'subir.html';
+        }
+    </script>
+</body>
+</html>
