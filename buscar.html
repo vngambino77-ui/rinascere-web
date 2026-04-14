@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Fotos - Ph. Rinascere</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px 20px;
+            padding: 60px 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 2px solid #d4af37;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #d4af37;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #ccc;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            font-size: 1.3em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #f0c14b;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-search {
+            width: 100%;
+            padding: 18px;
+            background: #d4af37;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-search:hover {
+            background: #f0c14b;
+            transform: scale(1.05);
+        }
+
+        .btn-search:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .album-select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .album-select:focus {
+            outline: none;
+            border-color: #f0c14b;
+        }
+
+        .btn-home {
+            display: inline-block;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.1);
+            color: #d4af37;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-home:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #d4af37;
+        }
+
+        .loading {
+            color: #d4af37;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .help-text {
+            font-size: 0.95em;
+            color: #999;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
+        
+        <h1>Buscá tus fotos</h1>
+        <p class="subtitle">Ingresá tu número de dorsal para ver tus imágenes del evento</p>
+
+        <div class="search-box">
+            <label for="albumSelect">Seleccioná el evento</label>
+            <select id="albumSelect" class="album-select">
+                <option value="">Cargando eventos...</option>
+            </select>
+
+            <label for="dorsalInput">Número de dorsal</label>
+            <input 
+                type="text" 
+                id="dorsalInput" 
+                placeholder="Ej: 123" 
+                maxlength="5"
+                onkeypress="return /[0-9]/.test(event.key)"
+            >
+
+            <button class="btn-search" onclick="buscar()" id="btnSearch" disabled>
+                🔍 Buscar mis fotos
+            </button>
+        </div>
+
+        <p class="help-text">
+            💡 <strong>Tip:</strong> Tu número de dorsal aparece en tu pechera o chip de carrera
+        </p>
+
+        <a href="index.html" class="btn-home">← Volver al inicio</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let albumes = [];
+
+        // Cargar álbumes al iniciar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarAlbumes();
+        });
+
+        async function cargarAlbumes() {
+            try {
+                const q = query(
+                    collection(db, 'albumes'),
+                    where('esPublico', '==', true)
+                );
+                
+                const snapshot = await getDocs(q);
+                const select = document.getElementById('albumSelect');
+                
+                albumes = [];
+                select.innerHTML = '<option value="">Seleccioná un evento</option>';
+
+                snapshot.forEach(doc => {
+                    const album = { id: doc.id, ...doc.data() };
+                    albumes.push(album);
+                    
+                    const option = document.createElement('option');
+                    option.value = album.id;
+                    option.textContent = `${album.nombre} - ${album.fecha}`;
+                    select.appendChild(option);
+                });
+
+                if (albumes.length === 0) {
+                    select.innerHTML = '<option value="">No hay eventos disponibles</option>';
+                } else {
+                    document.getElementById('btnSearch').disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error al cargar álbumes:', error);
+                document.getElementById('albumSelect').innerHTML = '<option value="">Error al cargar eventos</option>';
+            }
+        }
+
+        window.buscar = function() {
+            const albumId = document.getElementById('albumSelect').value;
+            const dorsal = document.getElementById('dorsalInput').value.trim();
+
+            if (!albumId) {
+                alert('Por favor seleccioná un evento');
+                return;
+            }
+
+            if (!dorsal) {
+                alert('Por favor ingresá tu número de dorsal');
+                return;
+            }
+
+            // Redirigir a evento.html con filtro de dorsal
+            window.location.href = `evento.html?album=${albumId}&dorsal=${dorsal}`;
+        };
+
+        // Permitir buscar con Enter
+        document.getElementById('dorsalInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                buscar();
+            }
+        });
+    </script>
+</body>
+</html>
