@@ -301,7 +301,7 @@
 
         async function procesarPago(precio, metodoPago) {
             try {
-                const response = await fetch('/api/crear-preferencia', {
+                const response = await fetch('/.netlify/functions/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
