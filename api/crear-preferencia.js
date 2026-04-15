@@ -1,33 +1,53 @@
-const fetch = require('node-fetch');
+exports.handler = async function(event, context) {
+    // CORS headers
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    };
 
-module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+    // Handle OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
     }
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Método no permitido' });
-    }
-
-    const { titulo, precio, albumId, metodoPago } = req.body;
-
-    if (!titulo || !precio) {
-        return res.status(400).json({ error: 'Faltan datos' });
-    }
-
-    const MERCADOPAGO_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-
-    if (!MERCADOPAGO_TOKEN) {
-        return res.status(500).json({ error: 'Token no configurado' });
+    // Only allow POST
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Método no permitido' })
+        };
     }
 
     try {
+        const { titulo, precio, albumId } = JSON.parse(event.body);
+
+        if (!titulo || !precio) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Faltan datos requeridos' })
+            };
+        }
+
+        const MERCADOPAGO_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+        if (!MERCADOPAGO_TOKEN) {
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Token no configurado' })
+            };
+        }
+
+        // Detectar URL base
+        const siteUrl = process.env.URL || 'https://rinascere-web-nwt9.vercel.app';
+
         const preference = {
             items: [{
                 title: titulo,
@@ -36,9 +56,9 @@ module.exports = async (req, res) => {
                 currency_id: 'ARS'
             }],
             back_urls: {
-                success: `https://rinascere-web-nwt9.vercel.app/exito.html?album=${albumId}`,
-                failure: `https://rinascere-web-nwt9.vercel.app/evento.html?album=${albumId}`,
-                pending: `https://rinascere-web-nwt9.vercel.app/evento.html?album=${albumId}`
+                success: `${siteUrl}/exito.html?album=${albumId}`,
+                failure: `${siteUrl}/evento.html?album=${albumId}`,
+                pending: `${siteUrl}/evento.html?album=${albumId}`
             },
             auto_return: 'approved',
             external_reference: albumId
@@ -56,14 +76,26 @@ module.exports = async (req, res) => {
         const data = await response.json();
 
         if (data.init_point) {
-            return res.status(200).json({ init_point: data.init_point });
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ init_point: data.init_point })
+            };
         } else {
             console.error('Error MP:', data);
-            return res.status(500).json({ error: 'Error al crear preferencia' });
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Error al crear preferencia', details: data })
+            };
         }
 
     } catch (error) {
         console.error('Error:', error);
-        return res.status(500).json({ error: error.message });
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: error.message })
+        };
     }
 };
