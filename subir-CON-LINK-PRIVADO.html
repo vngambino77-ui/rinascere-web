@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Fotos - Ph. Rinascere</title>
+    <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-bottom: 2px solid #d4af37;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { height: 50px; }
+        h1 { font-size: 2em; color: #d4af37; }
+        .btn-volver {
+            background: #d4af37;
+            color: #1a1a1a;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .btn-volver:hover { background: #f0c14b; }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 2px solid #d4af37;
+        }
+        .form-group { margin-bottom: 25px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d4af37;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            font-size: 1em;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #f0c14b;
+            background: rgba(255,255,255,0.15);
+        }
+        .precio-container { display: none; margin-top: 15px; }
+        .precio-container.active { display: block; }
+        .btn-subir {
+            width: 100%;
+            padding: 15px;
+            background: #d4af37;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-subir:hover { background: #f0c14b; }
+        .btn-subir:disabled { background: #666; cursor: not-allowed; }
+        .info-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 { color: #d4af37; margin-bottom: 10px; }
+        .info-box p { color: #ccc; line-height: 1.6; font-size: 0.95em; }
+        .status { display: none; margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            white-space: pre-line;
+        }
+        .status.error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid #dc2626;
+            color: #fca5a5;
+        }
+        .link-privado {
+            background: rgba(212, 175, 55, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 2px solid #d4af37;
+        }
+        .link-privado h4 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+        .link-privado input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #d4af37;
+            color: #fff;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .btn-copiar {
+            background: #d4af37;
+            color: #1a1a1a;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .btn-copiar:hover {
+            background: #f0c14b;
+        }
+        .help-text {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .preview-portada {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
+        <h1>Subir Fotos</h1>
+        <a href="admin.html" class="btn-volver">← Volver al Admin</a>
+    </div>
+
+    <div class="container">
+        <div class="info-box">
+            <h3>📁 Cómo subir fotos desde Google Drive</h3>
+            <p>
+                <strong>Portada:</strong> Subí 1 foto a Drive → Click derecho → "Obtener enlace" → Copiar<br>
+                <strong>Álbum:</strong> Creá carpeta con todas las fotos → Compartir como pública → Copiar enlace
+            </p>
+        </div>
+
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="portadaUrl">Link de Portada (Google Drive) *</label>
+                <input 
+                    type="url" 
+                    id="portadaUrl" 
+                    required 
+                    placeholder="https://drive.google.com/file/d/..."
+                    oninput="previsualizarPortada()"
+                >
+                <img id="portadaPreview" class="preview-portada">
+                <p class="help-text">Pegá el enlace de la foto de portada</p>
+            </div>
+
+            <div class="form-group">
+                <label for="albumNombre">Nombre del Álbum *</label>
+                <input type="text" id="albumNombre" required placeholder="Ej: Maratón 2024">
+            </div>
+
+            <div class="form-group">
+                <label for="albumFecha">Fecha *</label>
+                <input type="date" id="albumFecha" required>
+            </div>
+
+            <div class="form-group">
+                <label for="driveLink">Link Carpeta Drive (Álbum Completo) *</label>
+                <input 
+                    type="url" 
+                    id="driveLink" 
+                    required 
+                    placeholder="https://drive.google.com/drive/folders/..."
+                >
+                <p class="help-text">Carpeta con todas las fotos</p>
+            </div>
+
+            <div class="form-group">
+                <label for="albumMetodo">Método de Venta *</label>
+                <select id="albumMetodo" required onchange="mostrarPrecio()">
+                    <option value="">Seleccionar</option>
+                    <option value="gratis">🎁 Gratis</option>
+                    <option value="cafecito">☕ Cafecito</option>
+                    <option value="precio_fijo">💰 Precio Fijo</option>
+                    <option value="pack_fotos">📦 Packs</option>
+                </select>
+
+                <div id="precioContainer" class="precio-container">
+                    <label for="albumPrecio">Precio (ARS) *</label>
+                    <input type="number" id="albumPrecio" placeholder="3000" min="100" step="100">
+                    <p class="help-text" id="precioHelp"></p>
+                </div>
+
+                <div id="packsContainer" class="precio-container">
+                    <p style="color: #d4af37; margin-bottom: 15px; font-weight: bold;">Configurá 2 packs:</p>
+                    
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px;">
+                        <p style="color: #d4af37; margin-bottom: 8px;">📦 Pack 1</p>
+                        <input type="text" id="pack1Nombre" placeholder="Nombre" value="Básico" style="width: 100%; margin-bottom: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="number" id="pack1Cantidad" placeholder="Cantidad" value="10" min="1">
+                            <input type="number" id="pack1Precio" placeholder="Precio" value="5000" min="100" step="100">
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px;">
+                        <p style="color: #d4af37; margin-bottom: 8px;">📦 Pack 2</p>
+                        <input type="text" id="pack2Nombre" placeholder="Nombre" value="Premium" style="width: 100%; margin-bottom: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="number" id="pack2Cantidad" placeholder="Cantidad" value="20" min="1">
+                            <input type="number" id="pack2Precio" placeholder="Precio" value="10000" min="100" step="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="albumVisibilidad">Visibilidad *</label>
+                <select id="albumVisibilidad" required>
+                    <option value="true">👁️ Público</option>
+                    <option value="false">🔒 Privado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="albumDescripcion">Descripción (opcional)</label>
+                <textarea id="albumDescripcion" rows="3" placeholder="Opcional..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-subir" id="btnSubir">📤 Crear Álbum</button>
+            <div class="status" id="statusMessage"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function mostrarMensaje(tipo, mensaje) {
+            const status = document.getElementById('statusMessage');
+            status.className = 'status ' + tipo;
+            status.textContent = mensaje;
+            status.style.display = 'block';
+        }
+
+        function convertirDriveUrl(url) {
+            const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/);
+            if (fileIdMatch) {
+                return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+            }
+            return url;
+        }
+
+        window.previsualizarPortada = function() {
+            const url = document.getElementById('portadaUrl').value;
+            if (url) {
+                const preview = document.getElementById('portadaPreview');
+                preview.src = convertirDriveUrl(url);
+                preview.style.display = 'block';
+                preview.onerror = () => preview.style.display = 'none';
+            }
+        };
+
+        window.mostrarPrecio = function() {
+            const metodo = document.getElementById('albumMetodo').value;
+            const precioContainer = document.getElementById('precioContainer');
+            const packsContainer = document.getElementById('packsContainer');
+            const precioInput = document.getElementById('albumPrecio');
+            const precioHelp = document.getElementById('precioHelp');
+
+            precioContainer.classList.remove('active');
+            packsContainer.classList.remove('active');
+
+            if (metodo === 'cafecito') {
+                precioContainer.classList.add('active');
+                precioInput.required = true;
+                precioHelp.textContent = 'Monto mínimo';
+            } else if (metodo === 'precio_fijo') {
+                precioContainer.classList.add('active');
+                precioInput.required = true;
+                precioHelp.textContent = 'Precio total';
+            } else if (metodo === 'pack_fotos') {
+                packsContainer.classList.add('active');
+                precioInput.required = false;
+            } else {
+                precioInput.required = false;
+            }
+        };
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const portadaUrl = document.getElementById('portadaUrl').value;
+            const nombre = document.getElementById('albumNombre').value;
+            const fecha = document.getElementById('albumFecha').value;
+            const driveLink = document.getElementById('driveLink').value;
+            const metodo = document.getElementById('albumMetodo').value;
+            const precio = document.getElementById('albumPrecio').value;
+            const descripcion = document.getElementById('albumDescripcion').value;
+            const esPublico = document.getElementById('albumVisibilidad').value === 'true';
+
+            const folderId = driveLink.match(/folders\/([a-zA-Z0-9_-]+)/)?.[1];
+            
+            if (!folderId) {
+                mostrarMensaje('error', 'Link de carpeta Drive inválido');
+                return;
+            }
+
+            document.getElementById('btnSubir').disabled = true;
+            mostrarMensaje('success', 'Creando álbum...');
+
+            try {
+                const albumData = {
+                    nombre,
+                    fecha,
+                    descripcion: descripcion || '',
+                    metodo,
+                    portadaUrl: convertirDriveUrl(portadaUrl),
+                    driveFolderId: folderId,
+                    driveLink: `https://drive.google.com/drive/folders/${folderId}`,
+                    esPublico: esPublico,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (metodo === 'pack_fotos') {
+                    albumData.packs = [
+                        {
+                            nombre: document.getElementById('pack1Nombre').value,
+                            cantidad: Number(document.getElementById('pack1Cantidad').value),
+                            precio: Number(document.getElementById('pack1Precio').value)
+                        },
+                        {
+                            nombre: document.getElementById('pack2Nombre').value,
+                            cantidad: Number(document.getElementById('pack2Cantidad').value),
+                            precio: Number(document.getElementById('pack2Precio').value)
+                        }
+                    ];
+                } else if (metodo !== 'gratis') {
+                    albumData.precio = Number(precio);
+                } else {
+                    albumData.precio = 0;
+                }
+
+                const docRef = await addDoc(collection(db, 'albumes'), albumData);
+
+                if (!esPublico) {
+                    // Si es privado, mostrar link para copiar
+                    const linkPrivado = `${window.location.origin}/evento.html?album=${docRef.id}`;
+                    
+                    const statusDiv = document.getElementById('statusMessage');
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        <h3 style="color: #10b981; margin-bottom: 15px;">✓ Álbum Privado Creado</h3>
+                        <div class="link-privado">
+                            <h4>🔒 Link Privado (copiá y enviá a tus clientes):</h4>
+                            <input type="text" value="${linkPrivado}" id="linkPrivadoInput" readonly onclick="this.select()">
+                            <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link</button>
+                            <p style="color: #999; font-size: 0.9em; margin-top: 10px;">
+                                Este álbum NO aparece en el home público. Solo accesible con este link.
+                            </p>
+                        </div>
+                        <button class="btn-copiar" onclick="window.location.href='admin.html'" style="width: 100%; margin-top: 15px;">
+                            ← Volver al Admin
+                        </button>
+                    `;
+                    statusDiv.style.display = 'block';
+                    
+                    // Función copiar
+                    window.copiarLink = function() {
+                        const input = document.getElementById('linkPrivadoInput');
+                        input.select();
+                        navigator.clipboard.writeText(linkPrivado);
+                        alert('✓ Link copiado al portapapeles');
+                    };
+                    
+                    document.getElementById('btnSubir').style.display = 'none';
+                } else {
+                    mostrarMensaje('success', `✓ Álbum público creado`);
+                    setTimeout(() => window.location.href = 'admin.html', 1500);
+                }
+
+            } catch (error) {
+                mostrarMensaje('error', 'Error: ' + error.message);
+                document.getElementById('btnSubir').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
