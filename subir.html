@@ -180,88 +180,55 @@
                     <option value="gratis">🎁 Gratis</option>
                     <option value="cafecito">☕ Cafecito (cliente elige)</option>
                     <option value="precio_fijo">💰 Precio Fijo</option>
-                    <option value="pack_fotos">📦 Packs de Fotos (3 opciones)</option>
+                    <option value="pack_fotos">📦 Packs de Fotos</option>
                 </select>
 
-                <!-- PRECIO SIMPLE (cafecito / precio_fijo) -->
+                <!-- PRECIO SIMPLE -->
                 <div id="precioContainer" class="precio-container">
                     <label for="albumPrecio">Precio (ARS) *</label>
                     <input type="number" id="albumPrecio" placeholder="3000" min="100" step="100">
                     <p style="color: #999; font-size: 0.9em; margin-top: 5px;" id="precioHelp"></p>
                 </div>
 
-                <!-- CONFIGURACIÓN DE PACKS -->
+                <!-- PACKS -->
                 <div id="packsContainer" class="precio-container">
-                    <h3 style="color: #d4af37; margin: 20px 0 15px;">Configurá los 3 packs:</h3>
+                    <p style="color: #d4af37; margin-bottom: 15px; font-weight: bold;">Configurá 3 packs:</p>
                     
-                    <!-- PACK 1 -->
-                    <div style="background: rgba(212,175,55,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d4af37; margin-bottom: 10px;">📦 Pack 1</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label for="pack1Nombre" style="font-size: 0.9em;">Nombre del pack</label>
-                                <input type="text" id="pack1Nombre" placeholder="Ej: Básico" style="margin-top: 5px;">
-                            </div>
-                            <div>
-                                <label for="pack1Cantidad" style="font-size: 0.9em;">Cantidad de fotos</label>
-                                <input type="number" id="pack1Cantidad" placeholder="10" min="1" style="margin-top: 5px;">
-                            </div>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <label for="pack1Precio" style="font-size: 0.9em;">Precio (ARS)</label>
-                            <input type="number" id="pack1Precio" placeholder="5000" min="100" step="100" style="margin-top: 5px;">
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
+                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 1</p>
+                        <input type="text" id="pack1Nombre" placeholder="Nombre (ej: Básico)" value="Básico" style="width: 100%; margin-bottom: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="number" id="pack1Cantidad" placeholder="Cantidad" value="10" min="1">
+                            <input type="number" id="pack1Precio" placeholder="Precio" value="5000" min="100" step="100">
                         </div>
                     </div>
 
-                    <!-- PACK 2 -->
-                    <div style="background: rgba(212,175,55,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d4af37; margin-bottom: 10px;">📦 Pack 2</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label for="pack2Nombre" style="font-size: 0.9em;">Nombre del pack</label>
-                                <input type="text" id="pack2Nombre" placeholder="Ej: Estándar" style="margin-top: 5px;">
-                            </div>
-                            <div>
-                                <label for="pack2Cantidad" style="font-size: 0.9em;">Cantidad de fotos</label>
-                                <input type="number" id="pack2Cantidad" placeholder="20" min="1" style="margin-top: 5px;">
-                            </div>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <label for="pack2Precio" style="font-size: 0.9em;">Precio (ARS)</label>
-                            <input type="number" id="pack2Precio" placeholder="9000" min="100" step="100" style="margin-top: 5px;">
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
+                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 2</p>
+                        <input type="text" id="pack2Nombre" placeholder="Nombre (ej: Estándar)" value="Estándar" style="width: 100%; margin-bottom: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="number" id="pack2Cantidad" placeholder="Cantidad" value="20" min="1">
+                            <input type="number" id="pack2Precio" placeholder="Precio" value="9000" min="100" step="100">
                         </div>
                     </div>
 
-                    <!-- PACK 3 -->
-                    <div style="background: rgba(212,175,55,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d4af37; margin-bottom: 10px;">📦 Pack 3</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label for="pack3Nombre" style="font-size: 0.9em;">Nombre del pack</label>
-                                <input type="text" id="pack3Nombre" placeholder="Ej: Premium" style="margin-top: 5px;">
-                            </div>
-                            <div>
-                                <label for="pack3Cantidad" style="font-size: 0.9em;">Cantidad de fotos</label>
-                                <input type="number" id="pack3Cantidad" placeholder="30" min="1" style="margin-top: 5px;">
-                            </div>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <label for="pack3Precio" style="font-size: 0.9em;">Precio (ARS)</label>
-                            <input type="number" id="pack3Precio" placeholder="13000" min="100" step="100" style="margin-top: 5px;">
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
+                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 3</p>
+                        <input type="text" id="pack3Nombre" placeholder="Nombre (ej: Premium)" value="Premium" style="width: 100%; margin-bottom: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="number" id="pack3Cantidad" placeholder="Cantidad" value="30" min="1">
+                            <input type="number" id="pack3Precio" placeholder="Precio" value="13000" min="100" step="100">
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="albumVisibilidad">Visibilidad del Álbum *</label>
+                <label for="albumVisibilidad">Visibilidad *</label>
                 <select id="albumVisibilidad" required>
-                    <option value="true">👁️ Público (aparece en la lista del home)</option>
-                    <option value="false">🔒 Privado (solo accesible con link directo)</option>
+                    <option value="true">👁️ Público (aparece en el home)</option>
+                    <option value="false">🔒 Privado (solo con link directo)</option>
                 </select>
-                <p style="color: #999; font-size: 0.9em; margin-top: 5px;">
-                    Los álbumes privados se ven en el home con un candado 🔒 pero NO se pueden abrir sin el link
-                </p>
             </div>
 
             <div class="form-group">
@@ -317,28 +284,23 @@
             const precioInput = document.getElementById('albumPrecio');
             const precioHelp = document.getElementById('precioHelp');
 
-            // Ocultar ambos contenedores primero
+            // Ocultar ambos
             precioContainer.classList.remove('active');
-            packsContainer.classList.remove('active');
+            if (packsContainer) packsContainer.classList.remove('active');
 
             if (metodo === 'cafecito') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
-                precioHelp.textContent = 'Monto mínimo sugerido (cliente debe pagar al menos esto)';
+                precioHelp.textContent = 'Monto mínimo sugerido';
             } else if (metodo === 'precio_fijo') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
                 precioHelp.textContent = 'Precio fijo del álbum completo';
             } else if (metodo === 'pack_fotos') {
-                packsContainer.classList.add('active');
+                if (packsContainer) packsContainer.classList.add('active');
                 precioInput.required = false;
-                // Hacer requeridos los campos de packs
-                ['pack1Nombre', 'pack1Cantidad', 'pack1Precio',
-                 'pack2Nombre', 'pack2Cantidad', 'pack2Precio',
-                 'pack3Nombre', 'pack3Cantidad', 'pack3Precio'].forEach(id => {
-                    document.getElementById(id).required = true;
-                });
             } else {
+                precioContainer.classList.remove('active');
                 precioInput.required = false;
             }
         };
@@ -401,9 +363,8 @@
                     createdAt: new Date().toISOString()
                 };
 
-                // Agregar precio según método
+                // Agregar precio o packs según método
                 if (metodo === 'pack_fotos') {
-                    // Guardar los 3 packs
                     albumData.packs = [
                         {
                             nombre: document.getElementById('pack1Nombre').value,
@@ -423,11 +384,17 @@
                     ];
                 } else if (metodo !== 'gratis') {
                     albumData.precio = Number(precio);
+                } else {
+                    albumData.precio = 0;
                 }
 
                 await addDoc(collection(db, 'albumes'), albumData);
+                    driveLink: `https://drive.google.com/drive/folders/${folderId}`,
+                    esPublico: true,
+                    createdAt: new Date().toISOString()
+                });
 
-                mostrarMensaje('success', `✓ Álbum "${nombre}" creado ${esPublico ? '(Público)' : '(Privado 🔒)'}`);
+                mostrarMensaje('success', `✓ Álbum "${nombre}" creado`);
                 setTimeout(() => window.location.href = 'admin.html', 2000);
 
             } catch (error) {
