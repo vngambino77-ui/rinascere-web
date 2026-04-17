@@ -862,9 +862,9 @@
 
         async function cargarAlbumes() {
             try {
+                // CARGAR TODOS LOS ÁLBUMES (públicos y privados)
                 const q = query(
                     collection(db, 'albumes'),
-                    where('esPublico', '==', true),
                     orderBy('fecha', 'desc'),
                     limit(6)
                 );
@@ -882,14 +882,25 @@
                 snapshot.forEach(doc => {
                     const album = { id: doc.id, ...doc.data() };
                     const portadaUrl = album.portadaUrl || "https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere";
+                    const esPrivado = (album.esPublico === false);
 
                     const card = document.createElement('div');
                     card.className = 'album-card';
-                    card.onclick = () => window.location.href = `evento.html?album=${album.id}`;
+                    
+                    // Si es privado → bloquear acceso directo
+                    if (esPrivado) {
+                        card.onclick = () => {
+                            alert('🔒 Este álbum es privado. Solicitá el link de acceso.');
+                        };
+                        card.style.cursor = 'pointer';
+                    } else {
+                        card.onclick = () => window.location.href = `evento.html?album=${album.id}`;
+                    }
+                    
                     card.innerHTML = `
                         <img src="${portadaUrl}" alt="${album.nombre}" class="album-img">
                         <div class="album-info">
-                            <div class="album-title">${album.nombre}</div>
+                            <div class="album-title">${album.nombre} ${esPrivado ? '🔒' : ''}</div>
                             <div class="album-date">${album.fecha}</div>
                         </div>
                     `;
