@@ -180,6 +180,7 @@
                     <option value="gratis">🎁 Gratis</option>
                     <option value="cafecito">☕ Cafecito (cliente elige)</option>
                     <option value="precio_fijo">💰 Precio Fijo</option>
+                    <option value="pack_fotos">📦 Pack de Fotos</option>
                 </select>
 
                 <div id="precioContainer" class="precio-container">
@@ -187,6 +188,17 @@
                     <input type="number" id="albumPrecio" placeholder="3000" min="100" step="100">
                     <p style="color: #999; font-size: 0.9em; margin-top: 5px;" id="precioHelp"></p>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label for="albumVisibilidad">Visibilidad del Álbum *</label>
+                <select id="albumVisibilidad" required>
+                    <option value="true">👁️ Público (aparece en la lista del home)</option>
+                    <option value="false">🔒 Privado (solo accesible con link directo)</option>
+                </select>
+                <p style="color: #999; font-size: 0.9em; margin-top: 5px;">
+                    Los álbumes privados se ven en el home con un candado 🔒 pero NO se pueden abrir sin el link
+                </p>
             </div>
 
             <div class="form-group">
@@ -244,11 +256,15 @@
             if (metodo === 'cafecito') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
-                precioHelp.textContent = 'Precio sugerido (cliente puede pagar más o menos)';
+                precioHelp.textContent = 'Monto mínimo sugerido (cliente debe pagar al menos esto)';
             } else if (metodo === 'precio_fijo') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
-                precioHelp.textContent = 'Precio fijo que debe pagar';
+                precioHelp.textContent = 'Precio fijo del álbum completo';
+            } else if (metodo === 'pack_fotos') {
+                precioContainer.classList.add('active');
+                precioInput.required = true;
+                precioHelp.textContent = 'Precio por foto individual (ej: $500 por foto)';
             } else {
                 precioContainer.classList.remove('active');
                 precioInput.required = false;
@@ -285,6 +301,7 @@
             const metodo = document.getElementById('albumMetodo').value;
             const precio = document.getElementById('albumPrecio').value;
             const descripcion = document.getElementById('albumDescripcion').value;
+            const esPublico = document.getElementById('albumVisibilidad').value === 'true';
 
             const folderId = driveLink.match(/folders\/([a-zA-Z0-9_-]+)/)?.[1];
             
@@ -300,20 +317,28 @@
                 const portadaUrl = await uploadToCloudinary(portadaFile);
                 mostrarMensaje('success', 'Creando álbum...');
 
-                await addDoc(collection(db, 'albumes'), {
+                const albumData = {
                     nombre,
                     fecha,
                     descripcion: descripcion || '',
                     metodo,
-                    precio: metodo === 'gratis' ? 0 : Number(precio),
                     portadaUrl,
                     driveFolderId: folderId,
                     driveLink: `https://drive.google.com/drive/folders/${folderId}`,
-                    esPublico: true,
+                    esPublico: esPublico,
                     createdAt: new Date().toISOString()
-                });
+                };
 
-                mostrarMensaje('success', `✓ Álbum "${nombre}" creado`);
+                // Agregar precio según método
+                if (metodo === 'pack_fotos') {
+                    albumData.precioPorFoto = Number(precio);
+                } else if (metodo !== 'gratis') {
+                    albumData.precio = Number(precio);
+                }
+
+                await addDoc(collection(db, 'albumes'), albumData);
+
+                mostrarMensaje('success', `✓ Álbum "${nombre}" creado ${esPublico ? '(Público)' : '(Privado 🔒)'}`);
                 setTimeout(() => window.location.href = 'admin.html', 2000);
 
             } catch (error) {
