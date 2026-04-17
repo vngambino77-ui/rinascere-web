@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galería - Ph. Rinascere</title>
+    <title>Evento - Ph. Rinascere</title>
     <link rel="icon" href="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" type="image/png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,111 +45,154 @@
             text-decoration: none;
         }
         .back-btn:hover { background: #f0c14b; }
+        
         .container {
-            max-width: 1400px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 40px 20px;
         }
-        .drive-box {
-            background: rgba(212, 175, 55, 0.1);
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #d4af37;
-            text-align: center;
+
+        /* PACKS */
+        .packs-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
         }
-        .drive-box h2 {
-            color: #d4af37;
-            margin-bottom: 15px;
-        }
-        .drive-box p {
-            color: #ccc;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        .btn-drive {
-            display: inline-block;
-            padding: 15px 40px;
-            background: #d4af37;
-            color: #1a1a1a;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 1.1em;
-            margin: 10px;
-        }
-        .btn-drive:hover {
-            background: #f0c14b;
-            transform: scale(1.05);
-        }
-        .payment-box {
+        .pack-card {
             background: rgba(255,255,255,0.05);
             padding: 30px;
             border-radius: 10px;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-align: center;
-            margin-top: 20px;
         }
-        .payment-box h3 {
+        .pack-card:hover {
+            border-color: #d4af37;
+            background: rgba(212,175,55,0.1);
+            transform: translateY(-5px);
+        }
+        .pack-card.selected {
+            border-color: #d4af37;
+            background: rgba(212,175,55,0.2);
+            box-shadow: 0 0 20px rgba(212,175,55,0.3);
+        }
+        .pack-card h3 {
             color: #d4af37;
-            margin-bottom: 15px;
+            font-size: 1.4em;
+            margin-bottom: 20px;
         }
-        .payment-box p { color: #ccc; margin-bottom: 20px; }
-        .precio-input {
-            width: 200px;
-            padding: 12px;
-            border: 2px solid #d4af37;
-            border-radius: 5px;
-            background: rgba(255,255,255,0.1);
-            color: #f5f5f5;
-            font-size: 1.1em;
-            text-align: center;
-            margin: 10px auto;
-            display: block;
+        .pack-cantidad {
+            font-size: 2.5em;
+            color: #fff;
+            font-weight: bold;
+            margin: 15px 0;
         }
-        .precio-input:focus {
-            outline: none;
-            border-color: #f0c14b;
+        .pack-precio {
+            font-size: 2em;
+            color: #d4af37;
+            font-weight: bold;
+            margin: 15px 0;
         }
+        .pack-precio-unitario {
+            color: #999;
+            font-size: 0.95em;
+            margin-top: 10px;
+        }
+
         .btn-pay {
-            padding: 15px 40px;
             background: #d4af37;
             color: #1a1a1a;
+            padding: 15px 40px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
             font-weight: bold;
             font-size: 1.1em;
-            margin-top: 10px;
+            cursor: pointer;
+            margin: 30px 0;
+            display: inline-block;
         }
         .btn-pay:hover {
             background: #f0c14b;
-            transform: scale(1.05);
         }
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            font-size: 1.3em;
+        .btn-pay:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid #d4af37;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        .info-box h3 {
             color: #d4af37;
+            margin-bottom: 15px;
+            font-size: 1.3em;
         }
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
+        .info-box p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 10px;
         }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
+
+        /* ACCESO PAGADO */
+        .success-message {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: center;
         }
-        .error {
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            color: #fca5a5;
+        .success-message h2 {
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        .pack-info {
+            background: rgba(255,255,255,0.05);
             padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .pack-info h4 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .btn-drive {
+            background: #10b981;
+            color: white;
+            padding: 18px 50px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        .btn-drive:hover {
+            background: #059669;
+        }
+
+        .loading, .error {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
             border-radius: 10px;
             text-align: center;
             margin: 40px auto;
             max-width: 600px;
+        }
+
+        @media (max-width: 768px) {
+            .packs-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -166,50 +209,121 @@
     </div>
 
     <div class="container">
-        <div class="loading" id="loading">Cargando información del álbum</div>
+        <div class="loading" id="loading">Cargando álbum...</div>
         <div class="error" id="error" style="display: none;"></div>
         
         <div id="content" style="display: none;">
-            <div class="drive-box">
-                <h2>📸 Ver y Descargar Fotos</h2>
-                <p id="descripcion"></p>
-                <a href="#" id="driveLink" class="btn-drive" target="_blank" rel="noopener">
-                    📁 Abrir Carpeta en Google Drive
-                </a>
+            
+            <!-- ELEGIR Y PAGAR PACK (ANTES DE PAGAR) -->
+            <div id="seccionPacks" style="display: none;">
+                <div class="info-box">
+                    <h3>📦 ¿Cómo funciona?</h3>
+                    <p>1. Elegí el pack que mejor se adapte a vos</p>
+                    <p>2. Pagá de forma segura con Mercado Pago</p>
+                    <p>3. Accedé a todas las fotos del álbum en Google Drive</p>
+                    <p>4. Descargá las fotos que más te gusten (según tu pack)</p>
+                </div>
+
+                <h2 style="color: #d4af37; margin: 30px 0 20px; text-align: center;">
+                    Elegí tu Pack
+                </h2>
+                <div class="packs-container" id="packsGrid"></div>
+                
+                <div style="text-align: center;">
+                    <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled>
+                        💳 Pagar Pack Seleccionado
+                    </button>
+                </div>
             </div>
 
-            <!-- GRATIS -->
-            <div id="boxGratis" class="payment-box" style="display: none;">
-                <h3>✅ Descarga Gratuita</h3>
-                <p>Las fotos son de descarga gratuita. Hacé clic arriba para verlas en Google Drive.</p>
+            <!-- ACCESO DESPUÉS DE PAGAR -->
+            <div id="seccionPagado" style="display: none;">
+                <div class="success-message">
+                    <h2>✅ ¡Pago Confirmado!</h2>
+                    <p style="color: #fff; font-size: 1.1em;">Tu pago fue procesado exitosamente</p>
+                </div>
+
+                <div class="pack-info">
+                    <h4>Pack adquirido:</h4>
+                    <p style="font-size: 1.3em; color: #fff; margin: 10px 0;">
+                        <strong id="packNombrePagado"></strong>
+                    </p>
+                    <p style="color: #d4af37; font-size: 1.1em;">
+                        Podés descargar hasta <strong id="packCantidadPagado"></strong> fotos
+                    </p>
+                </div>
+
+                <div class="info-box">
+                    <h3>📁 Acceso a las Fotos</h3>
+                    <p>Click en el botón para acceder al álbum completo en Google Drive.</p>
+                    <p>Navegá las fotos, seleccioná las que más te gusten y descargalas.</p>
+                    <p style="color: #d4af37; font-weight: bold; margin-top: 15px;">
+                        💡 Podés descargar hasta <span id="packCantidadInfo"></span> fotos
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin: 40px 0;">
+                    <a href="#" id="linkDrive" class="btn-drive" target="_blank" rel="noopener">
+                        📁 Ver y Descargar Fotos
+                    </a>
+                </div>
             </div>
 
-            <!-- CAFECITO -->
-            <div id="boxCafecito" class="payment-box" style="display: none;">
-                <h3>☕ Vale un cafecito</h3>
-                <p>Si te gustaron las fotos, podés colaborar con el precio que quieras ✨</p>
-                <p style="color: #d4af37; font-size: 1.1em;">Precio sugerido: <span id="precioSugerido">$3.000</span></p>
-                <input 
-                    type="number" 
-                    id="inputCafecito" 
-                    class="precio-input" 
-                    placeholder="Tu precio" 
-                    min="100"
-                    step="100"
-                >
-                <button class="btn-pay" onclick="pagarCafecito()">
-                    💳 Contribuir
-                </button>
-            </div>
+            <!-- MÉTODOS NORMALES (GRATIS / PRECIO FIJO / CAFECITO) -->
+            <div id="seccionNormal" style="display: none;">
+                <div class="info-box">
+                    <h3 id="tituloInfo"></h3>
+                    <p id="descripcionInfo"></p>
+                </div>
 
-            <!-- PRECIO FIJO -->
-            <div id="boxPrecioFijo" class="payment-box" style="display: none;">
-                <h3>💰 Precio de Venta</h3>
-                <p>Para acceder a las fotos, abonás:</p>
-                <p style="color: #d4af37; font-size: 1.5em; font-weight: bold;" id="precioFijo">$0</p>
-                <button class="btn-pay" onclick="pagarPrecioFijo()">
-                    💳 Pagar y Descargar
-                </button>
+                <!-- GRATIS -->
+                <div id="boxGratis" style="display: none; text-align: center;">
+                    <a href="#" id="linkDriveGratis" class="btn-drive" target="_blank" rel="noopener">
+                        📁 Ver y Descargar Fotos Gratis
+                    </a>
+                </div>
+
+                <!-- PRECIO FIJO -->
+                <div id="boxPrecioFijo" style="display: none;">
+                    <p style="color: #d4af37; font-size: 1.8em; font-weight: bold; text-align: center; margin: 20px 0;" id="precioFijo"></p>
+                    <div style="text-align: center;">
+                        <button class="btn-pay" onclick="pagarPrecioFijo()">
+                            💳 Pagar y Acceder
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CAFECITO -->
+                <div id="boxCafecito" style="display: none;">
+                    <p style="color: #ccc; margin-bottom: 15px;">Monto mínimo sugerido: <strong style="color: #d4af37;" id="montoMinimo"></strong></p>
+                    <div style="display: flex; gap: 15px; align-items: center; justify-content: center; margin: 20px 0;">
+                        <label style="color: #d4af37;">Cuánto querés aportar:</label>
+                        <input 
+                            type="number" 
+                            id="inputCafecito" 
+                            placeholder="3000"
+                            min="100"
+                            step="100"
+                            style="padding: 10px; border-radius: 5px; border: 1px solid #d4af37; background: rgba(255,255,255,0.1); color: #fff; font-size: 1.1em; width: 150px;"
+                        >
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="btn-pay" onclick="pagarCafecito()">
+                            💳 Contribuir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ACCESO PAGADO (PRECIO FIJO / CAFECITO) -->
+                <div id="accesoNormalPagado" style="display: none; text-align: center;">
+                    <div class="success-message">
+                        <h2>✅ ¡Pago Confirmado!</h2>
+                        <p style="color: #fff;">Ya podés acceder al álbum completo</p>
+                    </div>
+                    <a href="#" id="linkDriveNormal" class="btn-drive" target="_blank" rel="noopener">
+                        📁 Ver y Descargar Todas las Fotos
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -231,9 +345,12 @@
         const db = getFirestore(app);
 
         let albumData = null;
+        let packSeleccionado = null;
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
+        const pagado = urlParams.get('pagado');
+        const packPagado = urlParams.get('pack');
 
         if (!albumId) {
             showError('No se especificó un álbum');
@@ -252,51 +369,160 @@
 
                 albumData = { id: albumId, ...albumDoc.data() };
                 
-                document.getElementById('albumName').textContent = albumData.nombre || 'Álbum sin nombre';
-                document.getElementById('albumDate').textContent = albumData.fecha || '';
-                document.getElementById('descripcion').textContent = albumData.descripcion || 'Hacé clic en el botón para ver todas las fotos del evento en alta resolución ✨';
-
-                if (!albumData.driveLink) {
-                    showError('Este álbum no tiene enlace de Google Drive');
-                    return;
-                }
-
-                document.getElementById('driveLink').href = albumData.driveLink;
-
-                // Mostrar método de pago correspondiente
-                if (albumData.metodo === 'gratis') {
-                    document.getElementById('boxGratis').style.display = 'block';
-                } else if (albumData.metodo === 'cafecito') {
-                    document.getElementById('boxCafecito').style.display = 'block';
-                    document.getElementById('precioSugerido').textContent = '$' + (albumData.precio || 3000).toLocaleString('es-AR');
-                    document.getElementById('inputCafecito').value = albumData.precio || 3000;
-                } else if (albumData.metodo === 'precio_fijo') {
-                    document.getElementById('boxPrecioFijo').style.display = 'block';
-                    document.getElementById('precioFijo').textContent = '$' + (albumData.precio || 5000).toLocaleString('es-AR');
-                }
+                document.getElementById('albumName').textContent = albumData.nombre;
+                document.getElementById('albumDate').textContent = albumData.fecha;
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
+                // DETERMINAR QUÉ MOSTRAR
+                if (albumData.metodo === 'pack_fotos') {
+                    if (pagado === 'true' && packPagado) {
+                        // YA PAGÓ → Mostrar acceso a Drive
+                        mostrarAccesoPagado(packPagado);
+                    } else {
+                        // NO PAGÓ → Mostrar packs
+                        mostrarPacks();
+                    }
+                } else {
+                    // GRATIS / PRECIO FIJO / CAFECITO
+                    mostrarMetodoNormal();
+                }
+
             } catch (error) {
                 console.error('Error:', error);
-                showError('Error al cargar el álbum: ' + error.message);
+                showError('Error al cargar el álbum');
             }
         }
 
-        window.pagarCafecito = async function() {
-            const precio = document.getElementById('inputCafecito').value;
+        function mostrarPacks() {
+            document.getElementById('seccionPacks').style.display = 'block';
             
-            if (!precio || precio < 100) {
-                alert('El precio mínimo es $100');
+            const packsGrid = document.getElementById('packsGrid');
+            packsGrid.innerHTML = '';
+
+            if (!albumData.packs || albumData.packs.length === 0) {
+                packsGrid.innerHTML = '<p style="color: #ccc; text-align: center;">No hay packs configurados</p>';
+                return;
+            }
+
+            albumData.packs.forEach((pack, index) => {
+                const card = document.createElement('div');
+                card.className = 'pack-card';
+                card.onclick = function() {
+                    document.querySelectorAll('.pack-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    packSeleccionado = pack;
+                    document.getElementById('btnPagar').disabled = false;
+                };
+
+                const precioPorFoto = Math.round(pack.precio / pack.cantidad);
+
+                card.innerHTML = `
+                    <h3>📦 ${pack.nombre}</h3>
+                    <div class="pack-cantidad">${pack.cantidad}</div>
+                    <p style="color: #ccc;">fotos</p>
+                    <div class="pack-precio">$${pack.precio.toLocaleString('es-AR')}</div>
+                    <p class="pack-precio-unitario">
+                        $${precioPorFoto.toLocaleString('es-AR')} por foto
+                    </p>
+                `;
+                
+                packsGrid.appendChild(card);
+            });
+        }
+
+        window.pagarPack = async function() {
+            if (!packSeleccionado) {
+                alert('Seleccioná un pack primero');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/crear-preferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        titulo: `${albumData.nombre} - Pack ${packSeleccionado.nombre}`,
+                        precio: packSeleccionado.precio,
+                        albumId: albumData.id,
+                        metodoPago: 'pack_fotos',
+                        nombrePack: packSeleccionado.nombre
+                    })
+                });
+
+                const data = await response.json();
+                if (data.init_point) {
+                    window.location.href = data.init_point;
+                } else {
+                    alert('Error al crear el pago');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al procesar el pago');
+            }
+        };
+
+        function mostrarAccesoPagado(nombrePack) {
+            document.getElementById('seccionPagado').style.display = 'block';
+            
+            const pack = albumData.packs.find(p => p.nombre === nombrePack);
+            if (pack) {
+                document.getElementById('packNombrePagado').textContent = pack.nombre;
+                document.getElementById('packCantidadPagado').textContent = pack.cantidad;
+                document.getElementById('packCantidadInfo').textContent = pack.cantidad;
+            }
+
+            document.getElementById('linkDrive').href = albumData.driveLink;
+        }
+
+        function mostrarMetodoNormal() {
+            document.getElementById('seccionNormal').style.display = 'block';
+
+            if (albumData.metodo === 'gratis') {
+                document.getElementById('tituloInfo').textContent = '🎁 Descarga Gratuita';
+                document.getElementById('descripcionInfo').textContent = 'Las fotos son de descarga gratuita.';
+                document.getElementById('boxGratis').style.display = 'block';
+                document.getElementById('linkDriveGratis').href = albumData.driveLink;
+
+            } else if (albumData.metodo === 'precio_fijo') {
+                if (pagado === 'true') {
+                    document.getElementById('accesoNormalPagado').style.display = 'block';
+                    document.getElementById('linkDriveNormal').href = albumData.driveLink;
+                } else {
+                    document.getElementById('tituloInfo').textContent = '💰 Álbum Completo';
+                    document.getElementById('descripcionInfo').textContent = 'Accedé a todas las fotos del álbum.';
+                    document.getElementById('boxPrecioFijo').style.display = 'block';
+                    document.getElementById('precioFijo').textContent = '$' + albumData.precio.toLocaleString('es-AR');
+                }
+
+            } else if (albumData.metodo === 'cafecito') {
+                if (pagado === 'true') {
+                    document.getElementById('accesoNormalPagado').style.display = 'block';
+                    document.getElementById('linkDriveNormal').href = albumData.driveLink;
+                } else {
+                    document.getElementById('tituloInfo').textContent = '☕ Vale un Cafecito';
+                    document.getElementById('descripcionInfo').textContent = 'Aportá lo que consideres justo (el monto mínimo es obligatorio).';
+                    document.getElementById('boxCafecito').style.display = 'block';
+                    document.getElementById('montoMinimo').textContent = '$' + albumData.precio.toLocaleString('es-AR');
+                }
+            }
+        }
+
+        window.pagarPrecioFijo = async function() {
+            procesarPago(albumData.precio, 'precio_fijo');
+        };
+
+        window.pagarCafecito = async function() {
+            const precio = parseInt(document.getElementById('inputCafecito').value);
+            const montoMinimo = albumData.precio || 3000;
+            
+            if (!precio || precio < montoMinimo) {
+                alert(`El monto mínimo es $${montoMinimo.toLocaleString('es-AR')}`);
                 return;
             }
 
             procesarPago(precio, 'cafecito');
-        };
-
-        window.pagarPrecioFijo = function() {
-            procesarPago(albumData.precio, 'precio_fijo');
         };
 
         async function procesarPago(precio, metodoPago) {
@@ -313,13 +539,11 @@
                 });
 
                 const data = await response.json();
-
                 if (data.init_point) {
                     window.location.href = data.init_point;
                 } else {
                     alert('Error al crear el pago');
                 }
-
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error al procesar el pago');
