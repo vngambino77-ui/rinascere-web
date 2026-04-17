@@ -63,26 +63,6 @@
             border-color: #f0c14b;
             background: rgba(255,255,255,0.15);
         }
-        .upload-portada {
-            border: 2px dashed #d4af37;
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .upload-portada:hover {
-            border-color: #f0c14b;
-            background: rgba(212, 175, 55, 0.1);
-        }
-        .preview-portada {
-            max-width: 300px;
-            max-height: 300px;
-            margin: 15px auto;
-            border-radius: 5px;
-            display: none;
-        }
-        #portadaInput { display: none; }
         .precio-container { display: none; margin-top: 15px; }
         .precio-container.active { display: block; }
         .btn-subir {
@@ -119,6 +99,18 @@
             border: 1px solid #dc2626;
             color: #fca5a5;
         }
+        .help-text {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .preview-portada {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -130,72 +122,69 @@
 
     <div class="container">
         <div class="info-box">
-            <h3>📁 Instrucciones</h3>
+            <h3>📁 Cómo subir fotos desde Google Drive</h3>
             <p>
-                1. Subí una <strong>foto de portada</strong> (click en el área de abajo)<br>
-                2. Creá carpeta en Google Drive con todas las fotos<br>
-                3. Compartí como "Pública" y copiá el enlace<br>
-                4. Pegá el enlace acá y elegí método de venta
+                <strong>Portada:</strong> Subí 1 foto a Drive → Click derecho → "Obtener enlace" → Copiar<br>
+                <strong>Álbum:</strong> Creá carpeta con todas las fotos → Compartir como pública → Copiar enlace
             </p>
         </div>
 
         <form id="uploadForm">
             <div class="form-group">
-                <label>Foto de Portada *</label>
-                <div class="upload-portada" id="uploadPortada" onclick="document.getElementById('portadaInput').click()">
-                    <p>📸 Click para seleccionar foto de portada</p>
-                    <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Aparecerá en la galería principal</p>
-                </div>
-                <input type="file" id="portadaInput" accept="image/*">
+                <label for="portadaUrl">Link de Portada (Google Drive) *</label>
+                <input 
+                    type="url" 
+                    id="portadaUrl" 
+                    required 
+                    placeholder="https://drive.google.com/file/d/..."
+                    oninput="previsualizarPortada()"
+                >
                 <img id="portadaPreview" class="preview-portada">
+                <p class="help-text">Pegá el enlace de la foto de portada</p>
             </div>
 
             <div class="form-group">
                 <label for="albumNombre">Nombre del Álbum *</label>
-                <input type="text" id="albumNombre" required placeholder="Ej: Maratón Nocturna 2024">
+                <input type="text" id="albumNombre" required placeholder="Ej: Maratón 2024">
             </div>
 
             <div class="form-group">
-                <label for="albumFecha">Fecha del Evento *</label>
+                <label for="albumFecha">Fecha *</label>
                 <input type="date" id="albumFecha" required>
             </div>
 
             <div class="form-group">
-                <label for="driveLink">Enlace de Google Drive *</label>
+                <label for="driveLink">Link Carpeta Drive (Álbum Completo) *</label>
                 <input 
                     type="url" 
                     id="driveLink" 
                     required 
                     placeholder="https://drive.google.com/drive/folders/..."
                 >
-                <p style="color: #999; font-size: 0.9em; margin-top: 5px;">
-                    Enlace de carpeta con todas las fotos
-                </p>
+                <p class="help-text">Carpeta con todas las fotos</p>
             </div>
 
             <div class="form-group">
                 <label for="albumMetodo">Método de Venta *</label>
                 <select id="albumMetodo" required onchange="mostrarPrecio()">
-                    <option value="">Seleccioná método</option>
+                    <option value="">Seleccionar</option>
                     <option value="gratis">🎁 Gratis</option>
-                    <option value="cafecito">☕ Cafecito (cliente elige)</option>
+                    <option value="cafecito">☕ Cafecito</option>
                     <option value="precio_fijo">💰 Precio Fijo</option>
-                    <option value="pack_fotos">📦 Packs de Fotos</option>
+                    <option value="pack_fotos">📦 Packs</option>
                 </select>
 
-                <!-- PRECIO SIMPLE -->
                 <div id="precioContainer" class="precio-container">
                     <label for="albumPrecio">Precio (ARS) *</label>
                     <input type="number" id="albumPrecio" placeholder="3000" min="100" step="100">
-                    <p style="color: #999; font-size: 0.9em; margin-top: 5px;" id="precioHelp"></p>
+                    <p class="help-text" id="precioHelp"></p>
                 </div>
 
-                <!-- PACKS -->
                 <div id="packsContainer" class="precio-container">
                     <p style="color: #d4af37; margin-bottom: 15px; font-weight: bold;">Configurá 2 packs:</p>
                     
-                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
-                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 1</p>
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px;">
+                        <p style="color: #d4af37; margin-bottom: 8px;">📦 Pack 1</p>
                         <input type="text" id="pack1Nombre" placeholder="Nombre" value="Básico" style="width: 100%; margin-bottom: 8px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <input type="number" id="pack1Cantidad" placeholder="Cantidad" value="10" min="1">
@@ -203,8 +192,8 @@
                         </div>
                     </div>
 
-                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
-                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 2</p>
+                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px;">
+                        <p style="color: #d4af37; margin-bottom: 8px;">📦 Pack 2</p>
                         <input type="text" id="pack2Nombre" placeholder="Nombre" value="Premium" style="width: 100%; margin-bottom: 8px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <input type="number" id="pack2Cantidad" placeholder="Cantidad" value="20" min="1">
@@ -217,14 +206,14 @@
             <div class="form-group">
                 <label for="albumVisibilidad">Visibilidad *</label>
                 <select id="albumVisibilidad" required>
-                    <option value="true">👁️ Público (aparece en el home)</option>
-                    <option value="false">🔒 Privado (solo con link directo)</option>
+                    <option value="true">👁️ Público</option>
+                    <option value="false">🔒 Privado</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="albumDescripcion">Descripción (opcional)</label>
-                <textarea id="albumDescripcion" rows="3" placeholder="Info adicional..."></textarea>
+                <textarea id="albumDescripcion" rows="3" placeholder="Opcional..."></textarea>
             </div>
 
             <button type="submit" class="btn-subir" id="btnSubir">📤 Crear Álbum</button>
@@ -248,33 +237,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let portadaFile = null;
-
-        // Evento para seleccionar archivo
-        document.getElementById('portadaInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            console.log('Archivo seleccionado:', file);
-            
-            if (file) {
-                portadaFile = file;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const preview = document.getElementById('portadaPreview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-                console.log('Preview cargado');
-            }
-        });
-
         function mostrarMensaje(tipo, mensaje) {
             const status = document.getElementById('statusMessage');
             status.className = 'status ' + tipo;
             status.textContent = mensaje;
             status.style.display = 'block';
-            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
         }
+
+        function convertirDriveUrl(url) {
+            const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/);
+            if (fileIdMatch) {
+                return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+            }
+            return url;
+        }
+
+        window.previsualizarPortada = function() {
+            const url = document.getElementById('portadaUrl').value;
+            if (url) {
+                const preview = document.getElementById('portadaPreview');
+                preview.src = convertirDriveUrl(url);
+                preview.style.display = 'block';
+                preview.onerror = () => preview.style.display = 'none';
+            }
+        };
 
         window.mostrarPrecio = function() {
             const metodo = document.getElementById('albumMetodo').value;
@@ -289,11 +275,11 @@
             if (metodo === 'cafecito') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
-                precioHelp.textContent = 'Monto mínimo sugerido';
+                precioHelp.textContent = 'Monto mínimo';
             } else if (metodo === 'precio_fijo') {
                 precioContainer.classList.add('active');
                 precioInput.required = true;
-                precioHelp.textContent = 'Precio fijo del álbum completo';
+                precioHelp.textContent = 'Precio total';
             } else if (metodo === 'pack_fotos') {
                 packsContainer.classList.add('active');
                 precioInput.required = false;
@@ -302,47 +288,10 @@
             }
         };
 
-        async function uploadToCloudinary(file) {
-            console.log('Iniciando upload a Cloudinary...');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'rinascere_fotos');
-            formData.append('folder', 'rinascere/portadas');
-
-            try {
-                const response = await fetch(
-                    'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload',
-                    { method: 'POST', body: formData }
-                );
-
-                console.log('Response status:', response.status);
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Error de Cloudinary:', errorData);
-                    throw new Error(errorData.error?.message || 'Error al subir a Cloudinary');
-                }
-
-                const data = await response.json();
-                console.log('Upload exitoso:', data.secure_url);
-                return data.secure_url;
-
-            } catch (error) {
-                console.error('Error completo:', error);
-                throw error;
-            }
-        }
-
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('Formulario enviado');
 
-            if (!portadaFile) {
-                mostrarMensaje('error', 'Seleccioná una foto de portada');
-                return;
-            }
-
+            const portadaUrl = document.getElementById('portadaUrl').value;
             const nombre = document.getElementById('albumNombre').value;
             const fecha = document.getElementById('albumFecha').value;
             const driveLink = document.getElementById('driveLink').value;
@@ -354,23 +303,20 @@
             const folderId = driveLink.match(/folders\/([a-zA-Z0-9_-]+)/)?.[1];
             
             if (!folderId) {
-                mostrarMensaje('error', 'Enlace de Google Drive inválido');
+                mostrarMensaje('error', 'Link de carpeta Drive inválido');
                 return;
             }
 
             document.getElementById('btnSubir').disabled = true;
-            mostrarMensaje('success', 'Subiendo portada a Cloudinary...');
+            mostrarMensaje('success', 'Creando álbum...');
 
             try {
-                const portadaUrl = await uploadToCloudinary(portadaFile);
-                mostrarMensaje('success', 'Guardando álbum en Firebase...');
-
                 const albumData = {
                     nombre,
                     fecha,
                     descripcion: descripcion || '',
                     metodo,
-                    portadaUrl,
+                    portadaUrl: convertirDriveUrl(portadaUrl),
                     driveFolderId: folderId,
                     driveLink: `https://drive.google.com/drive/folders/${folderId}`,
                     esPublico: esPublico,
@@ -396,16 +342,13 @@
                     albumData.precio = 0;
                 }
 
-                console.log('Datos a guardar:', albumData);
-
                 await addDoc(collection(db, 'albumes'), albumData);
 
-                mostrarMensaje('success', `✓ Álbum "${nombre}" creado exitosamente`);
-                setTimeout(() => window.location.href = 'admin.html', 2000);
+                mostrarMensaje('success', `✓ Álbum creado`);
+                setTimeout(() => window.location.href = 'admin.html', 1500);
 
             } catch (error) {
-                console.error('Error completo:', error);
-                mostrarMensaje('error', 'ERROR: ' + error.message);
+                mostrarMensaje('error', 'Error: ' + error.message);
                 document.getElementById('btnSubir').disabled = false;
             }
         });
