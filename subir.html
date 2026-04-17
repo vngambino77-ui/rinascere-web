@@ -192,7 +192,7 @@
 
                 <!-- PACKS -->
                 <div id="packsContainer" class="precio-container">
-                    <p style="color: #d4af37; margin-bottom: 15px; font-weight: bold;">Configurá 3 packs:</p>
+                    <p style="color: #d4af37; margin-bottom: 15px; font-weight: bold;">Configurá 2 packs:</p>
                     
                     <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
                         <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 1</p>
@@ -205,19 +205,10 @@
 
                     <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
                         <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 2</p>
-                        <input type="text" id="pack2Nombre" placeholder="Nombre (ej: Estándar)" value="Estándar" style="width: 100%; margin-bottom: 8px;">
+                        <input type="text" id="pack2Nombre" placeholder="Nombre (ej: Premium)" value="Premium" style="width: 100%; margin-bottom: 8px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                             <input type="number" id="pack2Cantidad" placeholder="Cantidad" value="20" min="1">
-                            <input type="number" id="pack2Precio" placeholder="Precio" value="9000" min="100" step="100">
-                        </div>
-                    </div>
-
-                    <div style="background: rgba(212,175,55,0.05); padding: 12px; border-radius: 5px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.3);">
-                        <p style="color: #d4af37; font-size: 0.95em; margin-bottom: 8px;">📦 Pack 3</p>
-                        <input type="text" id="pack3Nombre" placeholder="Nombre (ej: Premium)" value="Premium" style="width: 100%; margin-bottom: 8px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <input type="number" id="pack3Cantidad" placeholder="Cantidad" value="30" min="1">
-                            <input type="number" id="pack3Precio" placeholder="Precio" value="13000" min="100" step="100">
+                            <input type="number" id="pack2Precio" placeholder="Precio" value="10000" min="100" step="100">
                         </div>
                     </div>
                 </div>
@@ -375,11 +366,6 @@
                             nombre: document.getElementById('pack2Nombre').value,
                             cantidad: Number(document.getElementById('pack2Cantidad').value),
                             precio: Number(document.getElementById('pack2Precio').value)
-                        },
-                        {
-                            nombre: document.getElementById('pack3Nombre').value,
-                            cantidad: Number(document.getElementById('pack3Cantidad').value),
-                            precio: Number(document.getElementById('pack3Precio').value)
                         }
                     ];
                 } else if (metodo !== 'gratis') {
