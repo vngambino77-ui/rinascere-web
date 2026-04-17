@@ -144,6 +144,15 @@
             margin: 10px 0;
             border-radius: 5px;
             display: none;
+            border: 2px solid #d4af37;
+        }
+        code {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -156,10 +165,16 @@
 
     <div class="container">
         <div class="info-box">
-            <h3>📁 Cómo subir fotos desde Google Drive</h3>
+            <h3>📁 Cómo obtener el link de Google Drive</h3>
             <p>
-                <strong>Portada:</strong> Subí 1 foto a Drive → Click derecho → "Obtener enlace" → Copiar<br>
-                <strong>Álbum:</strong> Creá carpeta con todas las fotos → Compartir como pública → Copiar enlace
+                <strong>PASO 1:</strong> Subí la foto de portada a Google Drive<br>
+                <strong>PASO 2:</strong> Click derecho en la foto → "Obtener enlace"<br>
+                <strong>PASO 3:</strong> Cambiar a "Cualquier persona con el enlace"<br>
+                <strong>PASO 4:</strong> Click "Copiar enlace"<br>
+                <strong>PASO 5:</strong> Pegar el enlace en el campo de abajo<br><br>
+                
+                ⚠️ <strong>MUY IMPORTANTE:</strong> El link debe verse así:<br>
+                <code style="color: #d4af37;">https://drive.google.com/file/d/ABC123XYZ/view...</code>
             </p>
         </div>
 
@@ -279,21 +294,63 @@
         }
 
         function convertirDriveUrl(url) {
-            const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/);
-            if (fileIdMatch) {
-                return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+            // Extraer ID del archivo de diferentes formatos de URL de Drive
+            let fileId = null;
+            
+            // Formato 1: /file/d/ID/view
+            let match = url.match(/\/file\/d\/([^\/]+)/);
+            if (match) {
+                fileId = match[1];
             }
+            
+            // Formato 2: id=ID
+            if (!fileId) {
+                match = url.match(/[?&]id=([^&]+)/);
+                if (match) fileId = match[1];
+            }
+            
+            // Formato 3: /open?id=ID
+            if (!fileId) {
+                match = url.match(/\/open\?id=([^&]+)/);
+                if (match) fileId = match[1];
+            }
+            
+            if (fileId) {
+                // Limpiar ID (quitar parámetros extra)
+                fileId = fileId.split('?')[0].split('&')[0];
+                // Retornar URL de thumbnail (funciona mejor que uc)
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+            }
+            
             return url;
         }
 
         window.previsualizarPortada = function() {
-            const url = document.getElementById('portadaUrl').value;
-            if (url) {
-                const preview = document.getElementById('portadaPreview');
-                preview.src = convertirDriveUrl(url);
-                preview.style.display = 'block';
-                preview.onerror = () => preview.style.display = 'none';
+            const url = document.getElementById('portadaUrl').value.trim();
+            const preview = document.getElementById('portadaPreview');
+            
+            if (!url) {
+                preview.style.display = 'none';
+                return;
             }
+            
+            const urlConvertida = convertirDriveUrl(url);
+            console.log('URL original:', url);
+            console.log('URL convertida:', urlConvertida);
+            
+            preview.src = urlConvertida;
+            preview.style.display = 'block';
+            
+            preview.onerror = function() {
+                console.error('Error al cargar imagen');
+                // Intentar con formato alternativo
+                const fileId = url.match(/\/file\/d\/([^\/]+)/)?.[1];
+                if (fileId) {
+                    this.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+                } else {
+                    this.style.display = 'none';
+                }
+            };
         };
 
         window.mostrarPrecio = function() {
@@ -345,12 +402,15 @@
             mostrarMensaje('success', 'Creando álbum...');
 
             try {
+                // Convertir URL de Drive a formato visualizable
+                const portadaUrlFinal = convertirDriveUrl(portadaUrl);
+                
                 const albumData = {
                     nombre,
                     fecha,
                     descripcion: descripcion || '',
                     metodo,
-                    portadaUrl: convertirDriveUrl(portadaUrl),
+                    portadaUrl: portadaUrlFinal,
                     driveFolderId: folderId,
                     driveLink: `https://drive.google.com/drive/folders/${folderId}`,
                     esPublico: esPublico,
@@ -380,18 +440,20 @@
 
                 if (!esPublico) {
                     // Si es privado, mostrar link para copiar
-                    const linkPrivado = `${window.location.origin}/evento.html?album=${docRef.id}`;
+                    const baseUrl = 'https://rinascere-web.netlify.app';
+                    const linkPrivado = `${baseUrl}/evento.html?album=${docRef.id}`;
                     
                     const statusDiv = document.getElementById('statusMessage');
                     statusDiv.className = 'status success';
                     statusDiv.innerHTML = `
                         <h3 style="color: #10b981; margin-bottom: 15px;">✓ Álbum Privado Creado</h3>
                         <div class="link-privado">
-                            <h4>🔒 Link Privado (copiá y enviá a tus clientes):</h4>
-                            <input type="text" value="${linkPrivado}" id="linkPrivadoInput" readonly onclick="this.select()">
+                            <h4>🔒 Link Privado:</h4>
+                            <p style="color: #ccc; margin: 10px 0;">Copiá este link y envialo a tus clientes por WhatsApp/Email</p>
+                            <input type="text" value="${linkPrivado}" id="linkPrivadoInput" readonly onclick="this.select()" style="font-size: 0.9em;">
                             <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link</button>
                             <p style="color: #999; font-size: 0.9em; margin-top: 10px;">
-                                Este álbum NO aparece en el home público. Solo accesible con este link.
+                                ⚠️ Este álbum NO aparece en el home. Solo se accede con este link.
                             </p>
                         </div>
                         <button class="btn-copiar" onclick="window.location.href='admin.html'" style="width: 100%; margin-top: 15px;">
@@ -404,8 +466,11 @@
                     window.copiarLink = function() {
                         const input = document.getElementById('linkPrivadoInput');
                         input.select();
-                        navigator.clipboard.writeText(linkPrivado);
-                        alert('✓ Link copiado al portapapeles');
+                        navigator.clipboard.writeText(linkPrivado).then(() => {
+                            alert('✓ Link copiado al portapapeles\n\nYa podés pegarlo en WhatsApp o Email');
+                        }).catch(() => {
+                            alert('Seleccioná el texto y copiá manualmente (Ctrl+C)');
+                        });
                     };
                     
                     document.getElementById('btnSubir').style.display = 'none';
