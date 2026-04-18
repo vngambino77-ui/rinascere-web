@@ -610,7 +610,10 @@
       const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
       const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
       renderAlbumes(lista.length > 0 ? lista : albumesEj);
-    } catch(e) { renderAlbumes(albumesEj); }
+    } catch(e) { 
+      console.log('Error cargando álbumes, mostrando ejemplos:', e);
+      renderAlbumes(albumesEj); 
+    }
   }
 
   const albumesEj = [
@@ -618,6 +621,15 @@
     { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
+  
+  // 🔥 FORZAR que se muestren los álbumes inmediatamente
+  setTimeout(() => {
+    const grilla = document.getElementById('grilla');
+    if (grilla && grilla.innerHTML.includes('Cargando álbumes')) {
+      console.log('Álbumes no cargaron, forzando ejemplos');
+      renderAlbumes(albumesEj);
+    }
+  }, 2000);
 
   function renderAlbumes(lista) {
     const g = document.getElementById('grilla');
