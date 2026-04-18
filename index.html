@@ -593,16 +593,24 @@
 
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
+    // 🔥 URL FIJA de tu foto personal en Cloudinary
+    const URL_FOTO_FIJA = 'https://res.cloudinary.com/dwqvqpkbe/image/upload/v1776222849/mkllseo2rnjv8uhlx019.jpg';
+    
     try {
       const doc = await db.collection('configuracion').doc('sitio').get();
-      if (doc.exists && doc.data().fotoPersonalUrl) {
-        const url = doc.data().fotoPersonalUrl;
-        const img = document.getElementById('foto-personal-img');
-        img.src = url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
-      }
-    } catch(e) { /* silencioso */ }
+      const url = (doc.exists && doc.data().fotoPersonalUrl) ? doc.data().fotoPersonalUrl : URL_FOTO_FIJA;
+      
+      const img = document.getElementById('foto-personal-img');
+      img.src = url;
+      img.style.display = 'block';
+      document.getElementById('sobre-placeholder').style.display = 'none';
+    } catch(e) { 
+      // Si Firebase falla, usar la foto fija
+      const img = document.getElementById('foto-personal-img');
+      img.src = URL_FOTO_FIJA;
+      img.style.display = 'block';
+      document.getElementById('sobre-placeholder').style.display = 'none';
+    }
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
@@ -615,9 +623,9 @@
   }
 
   const albumesEj = [
-    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80" },
-    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
-    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
+    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/sample.jpg" },
+    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/hiking.jpg" },
+    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/bike.jpg" },
   ];
 
   function renderAlbumes(lista) {
