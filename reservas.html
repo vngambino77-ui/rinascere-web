@@ -168,7 +168,7 @@
 
         <div class="calendar-box">
             <iframe 
-                src="https://calendar.app.google/WuXnbWUbkp4AiwWG6" 
+                src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1JqVEy1AsX1Wte1UqM5zRtzAJheOIesTfYhami36v6Vg7zi2rkpydBjgQo2BbSWBGmxwSNQUBw?gv=true" 
                 class="calendar-embed"
                 title="Calendario de reservas">
             </iframe>
@@ -185,16 +185,5 @@
             </a>
         </div>
     </div>
-
-    <script>
-        // Detectar cuando se crea una reserva
-        window.addEventListener('message', function(event) {
-            // Google Calendar envía mensajes cuando se crea un evento
-            if (event.data && event.data.type === 'calendar-event-created') {
-                console.log('Reserva creada:', event.data);
-                // Aquí podés agregar lógica adicional si es necesario
-            }
-        });
-    </script>
 </body>
 </html>
