@@ -599,13 +599,17 @@ firebase.initializeApp({
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
-  async function cargarAlbumes() {
+async function cargarAlbumes() {
     try {
-      const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
+      const snap = await db.collection('albumes').get();
       const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      console.log('Álbumes cargados desde Firebase:', lista.length, lista);
       renderAlbumes(lista.length > 0 ? lista : albumesEj);
-    } catch(e) { renderAlbumes(albumesEj); }
-  }
+    } catch(e) {
+      console.error('Error al cargar álbumes:', e);
+      renderAlbumes(albumesEj);
+    }
+}
 
   const albumesEj = [
     { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80" },
