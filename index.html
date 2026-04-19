@@ -542,11 +542,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // Protección
+  // Protección (F12 TEMPORALMENTE HABILITADO PARA DIAGNÓSTICO)
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && ['s','p','u','a'].includes(e.key.toLowerCase())) e.preventDefault();
-    if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault();
+    // if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault(); // ← DESACTIVADO
   });
 
   function toggleNav() {
@@ -616,15 +616,48 @@
   // ── Cargar álbumes desde Firebase ─────────────────────
   async function cargarAlbumes() {
     try {
+      console.log('🔍 Intentando cargar álbumes desde Firebase...');
       const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      renderAlbumes(lista.length > 0 ? lista : albumesEj);
-    } catch(e) { renderAlbumes(albumesEj); }
+      
+      // Obtener portada de cada álbum (primera foto de la subcolección)
+      const albumesConPortada = await Promise.all(
+        snap.docs.map(async (doc) => {
+          const albumData = { id: doc.id, ...doc.data() };
+          
+          // Si no tiene portadaUrl, buscar primera foto
+          if (!albumData.portadaUrl) {
+            try {
+              const fotosSnap = await db.collection('albumes').doc(doc.id).collection('fotos').limit(1).get();
+              if (!fotosSnap.empty) {
+                albumData.portadaUrl = fotosSnap.docs[0].data().url;
+              }
+            } catch(e) {
+              console.log(`⚠️ No se pudo cargar portada para ${albumData.nombre}`);
+            }
+          }
+          
+          return albumData;
+        })
+      );
+      
+      console.log(`✅ Álbumes encontrados: ${albumesConPortada.length}`);
+      
+      if (albumesConPortada.length > 0) {
+        console.log('📸 Mostrando álbumes reales:', albumesConPortada);
+        renderAlbumes(albumesConPortada);
+      } else {
+        console.log('⚠️ No hay álbumes, mostrando ejemplos');
+        renderAlbumes(albumesEj);
+      }
+    } catch(e) { 
+      console.error('❌ Error cargando álbumes:', e);
+      renderAlbumes(albumesEj); 
+    }
   }
 
   const albumesEj = [
-    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/sample.jpg" },
-    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/hiking.jpg" },
+    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/flowers.jpg" },
+    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/mountains.jpg" },
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/bike.jpg" },
   ];
 
@@ -633,38 +666,39 @@
     g.innerHTML = lista.length === 0
       ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
       : lista.map(a => {
-          // ✅ Construir URL de portada correctamente
-          // portadaUrl puede ser: public_id limpio (nuevo) o URL completa (viejo)
+          // ✅ Construir URL de portada
           let imgSrc = '';
+          
           if (a.portadaUrl) {
+            // Si tiene portadaUrl, usarla
             if (a.portadaUrl.startsWith('http')) {
-              // URL completa guardada antes de la corrección
               imgSrc = a.portadaUrl;
             } else {
-              // ✅ public_id limpio — construimos la URL bien
               imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.portadaUrl}`;
             }
           } else if (a.fotos && a.fotos.length > 0) {
-            // Si no hay portada, usamos la primera foto del array
+            // Si tiene array de fotos, usar la primera
             imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
           }
+          // Si no tiene ninguna imagen, quedará vacío y se mostrará el degradado de fondo
+          
           return `
-        <a class="tarjeta" href="evento.html?slug=${a.slug}">
-          <div class="t-img">
+        <a class="tarjeta" href="evento.html?slug=${a.slug || a.id}">
+          <div class="t-img" style="${!imgSrc ? 'background:linear-gradient(135deg,#c9a961,#a88b4a);display:flex;align-items:center;justify-content:center;' : ''}">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
-                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f0ede8,#ddd)';"/>`
-              : ''}
+                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#c9a961,#a88b4a)';"/>`
+              : '<div style="font-size:3rem;opacity:0.3;">📸</div>'}
             <div class="t-badge">📷 ${a.cantidadFotos||0} fotos</div>
-            ${!a.publico ? '<div class="t-priv">🔒 Privado</div>' : ''}
+            ${!a.esPublico ? '<div class="t-priv">🔒 Privado</div>' : ''}
           </div>
           <div class="t-info">
             <div class="t-fecha">${a.fecha||''}</div>
             <div class="t-nombre">${a.nombre}</div>
-            <div class="t-lugar">📍 ${a.lugar||''}</div>
+            <div class="t-lugar">📍 ${a.lugar||a.descripcion||''}</div>
           </div>
           <div class="t-pie">
-            <span class="t-precio">Desde ${Number(a.precio||0).toLocaleString('es-AR')}</span>
+            <span class="t-precio">${a.metodo === 'cafecito' ? 'Vale un cafecito ☕' : a.metodo === 'gratis' ? 'Gratis ✨' : `Desde ${Number(a.precio||2500).toLocaleString('es-AR')}`}</span>
             <span class="t-cta">Ver fotos →</span>
           </div>
         </a>`;
