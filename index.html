@@ -431,8 +431,14 @@
     <div class="cal-box">
       <div class="ico">📅</div>
       <h3>Elegí tu fecha</h3>
-      <p>Seleccioná el día y horario que mejor te quede. Confirmación inmediata.</p>
-      <a href="https://calendar.app.google/tbUKQMJbpSDcCqs88" target="_blank" class="cal-btn">📅 Ver disponibilidad y reservar</a>
+      <p>Solo fechas disponibles con 72hs de anticipación</p>
+      
+      <!-- Google Calendar integrado -->
+      <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1JqVEy1AsX1Wte1UqM5zRtzAJheOIesTfYhami36v6Vg7zi2rkpydBjgQo2BbSWBGmxwSNQUBw?gv=true" 
+              style="border:0;border-radius:12px;width:100%;height:600px;margin:20px 0;" 
+              frameborder="0">
+      </iframe>
+      
       <p class="cal-nota">Cupos limitados · Confirmación por WhatsApp</p>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
         <a href="https://wa.me/542966346212?text=Hola%20Ver%C3%B3nica!%20Quiero%20reservar%20una%20sesi%C3%B3n%20fotogr%C3%A1fica%20%F0%9F%93%B8" target="_blank" class="btn btn-wa" style="width:100%;justify-content:center;">💬 Consultar por WhatsApp</a>
@@ -586,16 +592,13 @@
 
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
-    try {
-      const doc = await db.collection('configuracion').doc('sitio').get();
-      if (doc.exists && doc.data().fotoPersonalUrl) {
-        const url = doc.data().fotoPersonalUrl;
-        const img = document.getElementById('foto-personal-img');
-        img.src = url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
-      }
-    } catch(e) { /* silencioso */ }
+    // ✅ Foto fija desde Cloudinary
+    const URL_FOTO_FIJA = 'https://res.cloudinary.com/dwqvqpkbe/image/upload/v1776222849/mkllseo2rnjv8uhlx019.jpg';
+    
+    const img = document.getElementById('foto-personal-img');
+    img.src = URL_FOTO_FIJA;
+    img.style.display = 'block';
+    document.getElementById('sobre-placeholder').style.display = 'none';
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
@@ -666,25 +669,24 @@
   // ── Cargar portfolio desde Firebase ───────────────────
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
-    const SLOTS = 9;
-    try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
-      const fotos = snap.docs.map(d => d.data());
-      let html = fotos.map(f => {
-        const url = f.url.startsWith('http') ? f.url
-          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
-        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
-      }).join('');
-      // Completar slots vacíos con placeholders de carga
-      const vacios = SLOTS - fotos.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-      }
-      grilla.innerHTML = html;
-    } catch(e) {
-      // Sin Firebase → mostrar placeholders
-      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-    }
+    
+    // ✅ Fotos fijas desde Cloudinary
+    const fotosFijas = [
+      { url: 'v1776221771/fx4kcftrxqqrvahrdvsz.jpg', titulo: 'Portfolio 1' },
+      { url: 'v1776222570/l6fp5v5rctjhkr9rde5j.jpg', titulo: 'Portfolio 2' },
+      { url: 'v1776223338/p3hoccjjgx7ktnaju9wv.jpg', titulo: 'Portfolio 3' },
+      { url: 'v1776222496/ljw2zd3csre99pok2hm6.jpg', titulo: 'Portfolio 4' },
+      { url: 'v1776222640/t8f38zzy17pxyakg7ppq.jpg', titulo: 'Portfolio 5' },
+      { url: 'v1776224044/ymaudsdpo6kl49ao3ohv.jpg', titulo: 'Portfolio 6' }
+    ];
+    
+    const html = fotosFijas.map(f => {
+      const url = `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
+      return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo}" loading="lazy"/></div>`;
+    }).join('');
+    
+    grilla.innerHTML = html;
+  }
   }
 
   // ── Cargar testimonios desde Firebase (opcional) ──────
