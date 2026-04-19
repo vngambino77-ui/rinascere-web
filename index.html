@@ -432,14 +432,7 @@
       <div class="ico">📅</div>
       <h3>Elegí tu fecha</h3>
       <p>Seleccioná el día y horario que mejor te quede. Confirmación inmediata.</p>
-      <a href="https://calendar.app.google/tbUKQMJbpSDcCqs88" target="_blank" class="cal-btn" style="display:none;">📅 Ver disponibilidad y reservar</a>
-      
-      <!-- Google Calendar integrado -->
-      <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1JqVEy1AsX1Wte1UqM5zRtzAJheOIesTfYhami36v6Vg7zi2rkpydBjgQo2BbSWBGmxwSNQUBw?gv=true" 
-              style="border:0;border-radius:12px;width:100%;height:600px;margin:10px 0;" 
-              frameborder="0">
-      </iframe>
-      
+      <a href="https://calendar.app.google/tbUKQMJbpSDcCqs88" target="_blank" class="cal-btn">📅 Ver disponibilidad y reservar</a>
       <p class="cal-nota">Cupos limitados · Confirmación por WhatsApp</p>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
         <a href="https://wa.me/542966346212?text=Hola%20Ver%C3%B3nica!%20Quiero%20reservar%20una%20sesi%C3%B3n%20fotogr%C3%A1fica%20%F0%9F%93%B8" target="_blank" class="btn btn-wa" style="width:100%;justify-content:center;">💬 Consultar por WhatsApp</a>
@@ -542,11 +535,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // Protección (F12 TEMPORALMENTE HABILITADO PARA DIAGNÓSTICO)
+  // Protección
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && ['s','p','u','a'].includes(e.key.toLowerCase())) e.preventDefault();
-    // if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault(); // ← DESACTIVADO
+    if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault();
   });
 
   function toggleNav() {
@@ -593,33 +586,24 @@
 
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
-    // 🔥 URL FIJA de tu foto personal en Cloudinary
-    const URL_FOTO_FIJA = 'https://res.cloudinary.com/dwqvqpkbe/image/upload/v1776222849/mkllseo2rnjv8uhlx019.jpg';
-    
     try {
       const doc = await db.collection('configuracion').doc('sitio').get();
-      const url = (doc.exists && doc.data().fotoPersonalUrl) ? doc.data().fotoPersonalUrl : URL_FOTO_FIJA;
-      
-      const img = document.getElementById('foto-personal-img');
-      img.src = url;
-      img.style.display = 'block';
-      document.getElementById('sobre-placeholder').style.display = 'none';
-    } catch(e) { 
-      // Si Firebase falla, usar la foto fija
-      const img = document.getElementById('foto-personal-img');
-      img.src = URL_FOTO_FIJA;
-      img.style.display = 'block';
-      document.getElementById('sobre-placeholder').style.display = 'none';
-    }
+      if (doc.exists && doc.data().fotoPersonalUrl) {
+        const url = doc.data().fotoPersonalUrl;
+        const img = document.getElementById('foto-personal-img');
+        img.src = url;
+        img.style.display = 'block';
+        document.getElementById('sobre-placeholder').style.display = 'none';
+      }
+    } catch(e) { /* silencioso */ }
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
   async function cargarAlbumes() {
     try {
-      console.log('🔍 Intentando cargar álbumes desde Firebase...');
       const snap = await db.collection('albumes').orderBy('creadoEn','desc').get();
       
-      // Obtener portada de cada álbum (primera foto de la subcolección)
+      // Obtener portada de cada álbum
       const albumesConPortada = await Promise.all(
         snap.docs.map(async (doc) => {
           const albumData = { id: doc.id, ...doc.data() };
@@ -631,34 +615,21 @@
               if (!fotosSnap.empty) {
                 albumData.portadaUrl = fotosSnap.docs[0].data().url;
               }
-            } catch(e) {
-              console.log(`⚠️ No se pudo cargar portada para ${albumData.nombre}`);
-            }
+            } catch(e) { }
           }
           
           return albumData;
         })
       );
       
-      console.log(`✅ Álbumes encontrados: ${albumesConPortada.length}`);
-      
-      if (albumesConPortada.length > 0) {
-        console.log('📸 Mostrando álbumes reales:', albumesConPortada);
-        renderAlbumes(albumesConPortada);
-      } else {
-        console.log('⚠️ No hay álbumes, mostrando ejemplos');
-        renderAlbumes(albumesEj);
-      }
-    } catch(e) { 
-      console.error('❌ Error cargando álbumes:', e);
-      renderAlbumes(albumesEj); 
-    }
+      renderAlbumes(albumesConPortada.length > 0 ? albumesConPortada : albumesEj);
+    } catch(e) { renderAlbumes(albumesEj); }
   }
 
   const albumesEj = [
-    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/flowers.jpg" },
-    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/mountains.jpg" },
-    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://res.cloudinary.com/demo/image/upload/w_600,q_70/bike.jpg" },
+    { id:'ej1', nombre:"Maratón Ciudad de Río Gallegos", fecha:"15 Jun 2025", lugar:"Río Gallegos", cantidadFotos:348, precio:2500, publico:true, slug:"maraton-rio-gallegos-ej1", portadaUrl:"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80" },
+    { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
+    { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
 
   function renderAlbumes(lista) {
@@ -666,39 +637,38 @@
     g.innerHTML = lista.length === 0
       ? '<p style="color:#aaa;text-align:center;grid-column:1/-1;padding:40px">Próximamente nuevos álbumes ✨</p>'
       : lista.map(a => {
-          // ✅ Construir URL de portada
+          // ✅ Construir URL de portada correctamente
+          // portadaUrl puede ser: public_id limpio (nuevo) o URL completa (viejo)
           let imgSrc = '';
-          
           if (a.portadaUrl) {
-            // Si tiene portadaUrl, usarla
             if (a.portadaUrl.startsWith('http')) {
+              // URL completa guardada antes de la corrección
               imgSrc = a.portadaUrl;
             } else {
+              // ✅ public_id limpio — construimos la URL bien
               imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.portadaUrl}`;
             }
           } else if (a.fotos && a.fotos.length > 0) {
-            // Si tiene array de fotos, usar la primera
+            // Si no hay portada, usamos la primera foto del array
             imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
           }
-          // Si no tiene ninguna imagen, quedará vacío y se mostrará el degradado de fondo
-          
           return `
-        <a class="tarjeta" href="evento.html?slug=${a.slug || a.id}">
-          <div class="t-img" style="${!imgSrc ? 'background:linear-gradient(135deg,#c9a961,#a88b4a);display:flex;align-items:center;justify-content:center;' : ''}">
+        <a class="tarjeta" href="evento.html?slug=${a.slug}">
+          <div class="t-img">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
-                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#c9a961,#a88b4a)';"/>`
-              : '<div style="font-size:3rem;opacity:0.3;">📸</div>'}
+                   onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#f0ede8,#ddd)';"/>`
+              : ''}
             <div class="t-badge">📷 ${a.cantidadFotos||0} fotos</div>
-            ${!a.esPublico ? '<div class="t-priv">🔒 Privado</div>' : ''}
+            ${!a.publico ? '<div class="t-priv">🔒 Privado</div>' : ''}
           </div>
           <div class="t-info">
             <div class="t-fecha">${a.fecha||''}</div>
             <div class="t-nombre">${a.nombre}</div>
-            <div class="t-lugar">📍 ${a.lugar||a.descripcion||''}</div>
+            <div class="t-lugar">📍 ${a.lugar||''}</div>
           </div>
           <div class="t-pie">
-            <span class="t-precio">${a.metodo === 'cafecito' ? 'Vale un cafecito ☕' : a.metodo === 'gratis' ? 'Gratis ✨' : `Desde ${Number(a.precio||2500).toLocaleString('es-AR')}`}</span>
+            <span class="t-precio">Desde ${Number(a.precio||0).toLocaleString('es-AR')}</span>
             <span class="t-cta">Ver fotos →</span>
           </div>
         </a>`;
@@ -716,48 +686,23 @@
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
     const SLOTS = 9;
-    
-    // 🔥 FOTOS FIJAS de Cloudinary (las que ya tenés subidas)
-    const fotosFijas = [
-      { url: 'v1776221771/fx4kcftrxqqrvahrdvsz.jpg', titulo: 'Portfolio 1' },
-      { url: 'v1776222570/l6fp5v5rctjhkr9rde5j.jpg', titulo: 'Portfolio 2' },
-      { url: 'v1776223338/p3hoccjjgx7ktnaju9wv.jpg', titulo: 'Portfolio 3' },
-      { url: 'v1776222496/ljw2zd3csre99pok2hm6.jpg', titulo: 'Portfolio 4' },
-      { url: 'v1776222640/t8f38zzy17pxyakg7ppq.jpg', titulo: 'Portfolio 5' },
-      { url: 'v1776224044/ymaudsdpo6kl49ao3ohv.jpg', titulo: 'Portfolio 6' },
-    ];
-    
     try {
       const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
       const fotos = snap.docs.map(d => d.data());
-      
-      // Si hay fotos en Firebase, usarlas; si no, usar las fijas
-      const fotosAMostrar = fotos.length > 0 ? fotos : fotosFijas;
-      
-      let html = fotosAMostrar.map(f => {
+      let html = fotos.map(f => {
         const url = f.url.startsWith('http') ? f.url
           : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
         return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
       }).join('');
-      
-      // Completar slots vacíos con placeholders
-      const vacios = SLOTS - fotosAMostrar.length;
+      // Completar slots vacíos con placeholders de carga
+      const vacios = SLOTS - fotos.length;
       if (vacios > 0) {
         html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
       }
       grilla.innerHTML = html;
     } catch(e) {
-      // Error de Firebase → mostrar fotos fijas
-      let html = fotosFijas.map(f => {
-        const url = `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
-        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo}" loading="lazy"/></div>`;
-      }).join('');
-      
-      const vacios = SLOTS - fotosFijas.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
-      }
-      grilla.innerHTML = html;
+      // Sin Firebase → mostrar placeholders
+      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
     }
   }
 
