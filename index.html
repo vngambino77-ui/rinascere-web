@@ -638,7 +638,7 @@ async function cargarAlbumes() {
             imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
           }
           return `
-        <a class="tarjeta" href="evento.html?slug=${a.slug}">
+       <a class="tarjeta" href="evento.html?album=${a.id}">
           <div class="t-img">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
