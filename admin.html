@@ -279,7 +279,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, orderBy, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -358,6 +358,9 @@
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
                             </button>
+                            <button onclick="editarPrecio('${id}', '${album.metodo || ''}', ${album.precio || 0})" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                ✏️ Precio
+                            </button>
                             <button onclick="eliminarAlbum('${id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🗑️
                             </button>
@@ -385,6 +388,42 @@
                 location.reload();
             } catch (error) {
                 alert('Error al eliminar: ' + error.message);
+            }
+        };
+
+        window.editarPrecio = async function(id, metodo, precioActual) {
+            // Si el álbum es gratis o cafecito, avisamos que el precio funciona distinto
+            if (metodo === 'gratis') {
+                alert('Este álbum está marcado como "Gratis". Si querés cobrarlo, primero cambiá el método desde "Ver" → editar álbum.');
+                return;
+            }
+
+            const nuevoPrecioTexto = prompt(
+                metodo === 'cafecito'
+                    ? 'Nuevo monto mínimo sugerido (Cafecito):'
+                    : 'Nuevo precio del álbum:',
+                precioActual
+            );
+
+            // Si tocó "Cancelar" o dejó vacío, no hacemos nada
+            if (nuevoPrecioTexto === null || nuevoPrecioTexto.trim() === '') return;
+
+            const nuevoPrecio = Number(nuevoPrecioTexto);
+
+            // Validar que sea un número válido y mayor a 0
+            if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+                alert('Por favor ingresá un número válido mayor a 0.');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'albumes', id), {
+                    precio: nuevoPrecio
+                });
+                alert('✅ Precio actualizado correctamente');
+                location.reload();
+            } catch (error) {
+                alert('Error al actualizar el precio: ' + error.message);
             }
         };
     </script>
