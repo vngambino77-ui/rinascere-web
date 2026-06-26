@@ -391,39 +391,64 @@
             }
         };
 
-        window.editarPrecio = async function(id, metodo, precioActual) {
-            // Si el álbum es gratis o cafecito, avisamos que el precio funciona distinto
-            if (metodo === 'gratis') {
-                alert('Este álbum está marcado como "Gratis". Si querés cobrarlo, primero cambiá el método desde "Ver" → editar álbum.');
+        window.editarPrecio = async function(id, metodoActual, precioActual) {
+            // Mostramos las opciones de método de cobro disponibles
+            const metodoTexto = prompt(
+                'Elegí el método de cobro escribiendo el número:\n\n' +
+                '1 = 🎁 Gratis (sin costo)\n' +
+                '2 = ☕ Cafecito (el cliente eligen cuánto aportar, con un mínimo)\n' +
+                '3 = 💰 Precio Fijo (un precio único por el álbum)\n\n' +
+                'Método actual: ' + (metodoActual || 'no definido'),
+                metodoActual === 'gratis' ? '1' : metodoActual === 'cafecito' ? '2' : '3'
+            );
+
+            // Si tocó "Cancelar", no hacemos nada
+            if (metodoTexto === null) return;
+
+            let nuevoMetodo;
+            if (metodoTexto.trim() === '1') {
+                nuevoMetodo = 'gratis';
+            } else if (metodoTexto.trim() === '2') {
+                nuevoMetodo = 'cafecito';
+            } else if (metodoTexto.trim() === '3') {
+                nuevoMetodo = 'precio_fijo';
+            } else {
+                alert('Opción no válida. Escribí 1, 2 o 3.');
                 return;
             }
 
-            const nuevoPrecioTexto = prompt(
-                metodo === 'cafecito'
-                    ? 'Nuevo monto mínimo sugerido (Cafecito):'
-                    : 'Nuevo precio del álbum:',
-                precioActual
-            );
+            const datosActualizados = { metodo: nuevoMetodo };
 
-            // Si tocó "Cancelar" o dejó vacío, no hacemos nada
-            if (nuevoPrecioTexto === null || nuevoPrecioTexto.trim() === '') return;
+            // Si eligió Gratis, el precio queda en 0 y no preguntamos nada más
+            if (nuevoMetodo === 'gratis') {
+                datosActualizados.precio = 0;
+            } else {
+                // Si eligió Cafecito o Precio Fijo, pedimos el monto
+                const nuevoPrecioTexto = prompt(
+                    nuevoMetodo === 'cafecito'
+                        ? 'Monto mínimo sugerido (Cafecito):'
+                        : 'Precio fijo del álbum:',
+                    precioActual || ''
+                );
 
-            const nuevoPrecio = Number(nuevoPrecioTexto);
+                if (nuevoPrecioTexto === null || nuevoPrecioTexto.trim() === '') return;
 
-            // Validar que sea un número válido y mayor a 0
-            if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
-                alert('Por favor ingresá un número válido mayor a 0.');
-                return;
+                const nuevoPrecio = Number(nuevoPrecioTexto);
+
+                if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+                    alert('Por favor ingresá un número válido mayor a 0.');
+                    return;
+                }
+
+                datosActualizados.precio = nuevoPrecio;
             }
 
             try {
-                await updateDoc(doc(db, 'albumes', id), {
-                    precio: nuevoPrecio
-                });
-                alert('✅ Precio actualizado correctamente');
+                await updateDoc(doc(db, 'albumes', id), datosActualizados);
+                alert('✅ Cambios guardados correctamente');
                 location.reload();
             } catch (error) {
-                alert('Error al actualizar el precio: ' + error.message);
+                alert('Error al actualizar: ' + error.message);
             }
         };
     </script>
