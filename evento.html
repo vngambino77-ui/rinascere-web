@@ -283,6 +283,11 @@
                     </a>
                 </div>
 
+                <!-- Separador, solo se ve si Gratis y Cafecito están juntos -->
+                <div id="separadorGratisCafecito" style="display: none; text-align: center; color: #d4af37; margin: 25px 0; font-size: 0.95em;">
+                    — o si querés —
+                </div>
+
                 <!-- PRECIO FIJO -->
                 <div id="boxPrecioFijo" style="display: none;">
                     <p style="color: #d4af37; font-size: 1.8em; font-weight: bold; text-align: center; margin: 20px 0;" id="precioFijo"></p>
@@ -505,6 +510,23 @@
                     document.getElementById('descripcionInfo').textContent = 'Aportá lo que consideres justo (el monto mínimo es obligatorio).';
                     document.getElementById('boxCafecito').style.display = 'block';
                     document.getElementById('montoMinimo').textContent = '$' + albumData.precio.toLocaleString('es-AR');
+                }
+
+            } else if (albumData.metodo === 'gratis_o_cafecito') {
+                if (pagado === 'true') {
+                    document.getElementById('accesoNormalPagado').style.display = 'block';
+                    document.getElementById('linkDriveNormal').href = albumData.driveLink;
+                } else {
+                    // Mostramos las dos opciones juntas: gratis y cafecito
+                    document.getElementById('tituloInfo').textContent = '🎁☕ Elegí cómo acceder';
+                    document.getElementById('descripcionInfo').textContent = 'Podés descargar gratis, o si querés colaborar, dejar un cafecito.';
+
+                    document.getElementById('boxGratis').style.display = 'block';
+                    document.getElementById('linkDriveGratis').href = albumData.driveLink;
+                    document.getElementById('separadorGratisCafecito').style.display = 'block';
+
+                    document.getElementById('boxCafecito').style.display = 'block';
+                    document.getElementById('montoMinimo').textContent = '$' + (albumData.precio || 0).toLocaleString('es-AR');
                 }
             }
         }
