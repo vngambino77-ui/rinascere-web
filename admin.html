@@ -347,8 +347,8 @@
                         <td>${album.fecha || '-'}</td>
                         <td>0</td>
                         <td>
-                            <span style="background: ${album.metodo === 'gratis' ? '#10b981' : album.metodo === 'cafecito' ? '#f59e0b' : '#7c3aed'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
-                                ${album.metodo === 'gratis' ? '🎁 Gratis' : album.metodo === 'cafecito' ? '☕ Cafecito' : '💰 $' + (album.precio || 0)}
+                            <span style="background: ${album.metodo === 'gratis' ? '#10b981' : album.metodo === 'cafecito' ? '#f59e0b' : album.metodo === 'gratis_o_cafecito' ? '#0891b2' : '#7c3aed'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
+                                ${album.metodo === 'gratis' ? '🎁 Gratis' : album.metodo === 'cafecito' ? '☕ Cafecito' : album.metodo === 'gratis_o_cafecito' ? '🎁☕ Gratis o Cafecito' : '💰 $' + (album.precio || 0)}
                             </span>
                         </td>
                         <td>
@@ -360,6 +360,9 @@
                             </button>
                             <button onclick="editarPrecio('${id}', '${album.metodo || ''}', ${album.precio || 0})" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 ✏️ Precio
+                            </button>
+                            <button onclick="activarGratisOCafecito('${id}', ${album.precio || 0})" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🎁☕ Gratis/Cafecito
                             </button>
                             <button onclick="eliminarAlbum('${id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🗑️
@@ -425,9 +428,9 @@
             } else {
                 // Si eligió Cafecito o Precio Fijo, pedimos el monto
                 const nuevoPrecioTexto = prompt(
-                    nuevoMetodo === 'cafecito'
-                        ? 'Monto mínimo sugerido (Cafecito):'
-                        : 'Precio fijo del álbum:',
+                    nuevoMetodo === 'precio_fijo'
+                        ? 'Precio fijo del álbum:'
+                        : 'Monto mínimo sugerido (Cafecito):',
                     precioActual || ''
                 );
 
@@ -446,6 +449,33 @@
             try {
                 await updateDoc(doc(db, 'albumes', id), datosActualizados);
                 alert('✅ Cambios guardados correctamente');
+                location.reload();
+            } catch (error) {
+                alert('Error al actualizar: ' + error.message);
+            }
+        };
+
+        window.activarGratisOCafecito = async function(id, precioActual) {
+            const nuevoPrecioTexto = prompt(
+                'Monto mínimo sugerido para el Cafecito (si el cliente prefiere descargar gratis, no se le cobra nada):',
+                precioActual || ''
+            );
+
+            if (nuevoPrecioTexto === null || nuevoPrecioTexto.trim() === '') return;
+
+            const nuevoPrecio = Number(nuevoPrecioTexto);
+
+            if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+                alert('Por favor ingresá un número válido mayor a 0.');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'albumes', id), {
+                    metodo: 'gratis_o_cafecito',
+                    precio: nuevoPrecio
+                });
+                alert('✅ Listo: ahora el cliente puede elegir entre Gratis o Cafecito en este álbum');
                 location.reload();
             } catch (error) {
                 alert('Error al actualizar: ' + error.message);
