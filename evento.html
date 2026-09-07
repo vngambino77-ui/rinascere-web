@@ -458,11 +458,25 @@
             });
         }
 
+        // Pide nombre y contacto antes de pagar. Devuelve null si cancela.
+        function pedirDatosComprador() {
+            const nombre = prompt('Para identificar tu compra, decinos tu nombre y apellido:');
+            if (nombre === null || nombre.trim() === '') {
+                alert('Necesitamos tu nombre para continuar con el pago.');
+                return null;
+            }
+            const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
+            return { nombre: nombre.trim(), contacto: contacto.trim() };
+        }
+
         window.pagarPack = async function() {
             if (!packSeleccionado) {
                 alert('Seleccioná un pack primero');
                 return;
             }
+
+            const datosComprador = pedirDatosComprador();
+            if (!datosComprador) return;
             
             try {
                 const response = await fetch('/.netlify/functions/crear-preferencia', {
@@ -473,7 +487,9 @@
                         precio: packSeleccionado.precio,
                         albumId: albumData.id,
                         metodoPago: 'pack_fotos',
-                        nombrePack: packSeleccionado.nombre
+                        nombrePack: packSeleccionado.nombre,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
                     })
                 });
 
@@ -569,6 +585,9 @@
         };
 
         async function procesarPago(precio, metodoPago) {
+            const datosComprador = pedirDatosComprador();
+            if (!datosComprador) return;
+
             try {
                 const response = await fetch('/.netlify/functions/crear-preferencia', {
                     method: 'POST',
@@ -577,7 +596,9 @@
                         titulo: `${albumData.nombre} - Fotos`,
                         precio: precio,
                         albumId: albumData.id,
-                        metodoPago: metodoPago
+                        metodoPago: metodoPago,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
                     })
                 });
 
