@@ -96,6 +96,8 @@
         const albumId = urlParams.get('album');
         const nombrePack = urlParams.get('pack');
         const monto = urlParams.get('monto');
+        const comprador = urlParams.get('comprador');
+        const contacto = urlParams.get('contacto');
 
         // Marca para no registrar la compra dos veces si la persona refresca esta página
         let compraYaRegistrada = sessionStorage.getItem('compraRegistrada_' + albumId + '_' + monto) === 'true';
@@ -112,7 +114,7 @@
                     const albumData = albumDoc.data();
                     if (albumData.driveLink) {
                         if (!compraYaRegistrada) {
-                            await registrarCompra(albumId, albumData.nombre, nombrePack, monto);
+                            await registrarCompra(albumId, albumData.nombre, nombrePack, monto, comprador, contacto);
                             sessionStorage.setItem('compraRegistrada_' + albumId + '_' + monto, 'true');
                         }
                         // Redirigir a evento.html con parámetro pagado=true y pack
@@ -129,7 +131,7 @@
         }
 
         // Registra en Firestore cada vez que un pago se confirma
-        async function registrarCompra(albumId, albumNombre, pack, monto) {
+        async function registrarCompra(albumId, albumNombre, pack, monto, comprador, contacto) {
             try {
                 await addDoc(collection(db, 'eventos'), {
                     tipo: 'compra',
@@ -137,6 +139,8 @@
                     albumNombre: albumNombre || '',
                     pack: pack || null,
                     monto: Number(monto) || 0,
+                    comprador: comprador || '',
+                    contacto: contacto || '',
                     fecha: serverTimestamp()
                 });
                 await setDoc(doc(db, 'contadores', 'general'), {
