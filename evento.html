@@ -335,7 +335,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -348,6 +348,24 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        // Registra en Firestore cada vez que alguien entra a ver un álbum
+        async function registrarVisita(albumId, albumNombre) {
+            try {
+                await addDoc(collection(db, 'eventos'), {
+                    tipo: 'visita',
+                    albumId: albumId,
+                    albumNombre: albumNombre || '',
+                    fecha: serverTimestamp()
+                });
+                await setDoc(doc(db, 'contadores', 'general'), {
+                    visitas: increment(1),
+                    actualizado: serverTimestamp()
+                }, { merge: true });
+            } catch (error) {
+                console.error('No se pudo registrar la visita:', error);
+            }
+        }
 
         let albumData = null;
         let packSeleccionado = null;
@@ -373,7 +391,10 @@
                 }
 
                 albumData = { id: albumId, ...albumDoc.data() };
-                
+
+                // Registrar la visita (no bloquea la carga de la página)
+                registrarVisita(albumId, albumData.nombre);
+
                 document.getElementById('albumName').textContent = albumData.nombre;
                 document.getElementById('albumDate').textContent = albumData.fecha;
 
