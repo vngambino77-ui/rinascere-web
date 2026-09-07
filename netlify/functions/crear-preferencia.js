@@ -70,7 +70,7 @@ exports.handler = async function(event, context) {
         const siteUrl = process.env.URL || 'https://rinascere-web.netlify.app';
 
         // Construir URL de éxito, sumando el pack si hay
-        let successUrl = `${siteUrl}/exito.html?album=${albumId}`;
+        let successUrl = `${siteUrl}/exito.html?album=${albumId}&monto=${precioFinal}`;
         if (nombrePack) {
             successUrl += `&pack=${encodeURIComponent(nombrePack)}`;
         }
