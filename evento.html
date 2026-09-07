@@ -213,7 +213,18 @@
         <div class="error" id="error" style="display: none;"></div>
         
         <div id="content" style="display: none;">
-            
+
+            <!-- GALERÍA DE MUESTRA (VISIBLE ANTES DE COMPRAR) -->
+            <div id="seccionMuestra" style="display: none;">
+                <h2 style="color: #d4af37; margin: 10px 0 20px; text-align: center;">
+                    📸 Muestra de Fotos
+                </h2>
+                <p style="color: #ccc; text-align: center; margin-bottom: 20px;">
+                    Estas son algunas fotos del álbum, con marca de agua. Al comprar accedés a todas, sin marca de agua.
+                </p>
+                <div id="galeriaMuestra" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 35px;"></div>
+            </div>
+
             <!-- ELEGIR Y PAGAR PACK (ANTES DE PAGAR) -->
             <div id="seccionPacks" style="display: none;">
                 <div class="info-box">
@@ -401,6 +412,11 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
+                // Mostrar la galería de muestra, solo si todavía no pagó
+                if (pagado !== 'true') {
+                    mostrarMuestra();
+                }
+
                 // DETERMINAR QUÉ MOSTRAR
                 if (albumData.metodo === 'pack_fotos') {
                     if (pagado === 'true' && packPagado) {
@@ -419,6 +435,27 @@
                 console.error('Error:', error);
                 showError('Error al cargar el álbum');
             }
+        }
+
+        // Agrega la marca de agua a una foto de Cloudinary
+        function conMarcaDeAgua(url) {
+            return url.replace('/upload/', '/upload/l_y9ukn66j0hvwsauv4efg,w_1.0,o_35,g_center/fl_layer_apply/');
+        }
+
+        function mostrarMuestra() {
+            if (!albumData.fotosPreview || albumData.fotosPreview.length === 0) return;
+
+            document.getElementById('seccionMuestra').style.display = 'block';
+            const galeria = document.getElementById('galeriaMuestra');
+            galeria.innerHTML = '';
+
+            albumData.fotosPreview.forEach((url) => {
+                const img = document.createElement('img');
+                img.src = conMarcaDeAgua(url);
+                img.loading = 'lazy';
+                img.style.cssText = 'width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #d4af37;';
+                galeria.appendChild(img);
+            });
         }
 
         function mostrarPacks() {
