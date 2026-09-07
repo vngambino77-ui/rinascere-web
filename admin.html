@@ -320,7 +320,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, getDoc, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -468,6 +468,10 @@
                                 📸 Muestras
                             </button>
                             <input type="file" id="muestraInput_${id}" accept="image/*" multiple style="display: none;" onchange="subirMuestras(event, '${id}')">
+                            ${album.fotosPreview && album.fotosPreview.length > 0 ? `
+                            <button onclick="vaciarMuestras('${id}')" style="background: #92400e; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🗑️📸
+                            </button>` : ''}
                             <button onclick="eliminarAlbum('${id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🗑️
                             </button>
@@ -518,21 +522,48 @@
             return data.secure_url;
         }
 
-        window.subirMuestras = async function(event, albumId) {
-            const files = Array.from(event.target.files).slice(0, 6);
-            if (files.length === 0) return;
-
-            if (!confirm(`¿Subir ${files.length} foto(s) de muestra? Esto reemplaza las muestras que ya tenía este álbum (si tenía).`)) {
-                event.target.value = '';
-                return;
+        window.vaciarMuestras = async function(albumId) {
+            if (!confirm('¿Borrar TODAS las fotos de muestra de este álbum? Después vas a poder subir hasta 6 nuevas.')) return;
+            try {
+                await updateDoc(doc(db, 'albumes', albumId), { fotosPreview: [] });
+                alert('✅ Muestras borradas');
+                cargarAlbumes();
+            } catch (error) {
+                alert('Error: ' + error.message);
             }
+        };
+
+        window.subirMuestras = async function(event, albumId) {
+            const filesNuevos = Array.from(event.target.files);
+            if (filesNuevos.length === 0) return;
 
             try {
+                // Leer las muestras que ya tenía este álbum
+                const albumSnap = await getDoc(doc(db, 'albumes', albumId));
+                const fotosActuales = (albumSnap.exists() && albumSnap.data().fotosPreview) || [];
+
+                const espacioLibre = 6 - fotosActuales.length;
+                if (espacioLibre <= 0) {
+                    alert('Este álbum ya tiene 6 fotos de muestra (el máximo). Si querés cambiar alguna, primero borrá muestras desde Firebase o avisame para agregar un botón de "vaciar muestras".');
+                    event.target.value = '';
+                    return;
+                }
+
+                const filesAUsar = filesNuevos.slice(0, espacioLibre);
+                if (filesNuevos.length > espacioLibre) {
+                    alert(`Este álbum ya tenía ${fotosActuales.length} muestra(s). Solo hay lugar para ${espacioLibre} más (máximo 6 en total), así que se van a subir esas ${espacioLibre}.`);
+                }
+
+                if (!confirm(`¿Subir ${filesAUsar.length} foto(s) de muestra? Se van a SUMAR a las ${fotosActuales.length} que ya tenía este álbum.`)) {
+                    event.target.value = '';
+                    return;
+                }
+
                 alert('Subiendo fotos, esperá un momento...');
-                const urls = await Promise.all(files.map(f => subirFotoACloudinary(f)));
+                const urlsNuevas = await Promise.all(filesAUsar.map(f => subirFotoACloudinary(f)));
 
                 await updateDoc(doc(db, 'albumes', albumId), {
-                    fotosPreview: urls
+                    fotosPreview: [...fotosActuales, ...urlsNuevas]
                 });
 
                 alert('✅ Fotos de muestra guardadas correctamente');
