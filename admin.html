@@ -279,6 +279,7 @@
                     <tr>
                         <th>Tipo</th>
                         <th>Álbum</th>
+                        <th>Cliente</th>
                         <th>Pack</th>
                         <th>Monto</th>
                         <th>Fecha</th>
@@ -286,7 +287,7 @@
                 </thead>
                 <tbody id="actividadTableBody">
                     <tr>
-                        <td colspan="5" class="loading">Cargando actividad</td>
+                        <td colspan="6" class="loading">Cargando actividad</td>
                     </tr>
                 </tbody>
             </table>
@@ -368,7 +369,7 @@
             onSnapshot(q, (snapshot) => {
                 const tbody = document.getElementById('actividadTableBody');
                 if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">Todavía no hay actividad registrada</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">Todavía no hay actividad registrada</td></tr>';
                     return;
                 }
                 tbody.innerHTML = '';
@@ -378,9 +379,13 @@
                     const tipoTexto = ev.tipo === 'compra' ? '🛒 Compra' : '👀 Visita';
                     const fechaTexto = (ev.fecha && ev.fecha.toDate) ? ev.fecha.toDate().toLocaleString('es-AR') : '—';
                     const montoTexto = ev.monto ? '$' + Number(ev.monto).toLocaleString('es-AR') : '—';
+                    const clienteTexto = ev.comprador
+                        ? ev.comprador + (ev.contacto ? ' (' + ev.contacto + ')' : '')
+                        : '—';
                     tr.innerHTML = `
                         <td>${tipoTexto}</td>
                         <td>${ev.albumNombre || ev.albumId || '—'}</td>
+                        <td>${clienteTexto}</td>
                         <td>${ev.pack || '—'}</td>
                         <td>${montoTexto}</td>
                         <td>${fechaTexto}</td>
