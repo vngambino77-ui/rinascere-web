@@ -195,6 +195,16 @@
             </div>
 
             <div class="form-group">
+                <label>Fotos de Muestra (opcional, se ven ANTES de pagar) 🔒</label>
+                <div class="upload-portada" onclick="document.getElementById('muestraInput').click()">
+                    <p>📸 Click para elegir 4 a 6 fotos de muestra</p>
+                    <p style="font-size: 0.9em; color: #999; margin-top: 10px;">Se muestran con marca de agua, para que el cliente vea antes de comprar</p>
+                </div>
+                <input type="file" id="muestraInput" accept="image/*" multiple>
+                <div id="muestraPreviewContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+            </div>
+
+            <div class="form-group">
                 <label for="albumNombre">Nombre del Álbum *</label>
                 <input type="text" id="albumNombre" required placeholder="Ej: Maratón Nocturna 2024">
             </div>
@@ -293,6 +303,7 @@
         const db = getFirestore(app);
 
         let portadaFile = null;
+        let muestraFiles = [];
 
         document.getElementById('portadaInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -306,6 +317,22 @@
                 };
                 reader.readAsDataURL(file);
             }
+        });
+
+        document.getElementById('muestraInput').addEventListener('change', (e) => {
+            muestraFiles = Array.from(e.target.files).slice(0, 6);
+            const container = document.getElementById('muestraPreviewContainer');
+            container.innerHTML = '';
+            muestraFiles.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 1px solid #d4af37;';
+                    container.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
         });
 
         function mostrarMensaje(tipo, mensaje) {
@@ -341,11 +368,11 @@
             }
         };
 
-        async function uploadToCloudinary(file) {
+        async function uploadToCloudinary(file, folder = 'rinascere/portadas') {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', 'rinascere_fotos');
-            formData.append('folder', 'rinascere/portadas');
+            formData.append('folder', folder);
 
             const response = await fetch(
                 'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload',
@@ -389,6 +416,15 @@
 
             try {
                 const portadaUrl = await uploadToCloudinary(portadaFile);
+
+                let fotosPreview = [];
+                if (muestraFiles.length > 0) {
+                    mostrarMensaje('success', `Subiendo ${muestraFiles.length} fotos de muestra...`);
+                    fotosPreview = await Promise.all(
+                        muestraFiles.map(file => uploadToCloudinary(file, 'rinascere/muestras'))
+                    );
+                }
+
                 mostrarMensaje('success', 'Creando álbum...');
 
                 const albumData = {
@@ -397,6 +433,7 @@
                     descripcion: descripcion || '',
                     metodo,
                     portadaUrl,
+                    fotosPreview,
                     driveFolderId: folderId,
                     driveLink: `https://drive.google.com/drive/folders/${folderId}`,
                     esPublico: esPublico,
