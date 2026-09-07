@@ -441,6 +441,7 @@
                     tr.innerHTML = `
                         <td>
                             ${album.portadaUrl ? `<img src="${album.portadaUrl}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">` : '<div style="width: 60px; height: 60px; background: #333; border-radius: 5px;"></div>'}
+                            ${album.fotosPreview && album.fotosPreview.length > 0 ? `<div style="font-size: 0.75em; color: #d4af37; text-align: center; margin-top: 4px;">📸 ${album.fotosPreview.length} muestras</div>` : ''}
                         </td>
                         <td>${album.nombre || 'Sin nombre'}</td>
                         <td>${album.fecha || '-'}</td>
@@ -463,6 +464,10 @@
                             <button onclick="activarGratisOCafecito('${id}', ${album.precio || 0})" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🎁☕ Gratis/Cafecito
                             </button>
+                            <button onclick="document.getElementById('muestraInput_${id}').click()" style="background: #7c3aed; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                📸 Muestras
+                            </button>
+                            <input type="file" id="muestraInput_${id}" accept="image/*" multiple style="display: none;" onchange="subirMuestras(event, '${id}')">
                             <button onclick="eliminarAlbum('${id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🗑️
                             </button>
@@ -490,6 +495,52 @@
                 location.reload();
             } catch (error) {
                 alert('Error al eliminar: ' + error.message);
+            }
+        };
+
+        async function subirFotoACloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'rinascere_fotos');
+            formData.append('folder', 'rinascere/muestras');
+
+            const response = await fetch(
+                'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload',
+                { method: 'POST', body: formData }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Error al subir imagen');
+            }
+
+            const data = await response.json();
+            return data.secure_url;
+        }
+
+        window.subirMuestras = async function(event, albumId) {
+            const files = Array.from(event.target.files).slice(0, 6);
+            if (files.length === 0) return;
+
+            if (!confirm(`¿Subir ${files.length} foto(s) de muestra? Esto reemplaza las muestras que ya tenía este álbum (si tenía).`)) {
+                event.target.value = '';
+                return;
+            }
+
+            try {
+                alert('Subiendo fotos, esperá un momento...');
+                const urls = await Promise.all(files.map(f => subirFotoACloudinary(f)));
+
+                await updateDoc(doc(db, 'albumes', albumId), {
+                    fotosPreview: urls
+                });
+
+                alert('✅ Fotos de muestra guardadas correctamente');
+                cargarAlbumes();
+            } catch (error) {
+                alert('Error al subir las muestras: ' + error.message);
+            } finally {
+                event.target.value = '';
             }
         };
 
