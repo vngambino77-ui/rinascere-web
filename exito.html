@@ -78,7 +78,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -95,6 +95,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
         const nombrePack = urlParams.get('pack');
+        const monto = urlParams.get('monto');
+
+        // Marca para no registrar la compra dos veces si la persona refresca esta página
+        let compraYaRegistrada = sessionStorage.getItem('compraRegistrada_' + albumId + '_' + monto) === 'true';
 
         if (albumId) {
             cargarAlbum(albumId);
@@ -107,6 +111,10 @@
                 if (albumDoc.exists()) {
                     const albumData = albumDoc.data();
                     if (albumData.driveLink) {
+                        if (!compraYaRegistrada) {
+                            await registrarCompra(albumId, albumData.nombre, nombrePack, monto);
+                            sessionStorage.setItem('compraRegistrada_' + albumId + '_' + monto, 'true');
+                        }
                         // Redirigir a evento.html con parámetro pagado=true y pack
                         let redirectUrl = `evento.html?album=${albumId}&pagado=true`;
                         if (nombrePack) {
@@ -117,6 +125,27 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
+            }
+        }
+
+        // Registra en Firestore cada vez que un pago se confirma
+        async function registrarCompra(albumId, albumNombre, pack, monto) {
+            try {
+                await addDoc(collection(db, 'eventos'), {
+                    tipo: 'compra',
+                    albumId: albumId,
+                    albumNombre: albumNombre || '',
+                    pack: pack || null,
+                    monto: Number(monto) || 0,
+                    fecha: serverTimestamp()
+                });
+                await setDoc(doc(db, 'contadores', 'general'), {
+                    compras: increment(1),
+                    ingresos: increment(Number(monto) || 0),
+                    actualizado: serverTimestamp()
+                }, { merge: true });
+            } catch (error) {
+                console.error('No se pudo registrar la compra:', error);
             }
         }
     </script>
