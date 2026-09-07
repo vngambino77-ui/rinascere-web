@@ -252,6 +252,43 @@
             </div>
         </div>
 
+        <!-- Actividad de clientes -->
+        <h2 class="section-title">📊 Actividad de Clientes</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">👀 Visitas a Álbumes</div>
+                <div class="stat-number" id="totalVisitas">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🛒 Compras Realizadas</div>
+                <div class="stat-number" id="totalCompras">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">💰 Ingresos Totales</div>
+                <div class="stat-number" id="totalIngresos">$0</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🕐 Actividad Reciente</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Álbum</th>
+                        <th>Pack</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="actividadTableBody">
+                    <tr>
+                        <td colspan="5" class="loading">Cargando actividad</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <!-- Lista de álbumes -->
         <h2 class="section-title">Álbumes</h2>
         <div class="table-container">
@@ -279,7 +316,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -296,7 +333,53 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await cargarEstadisticas();
             await cargarAlbumes();
+            escucharContadores();
+            escucharActividadReciente();
         });
+
+        // Contador en vivo: se actualiza solo, sin recargar la página
+        function escucharContadores() {
+            const ref = doc(db, 'contadores', 'general');
+            onSnapshot(ref, (snap) => {
+                const data = snap.data() || {};
+                document.getElementById('totalVisitas').textContent = data.visitas || 0;
+                document.getElementById('totalCompras').textContent = data.compras || 0;
+                const ingresos = data.ingresos || 0;
+                document.getElementById('totalIngresos').textContent = '$' + ingresos.toLocaleString('es-AR');
+            }, (error) => {
+                console.error('Error al escuchar contadores:', error);
+            });
+        }
+
+        // Lista en vivo de las últimas 15 visitas/compras
+        function escucharActividadReciente() {
+            const q = query(collection(db, 'eventos'), orderBy('fecha', 'desc'), limit(15));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('actividadTableBody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">Todavía no hay actividad registrada</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const ev = docSnap.data();
+                    const tr = document.createElement('tr');
+                    const tipoTexto = ev.tipo === 'compra' ? '🛒 Compra' : '👀 Visita';
+                    const fechaTexto = (ev.fecha && ev.fecha.toDate) ? ev.fecha.toDate().toLocaleString('es-AR') : '—';
+                    const montoTexto = ev.monto ? '$' + Number(ev.monto).toLocaleString('es-AR') : '—';
+                    tr.innerHTML = `
+                        <td>${tipoTexto}</td>
+                        <td>${ev.albumNombre || ev.albumId || '—'}</td>
+                        <td>${ev.pack || '—'}</td>
+                        <td>${montoTexto}</td>
+                        <td>${fechaTexto}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }, (error) => {
+                console.error('Error al escuchar actividad reciente:', error);
+            });
+        }
 
         async function cargarEstadisticas() {
             try {
