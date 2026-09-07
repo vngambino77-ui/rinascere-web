@@ -269,8 +269,11 @@
             </div>
         </div>
 
-        <h2 class="section-title">🕐 Actividad Reciente</h2>
-        <div class="table-container">
+        <h2 class="section-title" onclick="toggleActividad()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+            <span>🕐 Actividad Reciente</span>
+            <span id="flechaActividad" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
+        </h2>
+        <div class="table-container" id="actividadWrapper" style="display: none;">
             <table>
                 <thead>
                     <tr>
@@ -336,6 +339,14 @@
             escucharContadores();
             escucharActividadReciente();
         });
+
+        window.toggleActividad = function() {
+            const wrapper = document.getElementById('actividadWrapper');
+            const flecha = document.getElementById('flechaActividad');
+            const abierto = wrapper.style.display !== 'none';
+            wrapper.style.display = abierto ? 'none' : 'block';
+            flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
 
         // Contador en vivo: se actualiza solo, sin recargar la página
         function escucharContadores() {
