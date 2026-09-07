@@ -26,7 +26,7 @@ exports.handler = async function(event, context) {
 
     try {
         // Leer los datos que mandó el sitio
-        const { titulo, precio, albumId, metodoPago, nombrePack } = JSON.parse(event.body);
+        const { titulo, precio, albumId, metodoPago, nombrePack, comprador, contacto } = JSON.parse(event.body);
 
         // Validar que lleguen los datos mínimos
         if (!titulo || !albumId) {
@@ -74,6 +74,12 @@ exports.handler = async function(event, context) {
         if (nombrePack) {
             successUrl += `&pack=${encodeURIComponent(nombrePack)}`;
         }
+        if (comprador) {
+            successUrl += `&comprador=${encodeURIComponent(comprador)}`;
+        }
+        if (contacto) {
+            successUrl += `&contacto=${encodeURIComponent(contacto)}`;
+        }
 
         // Armar la preferencia para Mercado Pago
         const preference = {
@@ -91,6 +97,14 @@ exports.handler = async function(event, context) {
             auto_return: 'approved',
             external_reference: albumId
         };
+
+        // Si tenemos el nombre del comprador, lo mandamos para que aparezca en Mercado Pago
+        if (comprador) {
+            preference.payer = { name: comprador };
+            if (contacto && contacto.includes('@')) {
+                preference.payer.email = contacto;
+            }
+        }
 
         // Llamar a Mercado Pago para crear la preferencia
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
