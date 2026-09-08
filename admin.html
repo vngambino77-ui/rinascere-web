@@ -269,8 +269,11 @@
             </div>
         </div>
         <div style="text-align: right; margin-bottom: 20px;">
-            <button onclick="reiniciarVisitas()" style="background: #92400e; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+            <button onclick="reiniciarVisitas()" style="background: #92400e; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-left: 8px;">
                 🔄 Reiniciar contador de Visitas
+            </button>
+            <button onclick="borrarHistorialVisitas()" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-left: 8px;">
+                🗑️ Borrar historial de Visitas
             </button>
         </div>
 
@@ -325,7 +328,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, getDoc, setDoc, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, getDoc, setDoc, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -532,6 +535,25 @@
             try {
                 await setDoc(doc(db, 'contadores', 'general'), { visitas: 0 }, { merge: true });
                 alert('✅ Contador de Visitas reiniciado');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        window.borrarHistorialVisitas = async function() {
+            if (!confirm('¿Borrar TODO el historial de visitas de "Actividad Reciente"? Las compras NO se tocan. Esto también reinicia el contador de Visitas a 0. No se puede deshacer.')) return;
+            try {
+                const q = query(collection(db, 'eventos'), where('tipo', '==', 'visita'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    alert('No había visitas registradas para borrar.');
+                } else {
+                    await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, 'eventos', d.id))));
+                }
+
+                await setDoc(doc(db, 'contadores', 'general'), { visitas: 0 }, { merge: true });
+                alert(`✅ Se borraron ${snapshot.size} visita(s) del historial y se reinició el contador.`);
             } catch (error) {
                 alert('Error: ' + error.message);
             }
