@@ -361,7 +361,14 @@
         const db = getFirestore(app);
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
+        // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
+            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia) {
+                console.log('Visita no contada (modo admin/vista previa)');
+                return;
+            }
             try {
                 await addDoc(collection(db, 'eventos'), {
                     tipo: 'visita',
