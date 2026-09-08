@@ -277,6 +277,48 @@
             </button>
         </div>
 
+        <h2 class="section-title">💵 Transferencias Pendientes</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Álbum</th>
+                        <th>Pack</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="transferenciasTableBody">
+                    <tr><td colspan="6" class="loading">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="section-title" onclick="toggleTransferenciasConfirmadas()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+            <span>✅ Transferencias Confirmadas</span>
+            <span id="flechaTransferenciasConfirmadas" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
+        </h2>
+        <div class="table-container" id="transferenciasConfirmadasWrapper" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Álbum</th>
+                        <th>Pack</th>
+                        <th>Monto</th>
+                        <th>Código</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="transferenciasConfirmadasTableBody">
+                    <tr><td colspan="7" class="loading">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
         <h2 class="section-title" onclick="toggleActividad()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
             <span>🕐 Actividad Reciente</span>
             <span id="flechaActividad" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
@@ -328,7 +370,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, getDoc, setDoc, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -347,11 +389,21 @@
             await cargarAlbumes();
             escucharContadores();
             escucharActividadReciente();
+            escucharTransferenciasPendientes();
+            escucharTransferenciasConfirmadas();
         });
 
         window.toggleActividad = function() {
             const wrapper = document.getElementById('actividadWrapper');
             const flecha = document.getElementById('flechaActividad');
+            const abierto = wrapper.style.display !== 'none';
+            wrapper.style.display = abierto ? 'none' : 'block';
+            flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
+
+        window.toggleTransferenciasConfirmadas = function() {
+            const wrapper = document.getElementById('transferenciasConfirmadasWrapper');
+            const flecha = document.getElementById('flechaTransferenciasConfirmadas');
             const abierto = wrapper.style.display !== 'none';
             wrapper.style.display = abierto ? 'none' : 'block';
             flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
@@ -370,6 +422,180 @@
                 console.error('Error al escuchar contadores:', error);
             });
         }
+
+        // Lista en vivo de transferencias pendientes de confirmar
+        function escucharTransferenciasPendientes() {
+            const q = query(collection(db, 'transferencias'), where('estado', '==', 'pendiente'));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('transferenciasTableBody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay transferencias pendientes</td></tr>';
+                    return;
+                }
+                const items = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0));
+
+                tbody.innerHTML = '';
+                items.forEach((t) => {
+                    const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
+                        <td>${t.albumNombre || t.albumId || '—'}</td>
+                        <td>${t.pack || '—'}</td>
+                        <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
+                        <td>${fechaTexto}</td>
+                        <td>
+                            <button onclick="confirmarTransferencia('${t.id}')" style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                ✅ Confirmar Pago
+                            </button>
+                            <button onclick="descartarTransferencia('${t.id}')" style="background: #6b7280; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                ❌ Descartar
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }, (error) => {
+                console.error('Error al escuchar transferencias:', error);
+            });
+        }
+
+        window.descartarTransferencia = async function(id) {
+            if (!confirm('¿Descartar esta transferencia? (Usalo si nunca llegó el pago)')) return;
+            try {
+                await updateDoc(doc(db, 'transferencias', id), { estado: 'descartada' });
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        window.confirmarTransferencia = async function(id) {
+            if (!confirm('¿Confirmás que la plata YA llegó a tu cuenta? Esto genera el link de acceso para el cliente.')) return;
+
+            try {
+                const snap = await getDoc(doc(db, 'transferencias', id));
+                if (!snap.exists()) {
+                    alert('Esta transferencia ya no existe.');
+                    return;
+                }
+                const t = snap.data();
+
+                // Generar un código de acceso único y de un solo uso
+                const codigo = Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
+
+                await setDoc(doc(db, 'codigosAcceso', codigo), {
+                    albumId: t.albumId,
+                    pack: t.pack || null,
+                    usado: false,
+                    creadoEn: serverTimestamp()
+                });
+
+                await updateDoc(doc(db, 'transferencias', id), { estado: 'confirmada', codigoAcceso: codigo });
+
+                // Registrar como compra, igual que los pagos con Mercado Pago
+                await addDoc(collection(db, 'eventos'), {
+                    tipo: 'compra',
+                    albumId: t.albumId,
+                    albumNombre: t.albumNombre || '',
+                    pack: t.pack || null,
+                    monto: Number(t.monto) || 0,
+                    comprador: t.comprador || '',
+                    contacto: t.contacto || '',
+                    metodo: 'transferencia',
+                    fecha: serverTimestamp()
+                });
+                await setDoc(doc(db, 'contadores', 'general'), {
+                    compras: increment(1),
+                    ingresos: increment(Number(t.monto) || 0),
+                    actualizado: serverTimestamp()
+                }, { merge: true });
+
+                // Armar el link de acceso
+                let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${codigo}`;
+                if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
+
+                const mensaje = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
+
+                // Copiar al portapapeles
+                try {
+                    await navigator.clipboard.writeText(mensaje);
+                } catch (e) { /* si el navegador bloquea el portapapeles, no pasa nada */ }
+
+                const soloNumeros = (t.contacto || '').replace(/\D/g, '');
+                if (soloNumeros.length >= 8) {
+                    if (confirm('✅ Confirmado y link copiado. ¿Abrir WhatsApp para enviárselo directo?')) {
+                        window.open(`https://wa.me/${soloNumeros}?text=${encodeURIComponent(mensaje)}`, '_blank');
+                    }
+                } else {
+                    alert('✅ Confirmado. Mensaje con el link copiado al portapapeles:\n\n' + mensaje);
+                }
+            } catch (error) {
+                alert('Error al confirmar: ' + error.message);
+            }
+        };
+
+        // Lista en vivo de transferencias ya confirmadas (para poder revivir un código si hace falta)
+        function escucharTransferenciasConfirmadas() {
+            const q = query(collection(db, 'transferencias'), where('estado', '==', 'confirmada'));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('transferenciasConfirmadasTableBody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">Todavía no hay transferencias confirmadas</td></tr>';
+                    return;
+                }
+                const items = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0))
+                    .slice(0, 20);
+
+                tbody.innerHTML = '';
+                items.forEach((t) => {
+                    const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
+                        <td>${t.albumNombre || t.albumId || '—'}</td>
+                        <td>${t.pack || '—'}</td>
+                        <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
+                        <td style="font-family: monospace;">${t.codigoAcceso || '—'}</td>
+                        <td>${fechaTexto}</td>
+                        <td>
+                            ${t.codigoAcceso ? `
+                            <button onclick="revivirCodigo('${t.codigoAcceso}', '${t.albumId}', '${(t.pack || '').replace(/'/g, "\\'")}', '${(t.comprador || '').replace(/'/g, "\\'")}')" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🔄 Revivir código
+                            </button>` : '—'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }, (error) => {
+                console.error('Error al escuchar transferencias confirmadas:', error);
+            });
+        }
+
+        window.revivirCodigo = async function(codigo, albumId, pack, comprador) {
+            if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
+
+            try {
+                await updateDoc(doc(db, 'codigosAcceso', codigo), { usado: false });
+
+                let link = `${window.location.origin}/evento.html?album=${albumId}&codigo=${codigo}`;
+                if (pack) link += `&pack=${encodeURIComponent(pack)}`;
+
+                const mensaje = `¡Hola ${comprador || ''}! Acá tenés de nuevo el acceso a tus fotos:\n${link}`;
+
+                try {
+                    await navigator.clipboard.writeText(mensaje);
+                    alert('✅ Código reactivado. Mensaje con el link copiado al portapapeles, listo para pegar en WhatsApp.');
+                } catch (e) {
+                    alert('✅ Código reactivado. Copiá este mensaje a mano:\n\n' + mensaje);
+                }
+            } catch (error) {
+                alert('Error al revivir el código: ' + error.message);
+            }
+        };
 
         // Lista en vivo de las últimas 15 visitas/compras
         function escucharActividadReciente() {
