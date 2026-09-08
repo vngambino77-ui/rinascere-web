@@ -244,6 +244,9 @@
                     <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled>
                         💳 Pagar Pack Seleccionado
                     </button>
+                    <button class="btn-pay" id="btnTransferenciaPack" onclick="iniciarTransferencia()" disabled style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                        💵 Pagar por Transferencia
+                    </button>
                 </div>
             </div>
 
@@ -280,6 +283,24 @@
                 </div>
             </div>
 
+            <!-- TRANSFERENCIA BANCARIA (COMPARTIDA ENTRE PACK Y PRECIO FIJO) -->
+            <div id="seccionTransferencia" style="display: none;">
+                <div class="info-box" style="text-align: center;">
+                    <h3>💵 Pagar por Transferencia</h3>
+                    <p style="margin: 15px 0;">Transferí <strong id="transferenciaMonto" style="color: #d4af37; font-size: 1.3em;"></strong> a:</p>
+                    <p style="font-size: 1.2em; color: #fff; margin: 10px 0;">
+                        Alias: <strong style="color: #d4af37;">verogam.fotos.mp</strong>
+                    </p>
+                    <p style="color: #ccc;">Titular: Verónica Gambino Rinascere Fotografías</p>
+                    <p style="color: #ccc; margin-top: 20px;">
+                        Cuando hagas la transferencia, mandanos el comprobante por WhatsApp. En cuanto lo confirmemos, te enviamos el acceso a tus fotos.
+                    </p>
+                    <a href="#" id="linkWhatsappTransferencia" target="_blank" rel="noopener" class="btn-pay" style="display: inline-block; text-decoration: none; margin-top: 20px;">
+                        💬 Avisar por WhatsApp
+                    </a>
+                </div>
+            </div>
+
             <!-- MÉTODOS NORMALES (GRATIS / PRECIO FIJO / CAFECITO) -->
             <div id="seccionNormal" style="display: none;">
                 <div class="info-box">
@@ -305,6 +326,9 @@
                     <div style="text-align: center;">
                         <button class="btn-pay" onclick="pagarPrecioFijo()">
                             💳 Pagar y Acceder
+                        </button>
+                        <button class="btn-pay" onclick="iniciarTransferencia()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                            💵 Pagar por Transferencia
                         </button>
                     </div>
                 </div>
@@ -346,7 +370,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -385,13 +409,31 @@
             }
         }
 
+        // Valida un código de acceso de un solo uso y lo marca como usado
+        async function validarCodigoAcceso(codigo, albumIdEsperado) {
+            try {
+                const ref = doc(db, 'codigosAcceso', codigo);
+                const snap = await getDoc(ref);
+                if (!snap.exists()) return null;
+                const data = snap.data();
+                if (data.usado) return null;
+                if (data.albumId !== albumIdEsperado) return null;
+                await updateDoc(ref, { usado: true, usadoEn: serverTimestamp() });
+                return data;
+            } catch (error) {
+                console.error('Error validando código de acceso:', error);
+                return null;
+            }
+        }
+
         let albumData = null;
         let packSeleccionado = null;
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
-        const pagado = urlParams.get('pagado');
-        const packPagado = urlParams.get('pack');
+        let pagado = urlParams.get('pagado');
+        let packPagado = urlParams.get('pack');
+        const codigoAcceso = urlParams.get('codigo');
 
         if (!albumId) {
             showError('No se especificó un álbum');
@@ -415,6 +457,23 @@
 
                 document.getElementById('albumName').textContent = albumData.nombre;
                 document.getElementById('albumDate').textContent = albumData.fecha;
+
+                // Si viene con un código de acceso (compra por transferencia), validarlo
+                if (codigoAcceso) {
+                    const dataCodigo = await validarCodigoAcceso(codigoAcceso, albumId);
+                    if (!dataCodigo) {
+                        document.getElementById('loading').innerHTML = `
+                            <div style="text-align:center; padding: 40px 20px;">
+                                <h2 style="color:#d4af37;">🔒 Este enlace ya fue usado o no es válido</h2>
+                                <p style="color:#ccc; margin-top: 15px;">Si vos sos quien compró el acceso y tenés algún problema, escribinos por WhatsApp y te ayudamos.</p>
+                                <a href="https://wa.me/542966346212" style="display:inline-block; margin-top:20px; background:#d4af37; color:#1a1a1a; padding: 12px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">💬 Escribir por WhatsApp</a>
+                            </div>
+                        `;
+                        return;
+                    }
+                    pagado = 'true';
+                    packPagado = dataCodigo.pack || packPagado;
+                }
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
@@ -484,6 +543,7 @@
                     this.classList.add('selected');
                     packSeleccionado = pack;
                     document.getElementById('btnPagar').disabled = false;
+                    document.getElementById('btnTransferenciaPack').disabled = false;
                 };
 
                 const precioPorFoto = Math.round(pack.precio / pack.cantidad);
@@ -626,6 +686,48 @@
             }
 
             procesarPago(precio, 'cafecito');
+        };
+
+        window.iniciarTransferencia = async function() {
+            let precio, packNombre = null;
+
+            if (albumData.metodo === 'pack_fotos') {
+                if (!packSeleccionado) {
+                    alert('Seleccioná un pack primero');
+                    return;
+                }
+                precio = packSeleccionado.precio;
+                packNombre = packSeleccionado.nombre;
+            } else {
+                precio = albumData.precio;
+            }
+
+            const datosComprador = pedirDatosComprador();
+            if (!datosComprador) return;
+
+            try {
+                await addDoc(collection(db, 'transferencias'), {
+                    albumId: albumData.id,
+                    albumNombre: albumData.nombre,
+                    pack: packNombre,
+                    monto: precio,
+                    comprador: datosComprador.nombre,
+                    contacto: datosComprador.contacto,
+                    estado: 'pendiente',
+                    fecha: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('No se pudo registrar la transferencia:', error);
+            }
+
+            document.getElementById('seccionPacks').style.display = 'none';
+            document.getElementById('seccionNormal').style.display = 'none';
+            document.getElementById('seccionTransferencia').style.display = 'block';
+
+            document.getElementById('transferenciaMonto').textContent = '$' + Number(precio).toLocaleString('es-AR');
+
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         };
 
         async function procesarPago(precio, metodoPago) {
