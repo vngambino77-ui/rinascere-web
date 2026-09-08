@@ -268,6 +268,11 @@
                 <div class="stat-number" id="totalIngresos">$0</div>
             </div>
         </div>
+        <div style="text-align: right; margin-bottom: 20px;">
+            <button onclick="reiniciarVisitas()" style="background: #92400e; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+                🔄 Reiniciar contador de Visitas
+            </button>
+        </div>
 
         <h2 class="section-title" onclick="toggleActividad()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
             <span>🕐 Actividad Reciente</span>
@@ -320,7 +325,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, collection, getDocs, getDoc, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, getDoc, setDoc, query, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -521,6 +526,16 @@
             const data = await response.json();
             return data.secure_url;
         }
+
+        window.reiniciarVisitas = async function() {
+            if (!confirm('¿Reiniciar el contador de Visitas a 0? Esto NO borra el historial de "Actividad Reciente", solo el número de la tarjeta.')) return;
+            try {
+                await setDoc(doc(db, 'contadores', 'general'), { visitas: 0 }, { merge: true });
+                alert('✅ Contador de Visitas reiniciado');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
 
         window.vaciarMuestras = async function(albumId) {
             if (!confirm('¿Borrar TODAS las fotos de muestra de este álbum? Después vas a poder subir hasta 6 nuevas.')) return;
