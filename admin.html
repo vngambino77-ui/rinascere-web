@@ -226,6 +226,7 @@
         <h1>Panel de Administración</h1>
         <div class="header-actions">
             <button class="btn btn-primary" onclick="nuevoAlbum()">+ Nuevo Álbum</button>
+            <button class="btn btn-secondary" onclick="copiarLinkPagina()">🔗 Copiar Link de mi Página</button>
             <a href="index.html" class="btn btn-secondary">← Volver al sitio</a>
             <button class="btn btn-secondary" onclick="cerrarSesion()">Salir</button>
         </div>
@@ -710,7 +711,7 @@
                         </td>
                         <td>${album.nombre || 'Sin nombre'}</td>
                         <td>${album.fecha || '-'}</td>
-                        <td>0</td>
+                        <td>${album.cantidadFotos || 0}</td>
                         <td>
                             <span style="background: ${album.metodo === 'gratis' ? '#10b981' : album.metodo === 'cafecito' ? '#f59e0b' : album.metodo === 'gratis_o_cafecito' ? '#0891b2' : '#7c3aed'}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.85em;">
                                 ${album.metodo === 'gratis' ? '🎁 Gratis' : album.metodo === 'cafecito' ? '☕ Cafecito' : album.metodo === 'gratis_o_cafecito' ? '🎁☕ Gratis o Cafecito' : '💰 $' + (album.precio || 0)}
@@ -728,6 +729,9 @@
                             </button>
                             <button onclick="editarPrecio('${id}', '${album.metodo || ''}', ${album.precio || 0})" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 ✏️ Precio
+                            </button>
+                            <button onclick="editarCantidadFotos('${id}', ${album.cantidadFotos || 0})" style="background: #4338ca; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🔢 Cant. Fotos
                             </button>
                             <button onclick="activarGratisOCafecito('${id}', ${album.precio || 0})" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🎁☕ Gratis/Cafecito
@@ -759,10 +763,10 @@
         };
 
         window.copiarLinkAlbum = async function(id) {
-            const link = `${window.location.origin}/evento.html?album=${id}`;
+            const link = `${window.location.origin}/fotos/${id}`;
             try {
                 await navigator.clipboard.writeText(link);
-                alert('✅ Link copiado. Ahora pegalo (mantené presionado y elegí "Pegar") en WhatsApp, Instagram o donde quieras.');
+                alert('✅ Link copiado (con tarjeta de vista previa). Ahora pegalo (mantené presionado y elegí "Pegar") en WhatsApp, Instagram o donde quieras.');
             } catch (error) {
                 // Si el navegador bloquea el portapapeles, mostramos el link para copiar a mano
                 prompt('No pude copiarlo solo. Copiá este link manualmente (ya está seleccionado, con Ctrl+C o mantené presionado y "Copiar"):', link);
@@ -922,6 +926,25 @@
             }
         };
 
+        window.editarCantidadFotos = async function(id, cantidadActual) {
+            const nuevaCantidad = prompt('¿Cuántas fotos hay en la carpeta de Drive de este álbum? (contalas vos, no se cuentan solas)', cantidadActual || '');
+            if (nuevaCantidad === null) return;
+
+            const numero = Number(nuevaCantidad);
+            if (isNaN(numero) || numero < 0) {
+                alert('Poné solo un número (ej: 348)');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'albumes', id), { cantidadFotos: numero });
+                alert('✅ Cantidad de fotos actualizada');
+                cargarAlbumes();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
         window.editarPrecio = async function(id, metodoActual, precioActual) {
             // Mostramos las opciones de método de cobro disponibles
             const metodoTexto = prompt(
@@ -1012,6 +1035,16 @@
     </script>
     <script>
         // Función para botón Nuevo Álbum
+        window.copiarLinkPagina = async function() {
+            const link = `${window.location.origin}/index.html`;
+            try {
+                await navigator.clipboard.writeText(link);
+                alert('✅ Link de tu página copiada (con tarjeta de vista previa). Pegalo en tu bio de Instagram, tu estado de WhatsApp, o donde quieras. El cliente va a ver todos tus álbumes y elige el suyo.');
+            } catch (error) {
+                prompt('No pude copiarlo solo. Copiá este link manualmente:', link);
+            }
+        };
+
         function nuevoAlbum() {
             window.location.href = 'subir.html';
         }
