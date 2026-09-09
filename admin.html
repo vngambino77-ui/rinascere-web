@@ -310,6 +310,11 @@
             <span id="flechaTransferenciasConfirmadas" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
         <div class="table-container" id="transferenciasConfirmadasWrapper" style="display: none;">
+            <div style="text-align: right; margin-bottom: 12px;">
+                <button onclick="borrarHistorialTransferenciasConfirmadas()" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+                    🗑️ Borrar historial de Transferencias Confirmadas
+                </button>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -583,6 +588,23 @@
                 console.error('Error al escuchar transferencias confirmadas:', error);
             });
         }
+
+        window.borrarHistorialTransferenciasConfirmadas = async function() {
+            if (!confirm('¿Borrar TODO el historial de Transferencias Confirmadas? Esto NO borra "Actividad Reciente" ni los contadores de Compras/Ingresos, solo esta lista. Los códigos de acceso ya generados van a seguir funcionando igual (una vez), solo dejás de ver el registro acá. No se puede deshacer.')) return;
+            try {
+                const q = query(collection(db, 'transferencias'), where('estado', '==', 'confirmada'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    alert('No había transferencias confirmadas para borrar.');
+                    return;
+                }
+                await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, 'transferencias', d.id))));
+                alert(`✅ Se borraron ${snapshot.size} transferencia(s) confirmada(s) del historial.`);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
 
         window.revivirCodigo = async function(codigo, albumId, pack, comprador) {
             if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
