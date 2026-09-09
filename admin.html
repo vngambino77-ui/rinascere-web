@@ -724,9 +724,6 @@
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
                             </button>
-                            <button onclick="copiarLinkAlbum('${id}')" style="background: #059669; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
-                                🔗 Copiar Link
-                            </button>
                             <button onclick="editarPrecio('${id}', '${album.metodo || ''}', ${album.precio || 0})" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 ✏️ Precio
                             </button>
@@ -760,17 +757,6 @@
 
         window.verAlbum = function(id) {
             window.location.href = `evento.html?album=${id}`;
-        };
-
-        window.copiarLinkAlbum = async function(id) {
-            const link = `${window.location.origin}/fotos/${id}`;
-            try {
-                await navigator.clipboard.writeText(link);
-                alert('✅ Link copiado (con tarjeta de vista previa). Ahora pegalo (mantené presionado y elegí "Pegar") en WhatsApp, Instagram o donde quieras.');
-            } catch (error) {
-                // Si el navegador bloquea el portapapeles, mostramos el link para copiar a mano
-                prompt('No pude copiarlo solo. Copiá este link manualmente (ya está seleccionado, con Ctrl+C o mantené presionado y "Copiar"):', link);
-            }
         };
 
         window.eliminarAlbum = async function(id) {
