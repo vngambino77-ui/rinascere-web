@@ -228,6 +228,19 @@
             </div>
 
             <div class="form-group">
+                <label for="cantidadFotos">Cantidad de Fotos en esa Carpeta</label>
+                <input 
+                    type="number" 
+                    id="cantidadFotos" 
+                    min="0"
+                    placeholder="Ej: 348"
+                >
+                <p style="color: #999; font-size: 0.9em; margin-top: 5px;">
+                    Contalas vos en Drive y poné el número acá (no se cuentan solas). Se muestra en la tarjeta del álbum.
+                </p>
+            </div>
+
+            <div class="form-group">
                 <label for="albumMetodo">Método de Venta *</label>
                 <select id="albumMetodo" required onchange="mostrarPrecio()">
                     <option value="">Seleccioná método</option>
@@ -434,6 +447,7 @@
                     metodo,
                     portadaUrl,
                     fotosPreview,
+                    cantidadFotos: Number(document.getElementById('cantidadFotos').value) || 0,
                     driveFolderId: folderId,
                     driveLink: `https://drive.google.com/drive/folders/${folderId}`,
                     esPublico: esPublico,
