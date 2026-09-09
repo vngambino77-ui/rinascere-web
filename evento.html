@@ -351,6 +351,9 @@
                         <button class="btn-pay" onclick="pagarCafecito()">
                             💳 Contribuir
                         </button>
+                        <button class="btn-pay" onclick="iniciarTransferenciaCafecito()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                            💵 Pagar por Transferencia
+                        </button>
                     </div>
                 </div>
 
@@ -702,6 +705,22 @@
                 precio = albumData.precio;
             }
 
+            await procesarTransferencia(precio, packNombre);
+        };
+
+        window.iniciarTransferenciaCafecito = async function() {
+            const precio = parseInt(document.getElementById('inputCafecito').value);
+            const montoMinimo = albumData.precio || 3000;
+
+            if (!precio || precio < montoMinimo) {
+                alert(`El monto mínimo es $${montoMinimo.toLocaleString('es-AR')}`);
+                return;
+            }
+
+            await procesarTransferencia(precio, null);
+        };
+
+        async function procesarTransferencia(precio, packNombre) {
             const datosComprador = pedirDatosComprador();
             if (!datosComprador) return;
 
@@ -728,7 +747,7 @@
 
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
-        };
+        }
 
         async function procesarPago(precio, metodoPago) {
             const datosComprador = pedirDatosComprador();
