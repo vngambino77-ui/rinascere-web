@@ -266,6 +266,9 @@
             <div class="stat-card">
                 <div class="stat-label">💰 Ingresos Totales</div>
                 <div class="stat-number" id="totalIngresos">$0</div>
+                <button onclick="reiniciarIngresos()" style="background: #92400e; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75em; margin-top: 8px;">
+                    🔄 Reiniciar
+                </button>
             </div>
         </div>
         <div style="text-align: right; margin-bottom: 20px;">
@@ -274,6 +277,12 @@
             </button>
             <button onclick="borrarHistorialVisitas()" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-left: 8px;">
                 🗑️ Borrar historial de Visitas
+            </button>
+            <button onclick="reiniciarCompras()" style="background: #92400e; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-left: 8px;">
+                🔄 Reiniciar contador de Compras
+            </button>
+            <button onclick="borrarHistorialCompras()" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 0.85em; margin-left: 8px;">
+                🗑️ Borrar historial de Compras
             </button>
         </div>
 
@@ -769,6 +778,45 @@
             const data = await response.json();
             return data.secure_url;
         }
+
+        window.reiniciarIngresos = async function() {
+            if (!confirm('¿Reiniciar solo el contador de Ingresos Totales a 0? Esto NO toca el contador de Compras ni el historial de "Actividad Reciente".')) return;
+            try {
+                await setDoc(doc(db, 'contadores', 'general'), { ingresos: 0 }, { merge: true });
+                alert('✅ Contador de Ingresos Totales reiniciado');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        window.reiniciarCompras = async function() {
+            if (!confirm('¿Reiniciar el contador de Compras e Ingresos a 0? Esto NO borra el historial de "Actividad Reciente", solo los números de las tarjetas.')) return;
+            try {
+                await setDoc(doc(db, 'contadores', 'general'), { compras: 0, ingresos: 0 }, { merge: true });
+                alert('✅ Contadores de Compras e Ingresos reiniciados');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        window.borrarHistorialCompras = async function() {
+            if (!confirm('¿Borrar TODO el historial de compras de "Actividad Reciente"? Las visitas NO se tocan. Esto también reinicia los contadores de Compras e Ingresos a 0. No se puede deshacer. (Esto no borra tus registros de Transferencias, solo el historial de "Actividad Reciente")')) return;
+            try {
+                const q = query(collection(db, 'eventos'), where('tipo', '==', 'compra'));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    alert('No había compras registradas para borrar.');
+                } else {
+                    await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, 'eventos', d.id))));
+                }
+
+                await setDoc(doc(db, 'contadores', 'general'), { compras: 0, ingresos: 0 }, { merge: true });
+                alert(`✅ Se borraron ${snapshot.size} compra(s) del historial y se reiniciaron los contadores.`);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
 
         window.reiniciarVisitas = async function() {
             if (!confirm('¿Reiniciar el contador de Visitas a 0? Esto NO borra el historial de "Actividad Reciente", solo el número de la tarjeta.')) return;
