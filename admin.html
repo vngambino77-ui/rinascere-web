@@ -289,6 +289,32 @@
             </button>
         </div>
 
+        <h2 class="section-title">🎨 Mi Portfolio (sección "Mi portfolio" de tu página)</h2>
+        <p style="color: #999; font-size: 0.9em; margin-bottom: 15px;">
+            Se muestran hasta 9 fotos en tu página, ordenadas por el número que le pongas (1 = primera). Son fotos tuyas para mostrar tu trabajo, no tienen nada que ver con los álbumes de clientes.
+        </p>
+        <div style="text-align: right; margin-bottom: 15px;">
+            <button onclick="document.getElementById('inputFotoPortfolio').click()" style="background: #7c3aed; color: white; border: none; padding: 10px 16px; border-radius: 5px; cursor: pointer;">
+                ➕ Agregar Foto al Portfolio
+            </button>
+            <input type="file" id="inputFotoPortfolio" accept="image/*" style="display: none;" onchange="subirFotoPortfolio(this.files[0])">
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Título</th>
+                        <th>Orden</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolioTableBody">
+                    <tr><td colspan="4" class="loading">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
         <h2 class="section-title">💵 Transferencias Pendientes</h2>
         <div class="table-container">
             <table>
@@ -408,6 +434,7 @@
             escucharActividadReciente();
             escucharTransferenciasPendientes();
             escucharTransferenciasConfirmadas();
+            escucharPortfolio();
         });
 
         window.toggleActividad = function() {
@@ -1050,6 +1077,104 @@
                 alert('Error al cambiar la foto: ' + error.message);
             } finally {
                 document.getElementById('inputFotoPersonalAdmin').value = '';
+            }
+        };
+
+        // Lista en vivo de las fotos del portfolio, ordenadas
+        function escucharPortfolio() {
+            const q = query(collection(db, 'portfolio'), orderBy('orden'));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('portfolioTableBody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Todavía no cargaste ninguna foto</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const f = docSnap.data();
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><img src="${f.url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;"></td>
+                        <td>${f.titulo || '—'}</td>
+                        <td>${f.orden ?? '—'}</td>
+                        <td>
+                            <button onclick="editarOrdenPortfolio('${docSnap.id}', ${f.orden || 0})" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🔢 Orden
+                            </button>
+                            <button onclick="eliminarFotoPortfolio('${docSnap.id}')" style="background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                                🗑️
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }, (error) => {
+                console.error('Error al escuchar el portfolio:', error);
+            });
+        }
+
+        window.subirFotoPortfolio = async function(archivo) {
+            if (!archivo) return;
+            try {
+                const titulo = prompt('Título para esta foto (opcional, podés dejarlo vacío):', '') || '';
+
+                // Contamos cuántas hay para sugerir el próximo número de orden
+                const snap = await getDocs(collection(db, 'portfolio'));
+                const siguienteOrden = snap.size + 1;
+                const ordenTexto = prompt('¿Qué número de orden le ponés? (1 = primera foto que se ve)', siguienteOrden);
+                if (ordenTexto === null) {
+                    document.getElementById('inputFotoPortfolio').value = '';
+                    return;
+                }
+                const orden = Number(ordenTexto) || siguienteOrden;
+
+                const fd = new FormData();
+                fd.append('file', archivo);
+                fd.append('upload_preset', 'rinascere_fotos');
+                fd.append('folder', 'rinascere/portfolio');
+
+                const response = await fetch('https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await response.json();
+                if (!data.secure_url) throw new Error('Cloudinary no devolvió la imagen');
+
+                await addDoc(collection(db, 'portfolio'), {
+                    url: data.secure_url,
+                    titulo: titulo,
+                    orden: orden
+                });
+
+                alert('✅ Foto agregada al portfolio');
+            } catch (error) {
+                alert('Error al subir la foto: ' + error.message);
+            } finally {
+                document.getElementById('inputFotoPortfolio').value = '';
+            }
+        };
+
+        window.editarOrdenPortfolio = async function(id, ordenActual) {
+            const nuevoOrden = prompt('Nuevo número de orden (1 = primera foto):', ordenActual || '');
+            if (nuevoOrden === null) return;
+            const numero = Number(nuevoOrden);
+            if (isNaN(numero)) {
+                alert('Poné solo un número');
+                return;
+            }
+            try {
+                await updateDoc(doc(db, 'portfolio', id), { orden: numero });
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        window.eliminarFotoPortfolio = async function(id) {
+            if (!confirm('¿Borrar esta foto del portfolio?')) return;
+            try {
+                await deleteDoc(doc(db, 'portfolio', id));
+            } catch (error) {
+                alert('Error: ' + error.message);
             }
         };
 
