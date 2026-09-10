@@ -389,16 +389,6 @@ firebase.initializeApp({
         <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo"/>
         <p>Tu foto personal<br>va a aparecer acá ✨</p>
       </div>
-
-      <!-- Botón para subir foto (tocá acá desde el celular o desktop) -->
-      <button class="btn-subir-foto" onclick="document.getElementById('input-foto-personal').click()">
-        📷 Subir mi foto
-      </button>
-      <div class="subir-progreso" id="subir-prog"></div>
-
-      <!-- Input de archivo — acepta cámara en celular y archivos en desktop -->
-      <input type="file" id="input-foto-personal" accept="image/*" style="display:none"
-        onchange="subirFotoPersonal(this.files[0])"/>
     </div>
 
     <!-- COLUMNA TEXTO -->
@@ -559,43 +549,6 @@ firebase.initializeApp({
   }
 
   // ── Subir foto personal a Cloudinary ──────────────────
-  async function subirFotoPersonal(archivo) {
-    if (!archivo) return;
-    const prog = document.getElementById('subir-prog');
-    prog.style.width = '0%';
-
-    const fd = new FormData();
-    fd.append('file', archivo);
-    fd.append('upload_preset', UPLOAD_PRESET);
-    fd.append('folder', 'perfil');
-    fd.append('public_id', 'foto_veronika');
-
-    const xhr = new XMLHttpRequest();
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) prog.style.width = Math.round(e.loaded/e.total*100) + '%';
-    };
-    xhr.onload = () => {
-      const data = JSON.parse(xhr.responseText);
-      if (data.secure_url) {
-        const img = document.getElementById('foto-personal-img');
-        img.src = data.secure_url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
-        prog.style.width = '100%';
-        setTimeout(() => prog.style.width = '0%', 1500);
-        toast('✅ Foto subida correctamente', 'ok');
-        // Guardar URL en Firebase para que persista
-        db.collection('configuracion').doc('sitio').set({ fotoPersonalUrl: data.secure_url }, { merge: true });
-      } else {
-        toast('❌ Error al subir la foto');
-        prog.style.width = '0%';
-      }
-    };
-    xhr.onerror = () => { toast('❌ Error de red'); prog.style.width = '0%'; };
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`);
-    xhr.send(fd);
-  }
-
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
     try {
