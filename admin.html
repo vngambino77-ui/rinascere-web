@@ -227,6 +227,8 @@
         <div class="header-actions">
             <button class="btn btn-primary" onclick="nuevoAlbum()">+ Nuevo Álbum</button>
             <button class="btn btn-secondary" onclick="copiarLinkPagina()">🔗 Copiar Link de mi Página</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('inputFotoPersonalAdmin').click()">📷 Cambiar mi Foto ("Sobre mí")</button>
+            <input type="file" id="inputFotoPersonalAdmin" accept="image/*" style="display:none" onchange="cambiarFotoPersonal(this.files[0])">
             <a href="index.html" class="btn btn-secondary">← Volver al sitio</a>
             <button class="btn btn-secondary" onclick="cerrarSesion()">Salir</button>
         </div>
@@ -1021,6 +1023,36 @@
     </script>
     <script>
         // Función para botón Nuevo Álbum
+        window.cambiarFotoPersonal = async function(archivo) {
+            if (!archivo) return;
+            if (!confirm('¿Reemplazar tu foto de la sección "Sobre mí" por esta?')) {
+                document.getElementById('inputFotoPersonalAdmin').value = '';
+                return;
+            }
+            try {
+                const fd = new FormData();
+                fd.append('file', archivo);
+                fd.append('upload_preset', 'rinascere_upload');
+                fd.append('folder', 'perfil');
+                fd.append('public_id', 'foto_veronika');
+
+                const response = await fetch('https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await response.json();
+
+                if (!data.secure_url) throw new Error('Cloudinary no devolvió la imagen');
+
+                await setDoc(doc(db, 'configuracion', 'sitio'), { fotoPersonalUrl: data.secure_url }, { merge: true });
+                alert('✅ Foto de "Sobre mí" actualizada');
+            } catch (error) {
+                alert('Error al cambiar la foto: ' + error.message);
+            } finally {
+                document.getElementById('inputFotoPersonalAdmin').value = '';
+            }
+        };
+
         window.copiarLinkPagina = async function() {
             const link = `${window.location.origin}/index.html`;
             try {
