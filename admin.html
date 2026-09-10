@@ -289,30 +289,35 @@
             </button>
         </div>
 
-        <h2 class="section-title">🎨 Mi Portfolio (sección "Mi portfolio" de tu página)</h2>
-        <p style="color: #999; font-size: 0.9em; margin-bottom: 15px;">
-            Se muestran hasta 9 fotos en tu página, ordenadas por el número que le pongas (1 = primera). Son fotos tuyas para mostrar tu trabajo, no tienen nada que ver con los álbumes de clientes.
-        </p>
-        <div style="text-align: right; margin-bottom: 15px;">
-            <button onclick="document.getElementById('inputFotoPortfolio').click()" style="background: #7c3aed; color: white; border: none; padding: 10px 16px; border-radius: 5px; cursor: pointer;">
-                ➕ Agregar Foto al Portfolio
-            </button>
-            <input type="file" id="inputFotoPortfolio" accept="image/*" style="display: none;" onchange="subirFotoPortfolio(this.files[0])">
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Foto</th>
-                        <th>Título</th>
-                        <th>Orden</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="portfolioTableBody">
-                    <tr><td colspan="4" class="loading">Cargando...</td></tr>
-                </tbody>
-            </table>
+        <h2 class="section-title" onclick="toggleMiPortfolio()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+            <span>🎨 Mi Portfolio (sección "Mi portfolio" de tu página)</span>
+            <span id="flechaMiPortfolio" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
+        </h2>
+        <div id="miPortfolioWrapper" style="display: none;">
+            <p style="color: #999; font-size: 0.9em; margin-bottom: 15px;">
+                Se muestran hasta 9 fotos en tu página, ordenadas por el número que le pongas (1 = primera). Son fotos tuyas para mostrar tu trabajo, no tienen nada que ver con los álbumes de clientes.
+            </p>
+            <div style="text-align: right; margin-bottom: 15px;">
+                <button onclick="document.getElementById('inputFotoPortfolio').click()" style="background: #7c3aed; color: white; border: none; padding: 10px 16px; border-radius: 5px; cursor: pointer;">
+                    ➕ Agregar Foto al Portfolio
+                </button>
+                <input type="file" id="inputFotoPortfolio" accept="image/*" style="display: none;" onchange="subirFotoPortfolio(this.files[0])">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Foto</th>
+                            <th>Título</th>
+                            <th>Orden</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolioTableBody">
+                        <tr><td colspan="4" class="loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <h2 class="section-title">💵 Transferencias Pendientes</h2>
@@ -436,6 +441,14 @@
             escucharTransferenciasConfirmadas();
             escucharPortfolio();
         });
+
+        window.toggleMiPortfolio = function() {
+            const wrapper = document.getElementById('miPortfolioWrapper');
+            const flecha = document.getElementById('flechaMiPortfolio');
+            const abierto = wrapper.style.display !== 'none';
+            wrapper.style.display = abierto ? 'none' : 'block';
+            flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
 
         window.toggleActividad = function() {
             const wrapper = document.getElementById('actividadWrapper');
