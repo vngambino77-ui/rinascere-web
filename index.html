@@ -651,6 +651,7 @@ async function cargarAlbumes() {
       }
       grilla.innerHTML = html;
     } catch(e) {
+      console.error('Error al cargar el portfolio desde Firebase:', e);
       // Sin Firebase → mostrar placeholders
       grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
     }
