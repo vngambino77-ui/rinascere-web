@@ -320,8 +320,11 @@
             </div>
         </div>
 
-        <h2 class="section-title">💵 Transferencias Pendientes</h2>
-        <div class="table-container">
+        <h2 class="section-title" onclick="toggleTransferenciasPendientes()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+            <span>💵 Transferencias Pendientes</span>
+            <span id="flechaTransferenciasPendientes" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
+        </h2>
+        <div class="table-container" id="transferenciasPendientesWrapper" style="display: none;">
             <table>
                 <thead>
                     <tr>
@@ -441,6 +444,14 @@
             escucharTransferenciasConfirmadas();
             escucharPortfolio();
         });
+
+        window.toggleTransferenciasPendientes = function() {
+            const wrapper = document.getElementById('transferenciasPendientesWrapper');
+            const flecha = document.getElementById('flechaTransferenciasPendientes');
+            const abierto = wrapper.style.display !== 'none';
+            wrapper.style.display = abierto ? 'none' : 'block';
+            flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
 
         window.toggleMiPortfolio = function() {
             const wrapper = document.getElementById('miPortfolioWrapper');
