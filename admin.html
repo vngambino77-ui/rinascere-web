@@ -295,7 +295,7 @@
         </h2>
         <div id="miPortfolioWrapper" style="display: none;">
             <p style="color: #999; font-size: 0.9em; margin-bottom: 15px;">
-                Se muestran hasta 10 fotos en tu página, ordenadas por el número que le pongas (1 = primera). Son fotos tuyas para mostrar tu trabajo, no tienen nada que ver con los álbumes de clientes.
+                Se muestran hasta 9 fotos en tu página, ordenadas por el número que le pongas (1 = primera). Son fotos tuyas para mostrar tu trabajo, no tienen nada que ver con los álbumes de clientes.
             </p>
             <div style="text-align: right; margin-bottom: 15px;">
                 <button onclick="document.getElementById('inputFotoPortfolio').click()" style="background: #7c3aed; color: white; border: none; padding: 10px 16px; border-radius: 5px; cursor: pointer;">
@@ -586,19 +586,13 @@
 
                 const mensaje = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
 
-                // Copiar al portapapeles
+                // Intentamos copiar solos, pero SIEMPRE mostramos el mensaje para copiar a mano también
+                // (en el celu, muchos navegadores bloquean copiar/abrir apps automáticamente)
                 try {
                     await navigator.clipboard.writeText(mensaje);
-                } catch (e) { /* si el navegador bloquea el portapapeles, no pasa nada */ }
+                } catch (e) { /* seguimos igual, el prompt de abajo sirve como respaldo */ }
 
-                const soloNumeros = (t.contacto || '').replace(/\D/g, '');
-                if (soloNumeros.length >= 8) {
-                    if (confirm('✅ Confirmado y link copiado. ¿Abrir WhatsApp para enviárselo directo?')) {
-                        window.open(`https://wa.me/${soloNumeros}?text=${encodeURIComponent(mensaje)}`, '_blank');
-                    }
-                } else {
-                    alert('✅ Confirmado. Mensaje con el link copiado al portapapeles:\n\n' + mensaje);
-                }
+                prompt('✅ Confirmado. Copiá este mensaje (ya está seleccionado, tocá y elegí "Copiar") y pegalo en WhatsApp:', mensaje);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
@@ -622,6 +616,17 @@
                 items.forEach((t) => {
                     const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
                     const tr = document.createElement('tr');
+
+                    let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${t.codigoAcceso || ''}`;
+                    if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
+                    const mensajeWa = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
+                    const soloNumeros = (t.contacto || '').replace(/\D/g, '');
+                    const botonWhatsapp = (t.codigoAcceso && soloNumeros.length >= 8)
+                        ? `<a href="https://wa.me/${soloNumeros}?text=${encodeURIComponent(mensajeWa)}" target="_blank" rel="noopener" style="display:inline-block; background: #25D366; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px; text-decoration:none;">
+                            📤 WhatsApp
+                        </a>`
+                        : '';
+
                     tr.innerHTML = `
                         <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
                         <td>${t.albumNombre || t.albumId || '—'}</td>
@@ -630,6 +635,7 @@
                         <td style="font-family: monospace;">${t.codigoAcceso || '—'}</td>
                         <td>${fechaTexto}</td>
                         <td>
+                            ${botonWhatsapp}
                             ${t.codigoAcceso ? `
                             <button onclick="revivirCodigo('${t.codigoAcceso}', '${t.albumId}', '${(t.pack || '').replace(/'/g, "\\'")}', '${(t.comprador || '').replace(/'/g, "\\'")}')" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🔄 Revivir código
