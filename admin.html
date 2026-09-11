@@ -592,7 +592,7 @@
                     await navigator.clipboard.writeText(mensaje);
                 } catch (e) { /* seguimos igual, el prompt de abajo sirve como respaldo */ }
 
-                prompt('✅ Confirmado. Copiá este mensaje (ya está seleccionado, tocá y elegí "Copiar") y pegalo en WhatsApp:', mensaje);
+                mostrarMensajeParaCopiar(mensaje);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
@@ -620,8 +620,8 @@
                     let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${t.codigoAcceso || ''}`;
                     if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
                     const mensajeWa = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-                    const soloNumeros = (t.contacto || '').replace(/\D/g, '');
-                    const botonWhatsapp = (t.codigoAcceso && soloNumeros.length >= 8)
+                    const soloNumeros = normalizarNumeroAr(t.contacto);
+                    const botonWhatsapp = (t.codigoAcceso && soloNumeros.length >= 10)
                         ? `<a href="https://wa.me/${soloNumeros}?text=${encodeURIComponent(mensajeWa)}" target="_blank" rel="noopener" style="display:inline-block; background: #25D366; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px; text-decoration:none;">
                             📤 WhatsApp
                         </a>`
@@ -679,10 +679,9 @@
 
                 try {
                     await navigator.clipboard.writeText(mensaje);
-                    alert('✅ Código reactivado. Mensaje con el link copiado al portapapeles, listo para pegar en WhatsApp.');
-                } catch (e) {
-                    alert('✅ Código reactivado. Copiá este mensaje a mano:\n\n' + mensaje);
-                }
+                } catch (e) { /* seguimos igual, la ventanita de abajo sirve como respaldo */ }
+
+                mostrarMensajeParaCopiar(mensaje);
             } catch (error) {
                 alert('Error al revivir el código: ' + error.message);
             }
@@ -848,6 +847,57 @@
 
             const data = await response.json();
             return data.secure_url;
+        }
+
+        // Le agrega el código de país de Argentina (54 9) si el número no lo tiene
+        function normalizarNumeroAr(numero) {
+            let n = String(numero || '').replace(/\D/g, '');
+            if (!n) return '';
+            if (n.startsWith('54')) {
+                if (!n.startsWith('549')) n = '549' + n.slice(2);
+            } else {
+                n = '549' + n;
+            }
+            return n;
+        }
+
+        // Muestra una ventanita con el mensaje en un cuadro de texto, con botón real de Copiar
+        // (mucho más confiable en celulares que el copiado automático o los prompt() nativos)
+        function mostrarMensajeParaCopiar(mensaje) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
+            overlay.innerHTML = `
+                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%;">
+                    <p style="color:#d4af37; margin-bottom:10px; font-weight:bold;">✅ Copiá este mensaje y pegalo en WhatsApp:</p>
+                    <textarea readonly style="width:100%; height:150px; background:#111; color:#fff; border:1px solid #555; border-radius:5px; padding:10px; font-size:0.95em; box-sizing:border-box;"></textarea>
+                    <div style="text-align:right; margin-top:15px;">
+                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold; margin-right:8px;">📋 Copiar</button>
+                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cerrar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const textarea = overlay.querySelector('textarea');
+            textarea.value = mensaje;
+
+            overlay.querySelector('#btnCopiarMensajeOverlay').onclick = async () => {
+                textarea.focus();
+                textarea.select();
+                textarea.setSelectionRange(0, 999999);
+                try {
+                    await navigator.clipboard.writeText(mensaje);
+                    alert('✅ Copiado');
+                } catch (e) {
+                    try {
+                        document.execCommand('copy');
+                        alert('✅ Copiado');
+                    } catch (e2) {
+                        alert('No se pudo copiar solo. Mantené presionado el texto de arriba y elegí "Copiar" manualmente.');
+                    }
+                }
+            };
+            overlay.querySelector('#btnCerrarMensajeOverlay').onclick = () => overlay.remove();
         }
 
         window.reiniciarIngresos = async function() {
