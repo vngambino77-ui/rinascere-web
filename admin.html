@@ -1267,7 +1267,12 @@
             }
         };
 
-        function nuevoAlbum() {
+        window.cerrarSesion = function() {
+            localStorage.removeItem('adminLoggedIn');
+            window.location.href = 'login.html';
+        };
+
+        window.nuevoAlbum = function() {
             window.location.href = 'subir.html';
         }
     </script>
