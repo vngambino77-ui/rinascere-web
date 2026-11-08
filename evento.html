@@ -426,6 +426,30 @@
             }
         }
 
+        // Registra cada vez que alguien toca un botón para ir a las fotos en Drive
+        // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
+        // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
+        async function registrarClickDrive(origen) {
+            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia || !albumData) return;
+            try {
+                await addDoc(collection(db, 'eventos'), {
+                    tipo: 'click_drive',
+                    origen: origen,
+                    albumId: albumData.id,
+                    albumNombre: albumData.nombre || '',
+                    fecha: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('No se pudo registrar el click en Drive:', error);
+            }
+        }
+
+        document.getElementById('linkDrive').addEventListener('click', () => registrarClickDrive('pagado'));
+        document.getElementById('linkDriveNormal').addEventListener('click', () => registrarClickDrive('pagado'));
+        document.getElementById('linkDriveGratis').addEventListener('click', () => registrarClickDrive('gratis'));
+
         // Valida un código de acceso de un solo uso y lo marca como usado
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
             try {
