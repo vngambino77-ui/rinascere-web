@@ -199,6 +199,50 @@
             max-width: 600px;
         }
 
+        /* FORMULARIO ANTES DE LA DESCARGA GRATIS */
+        .modal-fondo {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-caja {
+            background: #2d2d2d;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .modal-caja h3 { color: #d4af37; margin-bottom: 10px; font-size: 1.3em; }
+        .modal-caja p { color: #ccc; line-height: 1.5; margin-bottom: 15px; font-size: 0.95em; }
+        .modal-caja label { display: block; color: #d4af37; margin: 12px 0 5px; font-size: 0.95em; }
+        .modal-caja input, .modal-caja select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #d4af37;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1em;
+        }
+        .modal-caja select option { color: #000; }
+        .modal-botones { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-botones button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .modal-ok { background: #10b981; color: #fff; border: none; }
+        .modal-cancelar { background: transparent; color: #d4af37; border: 1px solid #d4af37; }
+
         @media (max-width: 768px) {
             .packs-container {
                 grid-template-columns: 1fr;
@@ -385,6 +429,50 @@
         </div>
     </div>
 
+    <!-- FORMULARIO ANTES DE LA DESCARGA GRATIS -->
+    <div class="modal-fondo" id="modalGratis">
+        <div class="modal-caja">
+            <div id="gratisPaso1">
+            <h3>📁 Pedí tu acceso gratis</h3>
+            <p>Dejanos unos datos y te mando el link a las fotos por WhatsApp. ✨</p>
+            <form id="formGratis">
+                <label for="gratisNombre">Tu nombre *</label>
+                <input type="text" id="gratisNombre" placeholder="Nombre y apellido" required>
+
+                <label for="gratisInstagram">Tu usuario de Instagram (opcional)</label>
+                <input type="text" id="gratisInstagram" placeholder="@tuusuario">
+
+                <label for="gratisConociste">¿Dónde viste mi plataforma?</label>
+                <select id="gratisConociste">
+                    <option value="">Elegí una opción</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Me la pasó alguien">Me la pasó alguien</option>
+                    <option value="En el evento">En el evento</option>
+                    <option value="Otro">Otro</option>
+                </select>
+
+                <div class="modal-botones">
+                    <button type="button" class="modal-cancelar" id="gratisCancelar">Cancelar</button>
+                    <button type="submit" class="modal-ok">Pedir acceso</button>
+                </div>
+            </form>
+            </div>
+
+            <div id="gratisPaso2" style="display: none; text-align: center;">
+                <h3>✅ ¡Gracias!</h3>
+                <p>Para recibir el link a las fotos, escribime por WhatsApp. Te lo mando en cuanto lo vea.</p>
+                <a href="#" id="linkWhatsappGratis" target="_blank" rel="noopener" class="btn-pay" style="display: inline-block; text-decoration: none; margin: 10px 0 5px;">
+                    💬 Pedir el link por WhatsApp
+                </a>
+                <div class="modal-botones">
+                    <button type="button" class="modal-cancelar" id="gratisCerrar">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -448,7 +536,57 @@
 
         document.getElementById('linkDrive').addEventListener('click', () => registrarClickDrive('pagado'));
         document.getElementById('linkDriveNormal').addEventListener('click', () => registrarClickDrive('pagado'));
-        document.getElementById('linkDriveGratis').addEventListener('click', () => registrarClickDrive('gratis'));
+        // Botón verde de descarga gratis: primero pide los datos, después abre Drive
+        // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
+        document.getElementById('linkDriveGratis').addEventListener('click', (e) => {
+            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia) return;
+            e.preventDefault();
+            document.getElementById('gratisPaso1').style.display = 'block';
+            document.getElementById('gratisPaso2').style.display = 'none';
+            document.getElementById('modalGratis').style.display = 'flex';
+            document.getElementById('gratisNombre').focus();
+        });
+
+        document.getElementById('gratisCancelar').addEventListener('click', () => {
+            document.getElementById('modalGratis').style.display = 'none';
+        });
+
+        document.getElementById('formGratis').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('gratisNombre').value.trim();
+            if (!nombre) {
+                alert('Dejanos tu nombre para continuar');
+                return;
+            }
+            const instagram = document.getElementById('gratisInstagram').value.trim();
+            const conociste = document.getElementById('gratisConociste').value;
+
+            // Guarda el pedido (queda pendiente hasta que vos mandes el link por WhatsApp)
+            addDoc(collection(db, 'eventos'), {
+                tipo: 'registro_gratis',
+                estado: 'pendiente',
+                nombre: nombre,
+                instagram: instagram,
+                dondeMeViste: conociste,
+                albumId: albumData.id,
+                albumNombre: albumData.nombre || '',
+                fecha: serverTimestamp()
+            }).catch((error) => {
+                console.error('No se pudo guardar el registro:', error);
+            });
+
+            // Muestra el botón para pedirte el link por WhatsApp, con el mensaje ya armado
+            const mensaje = `Hola Vero! Soy ${nombre}${instagram ? ' (' + instagram + ')' : ''}. Quiero acceder a las fotos gratis del álbum "${albumData.nombre}". ¿Me pasás el link?`;
+            document.getElementById('linkWhatsappGratis').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+            document.getElementById('gratisPaso1').style.display = 'none';
+            document.getElementById('gratisPaso2').style.display = 'block';
+        });
+
+        document.getElementById('gratisCerrar').addEventListener('click', () => {
+            document.getElementById('modalGratis').style.display = 'none';
+        });
 
         // Valida un código de acceso de un solo uso y lo marca como usado
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
