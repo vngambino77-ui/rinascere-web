@@ -461,6 +461,24 @@
         const db = getFirestore(app);
         const ADMIN_UID = "wuvIwxJyUcYvtgxRDZkYw7qo97v2";
 
+        async function tokenAdmin() {
+            const user = auth.currentUser;
+            if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+            return user.getIdToken();
+        }
+
+        async function sincronizarAlbum(id, eliminar = false) {
+            const token = await tokenAdmin();
+            const response = await fetch('/.netlify/functions/sincronizar-album', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ albumId: id, eliminar })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo sincronizar el álbum');
+            return result;
+        }
+
         // No cargar datos ni habilitar el panel sin la sesión del administrador autorizado.
         onAuthStateChanged(auth, async (user) => {
             if (!user || user.uid !== ADMIN_UID) {
@@ -478,11 +496,50 @@
                 escucharTransferenciasPendientes();
                 escucharTransferenciasConfirmadas();
                 escucharPortfolio();
+                instalarBotonMigracionAlbumes();
             } catch (error) {
                 console.error('No se pudo iniciar el panel:', error);
                 alert('No se pudo cargar el panel. Volvé a iniciar sesión.');
             }
         });
+
+        function instalarBotonMigracionAlbumes() {
+            if (document.getElementById('btnMigrarAlbumesSeguros')) return;
+            const button = document.createElement('button');
+            button.id = 'btnMigrarAlbumesSeguros';
+            button.textContent = '🔐 Proteger enlaces de Drive';
+            button.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;background:#c9a84c;color:#161616;border:0;border-radius:10px;padding:12px 16px;font-weight:700;box-shadow:0 4px 18px #0005;cursor:pointer;';
+            button.addEventListener('click', async () => {
+                if (!confirm('Se copiarán los álbumes actuales a colecciones separadas. La página pública pasará a leer solo metadatos sin enlaces de Drive. No se borrarán los documentos originales. ¿Continuar?')) return;
+                button.disabled = true;
+                button.textContent = 'Migrando álbumes…';
+                try {
+                    const token = await tokenAdmin();
+                    let cursor = null, total = 0, publicos = 0, privados = 0;
+                    do {
+                        const response = await fetch('/.netlify/functions/migrar-albumes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ cursor })
+                        });
+                        const result = await response.json();
+                        if (!response.ok || !result.ok) throw new Error(result.error || 'Falló la migración');
+                        total += result.migrated || 0;
+                        publicos += result.public || 0;
+                        privados += result.private || 0;
+                        cursor = result.nextCursor || null;
+                        button.textContent = `Migrando… ${total} álbumes`;
+                    } while (cursor);
+                    alert(`Migración finalizada. Álbumes procesados: ${total}. Públicos: ${publicos}. Privados: ${privados}. Los originales siguen guardados como respaldo.`);
+                } catch (error) {
+                    alert('No se pudo completar la migración: ' + error.message + '. Podés volver a ejecutar el proceso; no borra los originales.');
+                } finally {
+                    button.disabled = false;
+                    button.textContent = '🔐 Proteger enlaces de Drive';
+                }
+            });
+            document.body.appendChild(button);
+        }
 
         window.toggleTransferenciasPendientes = function() {
             const wrapper = document.getElementById('transferenciasPendientesWrapper');
@@ -950,6 +1007,7 @@
             
             try {
                 await deleteDoc(doc(db, 'albumes', id));
+                await sincronizarAlbum(id, true);
                 alert('Álbum eliminado');
                 location.reload();
             } catch (error) {
@@ -1100,6 +1158,7 @@
             if (!confirm('¿Borrar TODAS las fotos de muestra de este álbum? Después vas a poder subir hasta 6 nuevas.')) return;
             try {
                 await updateDoc(doc(db, 'albumes', albumId), { fotosPreview: [] });
+                await sincronizarAlbum(albumId);
                 alert('✅ Muestras borradas');
                 cargarAlbumes();
             } catch (error) {
@@ -1139,6 +1198,7 @@
                 await updateDoc(doc(db, 'albumes', albumId), {
                     fotosPreview: [...fotosActuales, ...urlsNuevas]
                 });
+                await sincronizarAlbum(albumId);
 
                 alert('✅ Fotos de muestra guardadas correctamente');
                 cargarAlbumes();
@@ -1161,6 +1221,7 @@
 
             try {
                 await updateDoc(doc(db, 'albumes', id), { cantidadFotos: numero });
+                await sincronizarAlbum(id);
                 alert('✅ Cantidad de fotos actualizada');
                 cargarAlbumes();
             } catch (error) {
@@ -1222,6 +1283,7 @@
 
             try {
                 await updateDoc(doc(db, 'albumes', id), datosActualizados);
+                await sincronizarAlbum(id);
                 alert('✅ Cambios guardados correctamente');
                 location.reload();
             } catch (error) {
@@ -1249,6 +1311,7 @@
                     metodo: 'gratis_o_cafecito',
                     precio: nuevoPrecio
                 });
+                await sincronizarAlbum(id);
                 alert('✅ Listo: ahora el cliente puede elegir entre Gratis o Cafecito en este álbum');
                 location.reload();
             } catch (error) {
