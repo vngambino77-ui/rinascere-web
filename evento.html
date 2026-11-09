@@ -491,14 +491,28 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const ADMIN_UID = 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
-        const adminAuthReady = new Promise((resolve) => {
-            onAuthStateChanged(auth, (user) => resolve(!!user && user.uid === ADMIN_UID), () => resolve(false));
+        let esAdminAutenticada = false;
+        let resolverAuthInicial;
+        const adminAuthReady = new Promise((resolve) => { resolverAuthInicial = resolve; });
+        onAuthStateChanged(auth, (user) => {
+            esAdminAutenticada = !!user && user.uid === ADMIN_UID;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
+        }, () => {
+            esAdminAutenticada = false;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
         });
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
-            const esAdmin = await adminAuthReady;
+            await adminAuthReady;
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
                 console.log('Visita no contada (modo admin/vista previa)');
@@ -524,7 +538,8 @@
         // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarClickDrive(origen) {
-            const esAdmin = await adminAuthReady;
+            await adminAuthReady;
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia || !albumData) return;
             try {
@@ -546,7 +561,8 @@
         // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
         document.getElementById('linkDriveGratis').addEventListener('click', async (e) => {
             e.preventDefault();
-            const esAdmin = await adminAuthReady;
+            await adminAuthReady;
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
                 window.open(document.getElementById('linkDriveGratis').href, '_blank', 'noopener');
