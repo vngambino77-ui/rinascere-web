@@ -17,7 +17,12 @@ Configurar variables separadas por contexto en Netlify:
 - `FIREBASE_PROJECT_ID`: ID del proyecto Firebase de pruebas.
 
 **Production (producción):**
-- `FIREBASE_WEB_CONFIG_JSON`: configuración web JSON actual del proyecto `rinascere-web-2025`.
+- `FIREBASE_WEB_CONFIG_JSON`: usar exactamente este JSON de configuración web ya presente en la versión publicada del proyecto (es configuración pública del cliente, no una clave privada):
+
+```json
+{"apiKey":"AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU","authDomain":"rinascere-web-2025.firebaseapp.com","projectId":"rinascere-web-2025","storageBucket":"rinascere-web-2025.firebasestorage.app","messagingSenderId":"781300280640","appId":"1:781300280640:web:34c98efa7780a8218cdea5"}
+```
+
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON de una cuenta de servicio del proyecto `rinascere-web-2025`.
 - `FIREBASE_ADMIN_UID`: UID autorizado del administrador.
 - `FIREBASE_PROJECT_ID`: `rinascere-web-2025`.
@@ -72,7 +77,7 @@ Después de confirmar que la galería pública y los enlaces privados funcionan 
 
 ## Verificación obligatoria en un entorno de prueba
 
-El workflow de GitHub Actions comprueba sintaxis de funciones y scripts JavaScript e instalación de dependencias. Eso no sustituye pruebas conectadas a Firebase/Netlify. Antes de fusionar o publicar, probar en staging:
+El workflow de GitHub Actions comprueba sintaxis de funciones y scripts JavaScript, generación de configuración y vulnerabilidades altas de dependencias de producción. Eso no sustituye pruebas conectadas a Firebase/Netlify. Antes de fusionar o publicar, probar en staging:
 
 1. Crear una transferencia con importe correcto.
 2. Alterar el precio desde el navegador y confirmar que el servidor lo rechaza.
