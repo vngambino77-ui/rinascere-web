@@ -760,7 +760,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo confirmar el pago');
-                mostrarMensajeParaCopiar(result.mensaje);
+                mostrarMensajeParaCopiar(result.mensaje, result.contacto);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
@@ -1032,34 +1032,42 @@
 
         // Le agrega el código de país de Argentina (54 9) si el número no lo tiene
         function normalizarNumeroAr(numero) {
-            let n = String(numero || '').replace(/\D/g, '');
+            const original = String(numero || '').trim();
+            // El campo también admite email: nunca convertir una dirección en un teléfono.
+            if (!original || /[A-Za-z@]/.test(original)) return '';
+            let n = original.replace(/\D/g, '');
             if (!n) return '';
             if (n.startsWith('54')) {
                 if (!n.startsWith('549')) n = '549' + n.slice(2);
             } else {
-                n = '549' + n;
+                n = '549' + n.replace(/^0+/, '').replace(/^15/, '');
             }
-            return n;
+            return n.length >= 12 ? n : '';
         }
 
         // Muestra una ventanita con el mensaje en un cuadro de texto, con botón real de Copiar
         // (mucho más confiable en celulares que el copiado automático o los prompt() nativos)
-        function mostrarMensajeParaCopiar(mensaje) {
+        function mostrarMensajeParaCopiar(mensaje, contacto = '') {
+            const telefono = normalizarNumeroAr(contacto);
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
             overlay.innerHTML = `
-                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%;">
-                    <p style="color:#d4af37; margin-bottom:10px; font-weight:bold;">✅ Copiá este mensaje y pegalo en WhatsApp:</p>
+                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%; max-height:90vh; overflow:auto;">
+                    <p style="color:#10b981; margin-bottom:8px; font-weight:bold;">✅ Pago confirmado y acceso generado</p>
+                    <p style="color:#ddd; margin-bottom:10px;">${telefono ? 'Abrí WhatsApp con el mensaje listo para el comprador. Revisalo y presioná Enviar.' : 'No hay un WhatsApp válido cargado. Podés copiar el mensaje y enviarlo manualmente.'}</p>
                     <textarea readonly style="width:100%; height:150px; background:#111; color:#fff; border:1px solid #555; border-radius:5px; padding:10px; font-size:0.95em; box-sizing:border-box;"></textarea>
-                    <div style="text-align:right; margin-top:15px;">
-                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold; margin-right:8px;">📋 Copiar</button>
-                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cerrar</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; margin-top:15px;">
+                        ${telefono ? '<a id="btnEnviarWhatsAppOverlay" target="_blank" rel="noopener" style="background:#25D366; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold; text-decoration:none;">📲 Abrir WhatsApp</a>' : ''}
+                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;">📋 Copiar</button>
+                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer;">Cerrar</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(overlay);
 
             const textarea = overlay.querySelector('textarea');
+            const botonWhatsApp = overlay.querySelector('#btnEnviarWhatsAppOverlay');
+            if (botonWhatsApp) botonWhatsApp.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
             textarea.value = mensaje;
 
             overlay.querySelector('#btnCopiarMensajeOverlay').onclick = async () => {
