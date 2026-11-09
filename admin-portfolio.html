@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <style>html { visibility: hidden; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestionar Portfolio - Rinascere</title>
     <style>
@@ -255,6 +256,7 @@
             window.location.replace('login.html');
             throw new Error('Acceso administrativo no autorizado');
         }
+        document.documentElement.style.visibility = 'visible';
         const db = getFirestore(app);
 
         const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload';
