@@ -75,6 +75,15 @@ El panel administrativo incorpora el botón **Proteger enlaces de Drive**. Una v
 
 Después de confirmar que la galería pública y los enlaces privados funcionan con las colecciones nuevas, desplegá `firestore.rules`. No cierres la colección histórica antes de migrar y comprobar los álbumes. Las reglas del repositorio no se aplican automáticamente por el deploy de Netlify.
 
+## Limitaciones funcionales y de protección confirmadas en la revisión
+
+- **Google Drive no queda oculto frente al comprador que descarga.** La función `descargar-album` responde con una redirección HTTP 302. El navegador recibe la URL de destino de Drive; por lo tanto, el token de un solo uso controla el acceso al endpoint de Rinascere, pero no impide que quien ya llegó a Drive copie o comparta el enlace. Para impedirlo se necesita servir los archivos mediante un proxy autenticado o almacenamiento con URLs firmadas y permisos privados. Esa solución no está implementada.
+- **Los packs todavía no limitan la cantidad de fotografías descargables.** El servidor valida el nombre y el precio del pack, pero el acceso resultante redirige a la carpeta completa de Drive. La cantidad indicada en el pack es informativa y no se aplica sobre archivos individuales. No anunciar los packs como selección/descarga limitada hasta implementar esa separación.
+- **Los álbumes privados son enlaces no listados, no galerías con autenticación individual.** Quien obtenga el enlace de evento puede consultar sus metadatos y muestras. No distribuir esos enlaces públicamente si contienen material sensible.
+- **Los pedidos gratis siguen un flujo de entrega por WhatsApp desde el panel.** El endpoint gratuito también redirige a Drive; no es una descarga protegida contra redistribución.
+
+Estas limitaciones no se corrigen con las reglas de Firestore: requieren cambios en la forma de entregar los archivos y en la organización de las fotos. La transferencia manual y la confirmación de pago sí están separadas del comprobante enviado por el cliente, pero eso no convierte la URL final de Drive en un enlace privado.
+
 ## Verificación obligatoria en un entorno de prueba
 
 El workflow de GitHub Actions comprueba sintaxis de funciones y scripts JavaScript, generación de configuración y vulnerabilidades altas de dependencias de producción. Eso no sustituye pruebas conectadas a Firebase/Netlify. Antes de fusionar o publicar, probar en staging:
