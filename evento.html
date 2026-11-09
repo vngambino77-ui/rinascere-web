@@ -928,7 +928,8 @@
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '
+            document.getElementById('transferenciaMonto').textContent = '$' + montoConfirmado.toLocaleString('es-AR');
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
 
