@@ -475,7 +475,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, runTransaction, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
@@ -592,13 +592,14 @@
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
             try {
                 const ref = doc(db, 'codigosAcceso', codigo);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) return null;
-                const data = snap.data();
-                if (data.usado) return null;
-                if (data.albumId !== albumIdEsperado) return null;
-                await updateDoc(ref, { usado: true, usadoEn: serverTimestamp() });
-                return data;
+                return await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return null;
+                    const data = snap.data();
+                    if (data.usado || data.albumId !== albumIdEsperado) return null;
+                    transaction.update(ref, { usado: true, usadoEn: serverTimestamp() });
+                    return data;
+                });
             } catch (error) {
                 console.error('Error validando código de acceso:', error);
                 return null;
@@ -610,7 +611,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
-        let pagado = urlParams.get('pagado');
+        let pagado = null; // No se acepta pagado=true desde la URL como comprobante de pago.
         let packPagado = urlParams.get('pack');
         const codigoAcceso = urlParams.get('codigo');
 
@@ -903,36 +904,6 @@
 
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
-        }
-
-        async function procesarPago(precio, metodoPago) {
-            const datosComprador = pedirDatosComprador();
-            if (!datosComprador) return;
-
-            try {
-                const response = await fetch('/.netlify/functions/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        titulo: `${albumData.nombre} - Fotos`,
-                        precio: precio,
-                        albumId: albumData.id,
-                        metodoPago: metodoPago,
-                        comprador: datosComprador.nombre,
-                        contacto: datosComprador.contacto
-                    })
-                });
-
-                const data = await response.json();
-                if (data.init_point) {
-                    window.location.href = data.init_point;
-                } else {
-                    alert('Error al crear el pago');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar el pago');
-            }
         }
 
         function showError(message) {
