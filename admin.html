@@ -695,62 +695,20 @@
             if (!confirm('¿Confirmás que la plata YA llegó a tu cuenta? Esto genera el link de acceso para el cliente.')) return;
 
             try {
-                const snap = await getDoc(doc(db, 'transferencias', id));
-                if (!snap.exists()) {
-                    alert('Esta transferencia ya no existe.');
-                    return;
-                }
-                const t = snap.data();
-                if (t.estado !== 'pendiente') {
-                    alert('Esta transferencia ya fue procesada o no está pendiente.');
-                    return;
-                }
-
-                // Generar un código de acceso criptográficamente aleatorio
-                const bytesCodigo = new Uint8Array(16);
-                crypto.getRandomValues(bytesCodigo);
-                const codigo = Array.from(bytesCodigo, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-                await setDoc(doc(db, 'codigosAcceso', codigo), {
-                    albumId: t.albumId,
-                    pack: t.pack || null,
-                    usado: false,
-                    creadoEn: serverTimestamp()
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/confirmar-transferencia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id })
                 });
-
-                await updateDoc(doc(db, 'transferencias', id), { estado: 'confirmada', codigoAcceso: codigo });
-
-                // Registrar como compra, igual que los pagos con Mercado Pago
-                await addDoc(collection(db, 'eventos'), {
-                    tipo: 'compra',
-                    albumId: t.albumId,
-                    albumNombre: t.albumNombre || '',
-                    pack: t.pack || null,
-                    monto: Number(t.monto) || 0,
-                    comprador: t.comprador || '',
-                    contacto: t.contacto || '',
-                    metodo: 'transferencia',
-                    fecha: serverTimestamp()
-                });
-                await setDoc(doc(db, 'contadores', 'general'), {
-                    compras: increment(1),
-                    ingresos: increment(Number(t.monto) || 0),
-                    actualizado: serverTimestamp()
-                }, { merge: true });
-
-                // Armar el link de acceso
-                let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${codigo}`;
-                if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
-
-                const mensaje = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-
-                // Intentamos copiar solos, pero SIEMPRE mostramos el mensaje para copiar a mano también
-                // (en el celu, muchos navegadores bloquean copiar/abrir apps automáticamente)
-                try {
-                    await navigator.clipboard.writeText(mensaje);
-                } catch (e) { /* seguimos igual, el prompt de abajo sirve como respaldo */ }
-
-                mostrarMensajeParaCopiar(mensaje);
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo confirmar el pago');
+                mostrarMensajeParaCopiar(result.mensaje);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
