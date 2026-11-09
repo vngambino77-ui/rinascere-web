@@ -765,7 +765,7 @@
                 alert('Necesitamos tu nombre para continuar con el pago.');
                 return null;
             }
-            const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
+            const contacto = prompt('Dejanos un WhatsApp o correo electrónico para recibir el acceso (elegí uno; opcional):') || '';
             return { nombre: nombre.trim(), contacto: contacto.trim() };
         }
 
