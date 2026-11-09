@@ -36,7 +36,7 @@ exports.handler = async (event) => {
     });
     if (!allowed) return send(429, { error: 'Se alcanzó el límite temporal de solicitudes. Intentá más tarde.' });
 
-    const albumSnap = await db.collection('albumes').doc(albumId).get();
+    const albumSnap = await db.collection('albumesPrivados').doc(albumId).get();
     if (!albumSnap.exists) return send(404, { error: 'El álbum no existe' });
     const album = albumSnap.data();
     let monto = 0;
