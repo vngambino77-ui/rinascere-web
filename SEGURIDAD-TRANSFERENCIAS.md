@@ -10,13 +10,21 @@ Se reemplazó el registro directo de solicitudes desde el navegador por una func
 
 Configurar en el sitio Netlify, en variables de entorno (no en el repositorio):
 
-- `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON completo de una cuenta de servicio de Firebase con permisos de administración de Firestore. Guardarlo como valor secreto, sin comillas externas añadidas por el panel.
+Configurar variables separadas por contexto en Netlify:
+
+**Deploy Previews (pruebas):**
+- `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON de una cuenta de servicio de un proyecto Firebase de pruebas, no del proyecto publicado.
+- `FIREBASE_ADMIN_UID`: UID del usuario administrador creado en ese proyecto de pruebas.
+- `FIREBASE_PROJECT_ID`: ID del proyecto Firebase de pruebas.
+
+**Production (producción):**
+- `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON de una cuenta de servicio del proyecto `rinascere-web-2025`.
 - `FIREBASE_ADMIN_UID`: UID autorizado del administrador.
 - `FIREBASE_PROJECT_ID`: `rinascere-web-2025`.
 
-Netlify suele proporcionar `URL` automáticamente. Si no está disponible, configurar `URL` con la URL canónica del sitio.
+Netlify suele proporcionar `URL` automáticamente. Si no está disponible, configurar `URL` con la URL canónica del sitio. No reutilizar credenciales de producción en Deploy Previews.
 
-No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes ni archivos públicos. Si se genera una clave, limitar su uso al backend de Netlify y rotarla si alguna vez se expone.
+No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes ni archivos públicos. Si se genera una clave, limitar su uso al backend de Netlify y rotarla si alguna vez se expone. Para la cuenta de servicio, asignar el rol mínimo necesario para leer/escribir Firestore (por ejemplo, Cloud Datastore User) en el proyecto correspondiente.
 
 ## Funciones creadas
 
@@ -44,6 +52,17 @@ Los álbumes existentes se copian desde `albumes` mediante el botón **Proteger 
 El enlace privado de evento conserva su formato actual con el ID del documento. Ese ID funciona como enlace no listado; no se muestra en el home. Si alguien comparte el enlace privado del evento, otra persona que lo reciba podrá ver sus muestras/metadatos. Los enlaces de Drive completos no se entregan en la respuesta pública de metadatos.
 
 El archivo `firebase.json` apunta a las reglas. Desplegarlas únicamente después de que las funciones de Netlify estén disponibles y la migración haya terminado correctamente.
+
+## Secuencia de despliegue sin interrumpir la galería
+
+1. Crear un proyecto Firebase separado para pruebas y habilitar Authentication (Email/Password) y Firestore.
+2. Crear el usuario administrador de pruebas y guardar su UID.
+3. En Netlify, configurar las variables del contexto Deploy Previews con las credenciales del proyecto de pruebas.
+4. Esperar el Deploy Preview de la PR y probar todo el flujo en ese proyecto.
+5. Configurar las variables de Production con la cuenta de servicio del proyecto publicado.
+6. Una vez aprobadas las pruebas, fusionar la PR. El nuevo código mantiene compatibilidad temporal con la colección histórica, por lo que la galería sigue funcionando antes de migrar.
+7. En la web publicada, entrar al panel y ejecutar **Proteger enlaces de Drive**. Verificar que los contadores de álbumes públicos/privados y los álbumes sin Drive sean correctos.
+8. Solo después de verificar la migración, desplegar las reglas con `firebase deploy --only firestore:rules --project rinascere-web-2025`.
 
 ## Verificación obligatoria en un entorno de prueba
 
