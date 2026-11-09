@@ -645,22 +645,25 @@
 
         async function loadAlbum(albumId) {
             try {
-                const albumDoc = await getDoc(doc(db, 'albumes', albumId));
-                
-                if (!albumDoc.exists()) {
-                    showError('El álbum no existe');
+                await adminAuthReady;
+                const headers = { 'Accept': 'application/json' };
+                if (auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
+                    headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                }
+                const response = await fetch(`/.netlify/functions/obtener-album?albumId=${encodeURIComponent(albumId)}`, { headers });
+                const result = await response.json();
+                if (!response.ok || !result.ok || !result.album) {
+                    showError(result.error || 'El álbum no existe o no está disponible');
                     return;
                 }
 
-                albumData = { id: albumId, ...albumDoc.data() };
-
+                albumData = result.album;
                 // Registrar la visita (no bloquea la carga de la página)
                 registrarVisita(albumId, albumData.nombre);
 
-                document.getElementById('albumName').textContent = albumData.nombre;
-                document.getElementById('albumDate').textContent = albumData.fecha;
+                document.getElementById('albumName').textContent = albumData.nombre || 'Álbum';
+                document.getElementById('albumDate').textContent = albumData.fecha || '';
 
-                // Si viene con un código de acceso (compra por transferencia), validarlo
                 if (codigoAcceso) {
                     const dataCodigo = await validarCodigoAcceso(codigoAcceso, albumId);
                     if (!dataCodigo) {
@@ -678,31 +681,27 @@
                     albumData.driveLink = dataCodigo.driveLink;
                 }
 
+                if (!albumData.driveLink && ['gratis', 'gratis_o_cafecito'].includes(albumData.metodo)) {
+                    albumData.driveLink = `/.netlify/functions/descargar-album?albumId=${encodeURIComponent(albumId)}`;
+                }
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
-                // Mostrar la galería de muestra, solo si todavía no pagó
-                if (pagado !== 'true') {
-                    mostrarMuestra();
-                }
+                if (pagado !== 'true') mostrarMuestra();
 
-                // DETERMINAR QUÉ MOSTRAR
                 if (albumData.metodo === 'pack_fotos') {
                     if (pagado === 'true' && packPagado) {
-                        // YA PAGÓ → Mostrar acceso a Drive
                         mostrarAccesoPagado(packPagado);
                     } else {
-                        // NO PAGÓ → Mostrar packs
                         mostrarPacks();
                     }
                 } else {
-                    // GRATIS / PRECIO FIJO / CAFECITO
                     mostrarMetodoNormal();
                 }
-
             } catch (error) {
                 console.error('Error:', error);
-                showError('Error al cargar el álbum');
+                showError('No se pudo cargar el álbum. Intentá nuevamente.');
             }
         }
 
