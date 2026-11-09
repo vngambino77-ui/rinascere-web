@@ -60,10 +60,11 @@ exports.handler = async (event) => {
       };
     });
 
-    let link = `${process.env.URL || 'https://rinascere-web.netlify.app'}/evento.html?album=${encodeURIComponent(result.albumId)}&codigo=${code}`;
+    const baseUrl = process.env.DEPLOY_PRIME_URL || process.env.URL || 'https://rinascere-web.netlify.app';
+    let link = `${baseUrl}/evento.html?album=${encodeURIComponent(result.albumId)}&codigo=${code}`;
     if (result.pack) link += `&pack=${encodeURIComponent(result.pack)}`;
     const message = `¡Hola ${result.comprador}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-    return send(200, { ok: true, codigo, link, mensaje: message });
+    return send(200, { ok: true, codigo, link, mensaje: message, contacto: result.contacto });
   } catch (error) {
     if (error.message === 'UNAUTHORIZED') return send(401, { error: 'Sesión no autorizada' });
     if (error.message === 'FORBIDDEN') return send(403, { error: 'No tenés permisos para confirmar pagos' });
