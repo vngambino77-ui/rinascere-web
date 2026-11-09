@@ -566,13 +566,13 @@ firebase.initializeApp({
   // ── Cargar álbumes desde Firebase ─────────────────────
 async function cargarAlbumes() {
     try {
-      const snap = await db.collection('albumes').get();
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      console.log('Álbumes cargados desde Firebase:', lista.length, lista);
-      renderAlbumes(lista.length > 0 ? lista : albumesEj);
+      const snap = await db.collection('albumesPublicos').where('esPublico', '==', true).get();
+      const lista = snap.docs.map(d => ({ id:d.id, ...d.data(), publico:true }));
+      console.log('Álbumes públicos cargados desde Firebase:', lista.length);
+      renderAlbumes(lista.length > 0 ? lista : []);
     } catch(e) {
       console.error('Error al cargar álbumes:', e);
-      renderAlbumes(albumesEj);
+      renderAlbumes([]);
     }
 }
 
