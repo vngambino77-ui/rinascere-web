@@ -566,13 +566,17 @@ firebase.initializeApp({
   // ── Cargar álbumes desde Firebase ─────────────────────
 async function cargarAlbumes() {
     try {
-      let snap = await db.collection('albumesPublicos').where('esPublico', '==', true).get();
-      if (snap.empty) {
-        // Compatibilidad durante la migración: la colección histórica se cerrará
-        // al público una vez que albumesPublicos esté completa.
-        snap = await db.collection('albumes').where('esPublico', '==', true).get();
+      const publicSnap = await db.collection('albumesPublicos').where('esPublico', '==', true).get();
+      const porId = new Map();
+      // Fallback temporal para que ningún álbum desaparezca mientras corre la migración.
+      try {
+        const legacySnap = await db.collection('albumes').where('esPublico', '==', true).get();
+        legacySnap.docs.forEach(d => porId.set(d.id, { id:d.id, ...d.data(), publico:true }));
+      } catch (legacyError) {
+        console.info('Colección histórica cerrada o no disponible; se usan los metadatos migrados.');
       }
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data(), publico:true }));
+      publicSnap.docs.forEach(d => porId.set(d.id, { id:d.id, ...d.data(), publico:true }));
+      const lista = Array.from(porId.values());
       console.log('Álbumes públicos cargados desde Firebase:', lista.length);
       renderAlbumes(lista);
     } catch(e) {
