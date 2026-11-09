@@ -929,6 +929,32 @@
             document.getElementById('seccionTransferencia').style.display = 'block';
 
             document.getElementById('transferenciaMonto').textContent = '
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
+
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
 
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por ${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
