@@ -1,4 +1,4 @@
-const { getFirebaseAdmin, send, readBody } = require('./_firebase');
+const { getFirebaseAdmin, send, readBody } = require('../lib/firebase-admin');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return send(405, { error: 'Método no permitido' });
