@@ -686,9 +686,15 @@
                     return;
                 }
                 const t = snap.data();
+                if (t.estado !== 'pendiente') {
+                    alert('Esta transferencia ya fue procesada o no está pendiente.');
+                    return;
+                }
 
-                // Generar un código de acceso único y de un solo uso
-                const codigo = Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
+                // Generar un código de acceso criptográficamente aleatorio
+                const bytesCodigo = new Uint8Array(16);
+                crypto.getRandomValues(bytesCodigo);
+                const codigo = Array.from(bytesCodigo, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
 
                 await setDoc(doc(db, 'codigosAcceso', codigo), {
                     albumId: t.albumId,
