@@ -489,6 +489,16 @@
                 }
 
                 const docRef = await addDoc(collection(db, 'albumes'), albumData);
+                const adminUser = auth.currentUser;
+                if (!adminUser || adminUser.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const adminToken = await adminUser.getIdToken();
+                const syncResponse = await fetch('/.netlify/functions/sincronizar-album', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ albumId: docRef.id })
+                });
+                const syncResult = await syncResponse.json();
+                if (!syncResponse.ok || !syncResult.ok) throw new Error(syncResult.error || 'El álbum se creó pero no pudo sincronizarse para la galería');
 
                 if (!esPublico) {
                     // ÁLBUM PRIVADO - Mostrar link
