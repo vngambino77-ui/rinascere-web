@@ -21,7 +21,8 @@ exports.handler = async (event) => {
       const data = codeSnap.data();
       if (data.usado || data.albumId !== albumId) throw new Error('INVALID_CODE');
       const albumRef = db.collection('albumesPrivados').doc(albumId);
-      const albumSnap = await tx.get(albumRef);
+      let albumSnap = await tx.get(albumRef);
+      if (!albumSnap.exists) albumSnap = await tx.get(db.collection('albumes').doc(albumId));
       if (!albumSnap.exists) throw new Error('ALBUM_NOT_FOUND');
       const album = albumSnap.data();
       if (!album.driveLink) throw new Error('NO_DRIVE_LINK');
