@@ -22,13 +22,12 @@ exports.handler = async (event) => {
     if (snapshot.empty) return send(200, { ok: true, migrated: 0, public: 0, private: 0, nextCursor: null, done: true });
 
     const batch = db.batch();
-    let publicCount = 0, privateCount = 0, skipped = 0, migrated = 0;
+    let publicCount = 0, privateCount = 0, withoutDrive = 0, migrated = 0;
     for (const item of snapshot.docs) {
       const data = item.data();
       if (!data.driveLink) {
-        console.warn('Álbum sin driveLink omitido:', item.id);
-        skipped++;
-        continue;
+        console.warn('Álbum migrado sin carpeta Drive:', item.id);
+        withoutDrive++;
       }
       batch.set(db.collection('albumesPrivados').doc(item.id), { ...data, migratedAt: new Date().toISOString() });
       migrated++;
@@ -45,7 +44,7 @@ exports.handler = async (event) => {
     return send(200, {
       ok: true,
       migrated,
-      skipped,
+      withoutDrive,
       public: publicCount,
       private: privateCount,
       nextCursor: snapshot.size === 180 ? last : null,
