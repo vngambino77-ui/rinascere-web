@@ -224,7 +224,7 @@
         async function cargarAlbumes() {
             try {
                 const q = query(
-                    collection(db, 'albumes'),
+                    collection(db, 'albumesPublicos'),
                     where('esPublico', '==', true)
                 );
                 
