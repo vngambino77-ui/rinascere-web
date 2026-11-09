@@ -9,7 +9,7 @@ exports.handler = async (event) => {
   const comprador = String(body.comprador || '').trim().slice(0, 120);
   const contacto = String(body.contacto || '').trim().slice(0, 160);
   const packNombre = body.pack == null ? null : String(body.pack).trim().slice(0, 100);
-  const limpiarTexto = (value, max) => String(value || '').replace(/[<>\\u0000-\\u001F]/g, '').trim().slice(0, max);
+  const limpiarTexto = (value, max) => String(value || '').replace(/[<>]/g, '').replace(/[\x00-\x1F]/g, '').trim().slice(0, max);
   const compradorSeguro = limpiarTexto(comprador, 120);
   const contactoSeguro = limpiarTexto(contacto, 160);
   if (!albumId || !/^[A-Za-z0-9_-]{5,150}$/.test(albumId) || !compradorSeguro) {
