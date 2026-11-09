@@ -18,7 +18,7 @@ exports.handler = async (event) => {
       data = privateSnap.data();
     }
 
-    const { driveLink, driveFolderId, privateTokenHash, ...safeAlbum } = data;
+    const { driveLink, driveFolderId, privateTokenHash, privateAccessToken, downloadUrl, codigoAcceso, ...safeAlbum } = data;
     return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
     console.error('obtener-album:', error);
