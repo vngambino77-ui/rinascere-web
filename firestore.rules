@@ -6,13 +6,26 @@ service cloud.firestore {
         && request.auth.uid == 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
     }
 
-    // Mantiene la lectura de álbumes para que la web actual siga funcionando.
-    // IMPORTANTE: los documentos legacy todavía contienen driveLink; la lectura
-    // pública de ese campo debe eliminarse después de migrar a albumesPublicos/
-    // albumesPrivados. Firestore no permite ocultar campos individuales.
+    // Colección histórica: solo el administrador puede leerla.
+    // El backend migra sus datos y conserva aquí compatibilidad administrativa.
     match /albumes/{albumId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
+    }
+
+    // Solo metadatos sin enlaces de Drive; el sitio público consulta únicamente
+    // álbumes visibles. Firestore evalúa la regla por documento.
+    match /albumesPublicos/{albumId} {
+      allow read: if resource.data.esPublico == true;
+      allow write: if isAdmin();
+    }
+
+    // Enlaces de Drive y datos privados: solo accesibles mediante Netlify Functions.
+    match /albumesPrivados/{albumId} {
+      allow read, write: if false;
+    }
+
+    match /limitesTransferencias/{id} {
+      allow read, write: if false;
     }
 
     // Las solicitudes se crean exclusivamente desde crear-transferencia.js.
