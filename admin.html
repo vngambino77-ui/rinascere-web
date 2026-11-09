@@ -786,7 +786,16 @@
             if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
 
             try {
-                await updateDoc(doc(db, 'codigosAcceso', codigo), { usado: false });
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/revivir-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ codigo })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo reactivar el código');
 
                 let link = `${window.location.origin}/evento.html?album=${albumId}&codigo=${codigo}`;
                 if (pack) link += `&pack=${encodeURIComponent(pack)}`;
