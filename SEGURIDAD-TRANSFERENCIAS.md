@@ -8,8 +8,6 @@ Se reemplazó el registro directo de solicitudes desde el navegador por una func
 
 ## Variables necesarias en Netlify
 
-Configurar en el sitio Netlify, en variables de entorno (no en el repositorio):
-
 Configurar variables separadas por contexto en Netlify:
 
 **Deploy Previews (pruebas):**
@@ -84,7 +82,7 @@ El workflow de GitHub Actions comprueba sintaxis de funciones y scripts JavaScri
 6. Canjear el código una vez y comprobar que el segundo intento devuelve `403`.
 7. Reactivar un código desde el panel y verificar un nuevo canje.
 8. Comprobar que un token de descarga vence a los 30 minutos y no puede usarse por segunda vez.
-9. Comprobar que los enlaces de Drive no aparecen en documentos de `albumesPublicos` ni en respuestas de metadatos/canje.
+9. Comprobar que los enlaces de Drive no aparecen en documentos de `albumesPublicos` ni en respuestas de metadatos/canje; verificar también que la redirección 302 a Drive es visible para el comprador y que los permisos de cada carpeta son los esperados.
 10. Comprobar que las galerías públicas, privadas, las métricas y el panel siguen funcionando.
 
-No se ejecutaron pruebas reales contra Firebase, Netlify ni Google Drive desde esta sesión: faltan las variables secretas del backend y acceso de ejecución al proyecto. Por eso esta rama es una implementación preparada para staging, no una publicación certificada como libre de errores.
+No se ejecutaron pruebas reales contra Firebase, Netlify ni Google Drive desde esta sesión: no hay conexión administrativa a Netlify ni credenciales de un proyecto Firebase de pruebas. El workflow de GitHub sí valida sintaxis de funciones y scripts HTML, generación del archivo de configuración web con valores ficticios y dependencias. Por eso esta rama está preparada para staging, pero no se puede certificar como lista para producción hasta ejecutar las pruebas conectadas descritas arriba.
