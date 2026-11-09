@@ -25,13 +25,21 @@ No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes n
 - `/.netlify/functions/canjear-codigo`: consume el código una sola vez y devuelve el enlace del álbum.
 - `/.netlify/functions/revivir-codigo`: exige token Firebase del administrador para reactivar un código.
 
-## Reglas Firestore
+## Separación de álbumes y enlaces de Drive
 
-El archivo `firestore.rules` bloquea la creación directa de transferencias y todo acceso de navegador a `codigosAcceso`; permite las operaciones administrativas autenticadas y conserva las lecturas actuales de álbumes para no romper las galerías existentes.
+La nueva estructura usa tres colecciones:
 
-**Limitación pendiente importante:** los documentos actuales de `albumes` contienen `driveLink`. Firestore no puede ocultar ese campo y permitir a la vez leer el resto del documento. Por compatibilidad, esta versión conserva la lectura de esos documentos; por lo tanto, todavía no es posible afirmar que los enlaces de Drive estén protegidos frente a quien pueda leer el documento o compartir el enlace. La solución completa requiere migrar los datos a dos colecciones (`albumesPublicos` y `albumesPrivados`), adaptar la portada, la galería y el panel, y migrar los álbumes existentes antes de cerrar la lectura pública de la colección legacy.
+- `albumes`: respaldo histórico y fuente administrativa; solo UID administrador puede leer/escribir desde el navegador.
+- `albumesPublicos`: metadatos de álbumes públicos, sin `driveLink` ni `driveFolderId`; lectura pública solo si `esPublico == true`.
+- `albumesPrivados`: documento completo, incluido el enlace de Drive; no admite lecturas ni escrituras desde el navegador. Solo Netlify Functions con Firebase Admin SDK acceden a esta colección.
 
-El archivo `firebase.json` apunta a estas reglas. No desplegar las reglas hasta verificar las operaciones del panel y migrar los álbumes si se desea ocultar los enlaces de Drive.
+La página principal consulta exclusivamente `albumesPublicos`. La página de evento obtiene los metadatos mediante `obtener-album`; los enlaces de descarga gratuita pasan por `descargar-album`, que redirige a Drive solo para álbumes gratuitos o de acceso gratis/cafecito. Los códigos de compra se canjean mediante `canjear-codigo`, que consulta `albumesPrivados`.
+
+Los álbumes existentes se copian desde `albumes` mediante el botón **Proteger enlaces de Drive** del panel administrativo. La migración es por lotes, conserva los documentos originales como respaldo y puede ejecutarse más de una vez. No borrar manualmente la colección legacy durante la migración.
+
+El enlace privado de evento conserva su formato actual con el ID del documento. Ese ID funciona como enlace no listado; no se muestra en el home. Si alguien comparte el enlace privado del evento, otra persona que lo reciba podrá ver sus muestras/metadatos. Los enlaces de Drive completos no se entregan en la respuesta pública de metadatos.
+
+El archivo `firebase.json` apunta a las reglas. Desplegarlas únicamente después de que las funciones de Netlify estén disponibles y la migración haya terminado correctamente.
 
 ## Verificación obligatoria en un entorno de prueba
 
