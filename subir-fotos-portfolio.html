@@ -2,6 +2,28 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <style>html { visibility: hidden; }</style>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+        const auth = getAuth(initializeApp(firebaseConfig));
+        const autorizado = await new Promise((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(!!user && user.uid === 'wuvIwxJyUcYvtgxRDZkYw7qo97v2'), () => resolve(false));
+        });
+        if (autorizado) {
+            document.documentElement.style.visibility = 'visible';
+        } else {
+            window.location.replace('login.html');
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subir Fotos Portfolio - Rinascere</title>
     <style>
