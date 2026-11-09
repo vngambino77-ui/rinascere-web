@@ -1048,7 +1048,7 @@
         // Reconoce una dirección de correo para ofrecer un borrador listo para enviar.
         function normalizarEmail(contacto) {
             const email = String(contacto || '').trim();
-            return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ? email : '';
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : '';
         }
 
         // Muestra el acceso con la acción adecuada según el contacto elegido por el comprador.
