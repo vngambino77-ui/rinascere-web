@@ -22,7 +22,11 @@ No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes n
 
 - `/.netlify/functions/crear-transferencia`: valida el álbum, el pack y el importe en Firestore; limita solicitudes por IP; crea la transferencia pendiente.
 - `/.netlify/functions/confirmar-transferencia`: exige token Firebase del administrador y confirma una sola vez, crea el código y registra la compra/contadores en una transacción.
-- `/.netlify/functions/canjear-codigo`: consume el código una sola vez y devuelve el enlace del álbum.
+- `/.netlify/functions/canjear-codigo`: consume el código una sola vez y genera un enlace de descarga temporal, también de un solo uso.
+- `/.netlify/functions/obtener-album`: entrega metadatos de un álbum sin exponer el enlace de Drive.
+- `/.netlify/functions/descargar-album`: redirige a Drive para álbumes gratuitos o mediante un token de descarga temporal tras una compra.
+- `/.netlify/functions/sincronizar-album`: replica un álbum creado/editado desde el panel en las colecciones separadas.
+- `/.netlify/functions/migrar-albumes`: migra álbumes históricos por lotes, con paginación.
 - `/.netlify/functions/revivir-codigo`: exige token Firebase del administrador para reactivar un código.
 
 ## Separación de álbumes y enlaces de Drive
@@ -33,7 +37,7 @@ La nueva estructura usa tres colecciones:
 - `albumesPublicos`: metadatos de álbumes públicos, sin `driveLink` ni `driveFolderId`; lectura pública solo si `esPublico == true`.
 - `albumesPrivados`: documento completo, incluido el enlace de Drive; no admite lecturas ni escrituras desde el navegador. Solo Netlify Functions con Firebase Admin SDK acceden a esta colección.
 
-La página principal consulta exclusivamente `albumesPublicos`. La página de evento obtiene los metadatos mediante `obtener-album`; los enlaces de descarga gratuita pasan por `descargar-album`, que redirige a Drive solo para álbumes gratuitos o de acceso gratis/cafecito. Los códigos de compra se canjean mediante `canjear-codigo`, que consulta `albumesPrivados`.
+La página principal consulta exclusivamente `albumesPublicos`. La página de evento obtiene los metadatos mediante `obtener-album`; los enlaces de descarga gratuita pasan por `descargar-album`, que redirige a Drive solo para álbumes gratuitos o de acceso gratis/cafecito. Los códigos de compra se canjean mediante `canjear-codigo`, que consulta `albumesPrivados` y genera un token temporal de descarga. El token expira a los 30 minutos y se consume al redirigir a Drive. El navegador no recibe el enlace de Drive desde los endpoints de metadatos o canje.
 
 Los álbumes existentes se copian desde `albumes` mediante el botón **Proteger enlaces de Drive** del panel administrativo. La migración es por lotes, conserva los documentos originales como respaldo y puede ejecutarse más de una vez. No borrar manualmente la colección legacy durante la migración.
 
@@ -52,6 +56,8 @@ El workflow de GitHub Actions comprueba sintaxis JavaScript e instalación de de
 5. Intentar confirmar la misma transferencia otra vez y comprobar respuesta `409`.
 6. Canjear el código una vez y comprobar que el segundo intento devuelve `403`.
 7. Reactivar un código desde el panel y verificar un nuevo canje.
-8. Comprobar que las galerías públicas, privadas, las métricas y el panel siguen funcionando.
+8. Comprobar que un token de descarga vence a los 30 minutos y no puede usarse por segunda vez.
+9. Comprobar que los enlaces de Drive no aparecen en documentos de `albumesPublicos` ni en respuestas de metadatos/canje.
+10. Comprobar que las galerías públicas, privadas, las métricas y el panel siguen funcionando.
 
 No se ejecutaron pruebas reales contra Firebase, Netlify ni Google Drive desde esta sesión: faltan las variables secretas del backend y acceso de ejecución al proyecto. Por eso esta rama es una implementación preparada para staging, no una publicación certificada como libre de errores.
