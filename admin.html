@@ -673,11 +673,11 @@
             }
             try {
                 const albumSnap = await getDoc(doc(db, 'albumes', p.albumId));
-                const driveLink = albumSnap.exists() ? albumSnap.data().driveLink : '';
-                if (!driveLink) {
-                    alert('Este álbum no tiene link de Drive cargado, o el álbum ya no existe.');
+                if (!albumSnap.exists()) {
+                    alert('Este álbum ya no existe.');
                     return;
                 }
+                const driveLink = `${window.location.origin}/.netlify/functions/descargar-album?albumId=${encodeURIComponent(p.albumId)}`;
 
                 const mensaje = `¡Hola ${p.nombre || ''}! Acá tenés tus fotos de ${p.albumNombre || 'tu álbum'} 📸\n${driveLink}\nQue las disfrutes ✨`;
 
