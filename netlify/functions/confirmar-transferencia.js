@@ -55,7 +55,8 @@ exports.handler = async (event) => {
       return {
         albumId: t.albumId,
         pack: t.pack || null,
-        comprador: t.comprador || ''
+        comprador: t.comprador || '',
+        contacto: t.contacto || ''
       };
     });
 
