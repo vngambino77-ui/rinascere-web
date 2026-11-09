@@ -4,7 +4,6 @@
   "private": true,
   "engines": { "node": ">=18" },
   "dependencies": {
-    "firebase-admin": "^13.0.2",
-    "node-fetch": "^2.6.1"
+    "firebase-admin": "^13.0.2"
   }
 }
