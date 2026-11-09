@@ -12,8 +12,8 @@ exports.handler = async (event) => {
     const body = readBody(event);
     if (!body) return send(400, { error: 'Solicitud inválida' });
     const cursor = body.cursor ? String(body.cursor) : null;
-    const { db } = getFirebaseAdmin();
-    let query = db.collection('albumes').orderBy('__name__').limit(180);
+    const { db, admin } = getFirebaseAdmin();
+    let query = db.collection('albumes').orderBy(admin.firestore.FieldPath.documentId()).limit(180);
     if (cursor) {
       const cursorSnap = await db.collection('albumes').doc(cursor).get();
       if (cursorSnap.exists) query = query.startAfter(cursorSnap);
