@@ -13,18 +13,20 @@ Configurar en el sitio Netlify, en variables de entorno (no en el repositorio):
 Configurar variables separadas por contexto en Netlify:
 
 **Deploy Previews (pruebas):**
+- `FIREBASE_WEB_CONFIG_JSON`: configuración web JSON del proyecto Firebase de pruebas (apiKey, authDomain, projectId, appId y los campos opcionales que correspondan).
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON de una cuenta de servicio de un proyecto Firebase de pruebas, no del proyecto publicado.
 - `FIREBASE_ADMIN_UID`: UID del usuario administrador creado en ese proyecto de pruebas.
 - `FIREBASE_PROJECT_ID`: ID del proyecto Firebase de pruebas.
 
 **Production (producción):**
+- `FIREBASE_WEB_CONFIG_JSON`: configuración web JSON actual del proyecto `rinascere-web-2025`.
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON de una cuenta de servicio del proyecto `rinascere-web-2025`.
 - `FIREBASE_ADMIN_UID`: UID autorizado del administrador.
 - `FIREBASE_PROJECT_ID`: `rinascere-web-2025`.
 
 Netlify suele proporcionar `URL` automáticamente. Si no está disponible, configurar `URL` con la URL canónica del sitio. No reutilizar credenciales de producción en Deploy Previews.
 
-No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes ni archivos públicos. Si se genera una clave, limitar su uso al backend de Netlify y rotarla si alguna vez se expone. Para la cuenta de servicio, asignar el rol mínimo necesario para leer/escribir Firestore (por ejemplo, Cloud Datastore User) en el proyecto correspondiente.
+El build de Netlify genera automáticamente `firebase-config.js` a partir de `FIREBASE_WEB_CONFIG_JSON` y `FIREBASE_ADMIN_UID`, según el contexto (Deploy Preview o Production). Ese archivo es público y contiene solo la configuración web y el UID, nunca la clave privada. No colocar la clave privada de la cuenta de servicio en HTML, GitHub, mensajes ni archivos públicos. Si se genera una clave, limitar su uso al backend de Netlify y rotarla si alguna vez se expone. Para la cuenta de servicio, asignar el rol mínimo necesario para leer/escribir Firestore (por ejemplo, Cloud Datastore User) en el proyecto correspondiente.
 
 ## Funciones creadas
 
@@ -56,7 +58,7 @@ El archivo `firebase.json` apunta a las reglas. Desplegarlas únicamente despué
 ## Secuencia de despliegue sin interrumpir la galería
 
 1. Crear un proyecto Firebase separado para pruebas y habilitar Authentication (Email/Password) y Firestore.
-2. Crear el usuario administrador de pruebas y guardar su UID.
+2. Crear el usuario administrador de pruebas y guardar su UID; el build inyecta el UID de ese contexto en las páginas.
 3. En Netlify, configurar las variables del contexto Deploy Previews con las credenciales del proyecto de pruebas.
 4. Esperar el Deploy Preview de la PR y probar todo el flujo en ese proyecto.
 5. Configurar las variables de Production con la cuenta de servicio del proyecto publicado.
