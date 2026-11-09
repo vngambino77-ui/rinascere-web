@@ -233,6 +233,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -245,6 +246,15 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const ADMIN_UID = 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
+        const adminAutorizado = await new Promise((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(!!user && user.uid === ADMIN_UID), () => resolve(false));
+        });
+        if (!adminAutorizado) {
+            window.location.replace('login.html');
+            throw new Error('Acceso administrativo no autorizado');
+        }
         const db = getFirestore(app);
 
         const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dwqvqpkbe/image/upload';
