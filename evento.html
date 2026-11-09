@@ -678,7 +678,7 @@
                     }
                     pagado = 'true';
                     packPagado = dataCodigo.pack || packPagado;
-                    albumData.driveLink = dataCodigo.driveLink;
+                    albumData.driveLink = dataCodigo.downloadUrl;
                 }
 
                 if (!albumData.driveLink && ['gratis', 'gratis_o_cafecito'].includes(albumData.metodo)) {
