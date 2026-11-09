@@ -51,3 +51,5 @@ jobs:
           PY
       - name: Verificar dependencias
         run: npm ls --depth=0
+      - name: Revisar vulnerabilidades de dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
