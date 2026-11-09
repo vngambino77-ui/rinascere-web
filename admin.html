@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Ph. Rinascere</title>
@@ -444,30 +445,96 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            await cargarEstadisticas();
-            await cargarAlbumes();
-            escucharContadores();
-            escucharActividadReciente();
-            escucharPedidosGratis();
-            escucharTransferenciasPendientes();
-            escucharTransferenciasConfirmadas();
-            escucharPortfolio();
+        async function tokenAdmin() {
+            const user = auth.currentUser;
+            if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+            return user.getIdToken();
+        }
+
+        async function sincronizarAlbum(id, eliminar = false) {
+            const token = await tokenAdmin();
+            const response = await fetch('/.netlify/functions/sincronizar-album', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ albumId: id, eliminar })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo sincronizar el álbum');
+            return result;
+        }
+
+        // No cargar datos ni habilitar el panel sin la sesión del administrador autorizado.
+        onAuthStateChanged(auth, async (user) => {
+            if (!user || user.uid !== ADMIN_UID) {
+                if (user) await signOut(auth);
+                window.location.replace('login.html');
+                return;
+            }
+
+            try {
+                await cargarEstadisticas();
+                await cargarAlbumes();
+                escucharContadores();
+                escucharActividadReciente();
+                escucharPedidosGratis();
+                escucharTransferenciasPendientes();
+                escucharTransferenciasConfirmadas();
+                escucharPortfolio();
+                instalarBotonMigracionAlbumes();
+            } catch (error) {
+                console.error('No se pudo iniciar el panel:', error);
+                alert('No se pudo cargar el panel. Volvé a iniciar sesión.');
+            }
         });
+
+        function instalarBotonMigracionAlbumes() {
+            if (document.getElementById('btnMigrarAlbumesSeguros')) return;
+            const button = document.createElement('button');
+            button.id = 'btnMigrarAlbumesSeguros';
+            button.textContent = '🔐 Proteger enlaces de Drive';
+            button.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;background:#c9a84c;color:#161616;border:0;border-radius:10px;padding:12px 16px;font-weight:700;box-shadow:0 4px 18px #0005;cursor:pointer;';
+            button.addEventListener('click', async () => {
+                if (!confirm('Se copiarán los álbumes actuales a colecciones separadas. La página pública pasará a leer solo metadatos sin enlaces de Drive. No se borrarán los documentos originales. ¿Continuar?')) return;
+                button.disabled = true;
+                button.textContent = 'Migrando álbumes…';
+                try {
+                    const token = await tokenAdmin();
+                    let cursor = null, total = 0, publicos = 0, privados = 0, sinDrive = 0;
+                    do {
+                        const response = await fetch('/.netlify/functions/migrar-albumes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ cursor })
+                        });
+                        const result = await response.json();
+                        if (!response.ok || !result.ok) throw new Error(result.error || 'Falló la migración');
+                        total += result.migrated || 0;
+                        sinDrive += result.withoutDrive || 0;
+                        publicos += result.public || 0;
+                        privados += result.private || 0;
+                        cursor = result.nextCursor || null;
+                        button.textContent = `Migrando… ${total} álbumes`;
+                    } while (cursor);
+                    alert(`Migración finalizada. Migrados: ${total}. Públicos: ${publicos}. Privados: ${privados}. Sin carpeta Drive: ${sinDrive}. Los originales siguen guardados como respaldo.`);
+                } catch (error) {
+                    alert('No se pudo completar la migración: ' + error.message + '. Podés volver a ejecutar el proceso; no borra los originales.');
+                } finally {
+                    button.disabled = false;
+                    button.textContent = '🔐 Proteger enlaces de Drive';
+                }
+            });
+            document.body.appendChild(button);
+        }
 
         window.toggleTransferenciasPendientes = function() {
             const wrapper = document.getElementById('transferenciasPendientesWrapper');
@@ -601,11 +668,11 @@
             }
             try {
                 const albumSnap = await getDoc(doc(db, 'albumes', p.albumId));
-                const driveLink = albumSnap.exists() ? albumSnap.data().driveLink : '';
-                if (!driveLink) {
-                    alert('Este álbum no tiene link de Drive cargado, o el álbum ya no existe.');
+                if (!albumSnap.exists()) {
+                    alert('Este álbum ya no existe.');
                     return;
                 }
+                const driveLink = `${window.location.origin}/.netlify/functions/descargar-album?albumId=${encodeURIComponent(p.albumId)}`;
 
                 const mensaje = `¡Hola ${p.nombre || ''}! Acá tenés tus fotos de ${p.albumNombre || 'tu álbum'} 📸\n${driveLink}\nQue las disfrutes ✨`;
 
@@ -680,56 +747,20 @@
             if (!confirm('¿Confirmás que la plata YA llegó a tu cuenta? Esto genera el link de acceso para el cliente.')) return;
 
             try {
-                const snap = await getDoc(doc(db, 'transferencias', id));
-                if (!snap.exists()) {
-                    alert('Esta transferencia ya no existe.');
-                    return;
-                }
-                const t = snap.data();
-
-                // Generar un código de acceso único y de un solo uso
-                const codigo = Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
-
-                await setDoc(doc(db, 'codigosAcceso', codigo), {
-                    albumId: t.albumId,
-                    pack: t.pack || null,
-                    usado: false,
-                    creadoEn: serverTimestamp()
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/confirmar-transferencia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id })
                 });
-
-                await updateDoc(doc(db, 'transferencias', id), { estado: 'confirmada', codigoAcceso: codigo });
-
-                // Registrar como compra, igual que los pagos con Mercado Pago
-                await addDoc(collection(db, 'eventos'), {
-                    tipo: 'compra',
-                    albumId: t.albumId,
-                    albumNombre: t.albumNombre || '',
-                    pack: t.pack || null,
-                    monto: Number(t.monto) || 0,
-                    comprador: t.comprador || '',
-                    contacto: t.contacto || '',
-                    metodo: 'transferencia',
-                    fecha: serverTimestamp()
-                });
-                await setDoc(doc(db, 'contadores', 'general'), {
-                    compras: increment(1),
-                    ingresos: increment(Number(t.monto) || 0),
-                    actualizado: serverTimestamp()
-                }, { merge: true });
-
-                // Armar el link de acceso
-                let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${codigo}`;
-                if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
-
-                const mensaje = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-
-                // Intentamos copiar solos, pero SIEMPRE mostramos el mensaje para copiar a mano también
-                // (en el celu, muchos navegadores bloquean copiar/abrir apps automáticamente)
-                try {
-                    await navigator.clipboard.writeText(mensaje);
-                } catch (e) { /* seguimos igual, el prompt de abajo sirve como respaldo */ }
-
-                mostrarMensajeParaCopiar(mensaje);
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo confirmar el pago');
+                mostrarMensajeParaCopiar(result.mensaje, result.contacto);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
@@ -807,7 +838,16 @@
             if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
 
             try {
-                await updateDoc(doc(db, 'codigosAcceso', codigo), { usado: false });
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/revivir-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ codigo })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo reactivar el código');
 
                 let link = `${window.location.origin}/evento.html?album=${albumId}&codigo=${codigo}`;
                 if (pack) link += `&pack=${encodeURIComponent(pack)}`;
@@ -962,6 +1002,7 @@
             
             try {
                 await deleteDoc(doc(db, 'albumes', id));
+                await sincronizarAlbum(id, true);
                 alert('Álbum eliminado');
                 location.reload();
             } catch (error) {
@@ -991,34 +1032,42 @@
 
         // Le agrega el código de país de Argentina (54 9) si el número no lo tiene
         function normalizarNumeroAr(numero) {
-            let n = String(numero || '').replace(/\D/g, '');
+            const original = String(numero || '').trim();
+            // El campo también admite email: nunca convertir una dirección en un teléfono.
+            if (!original || /[A-Za-z@]/.test(original)) return '';
+            let n = original.replace(/\D/g, '');
             if (!n) return '';
             if (n.startsWith('54')) {
                 if (!n.startsWith('549')) n = '549' + n.slice(2);
             } else {
-                n = '549' + n;
+                n = '549' + n.replace(/^0+/, '').replace(/^15/, '');
             }
-            return n;
+            return n.length >= 12 ? n : '';
         }
 
         // Muestra una ventanita con el mensaje en un cuadro de texto, con botón real de Copiar
         // (mucho más confiable en celulares que el copiado automático o los prompt() nativos)
-        function mostrarMensajeParaCopiar(mensaje) {
+        function mostrarMensajeParaCopiar(mensaje, contacto = '') {
+            const telefono = normalizarNumeroAr(contacto);
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
             overlay.innerHTML = `
-                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%;">
-                    <p style="color:#d4af37; margin-bottom:10px; font-weight:bold;">✅ Copiá este mensaje y pegalo en WhatsApp:</p>
+                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%; max-height:90vh; overflow:auto;">
+                    <p style="color:#10b981; margin-bottom:8px; font-weight:bold;">✅ Pago confirmado y acceso generado</p>
+                    <p style="color:#ddd; margin-bottom:10px;">${telefono ? 'Abrí WhatsApp con el mensaje listo para el comprador. Revisalo y presioná Enviar.' : 'No hay un WhatsApp válido cargado. Podés copiar el mensaje y enviarlo manualmente.'}</p>
                     <textarea readonly style="width:100%; height:150px; background:#111; color:#fff; border:1px solid #555; border-radius:5px; padding:10px; font-size:0.95em; box-sizing:border-box;"></textarea>
-                    <div style="text-align:right; margin-top:15px;">
-                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold; margin-right:8px;">📋 Copiar</button>
-                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cerrar</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; margin-top:15px;">
+                        ${telefono ? '<a id="btnEnviarWhatsAppOverlay" target="_blank" rel="noopener" style="background:#25D366; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold; text-decoration:none;">📲 Abrir WhatsApp</a>' : ''}
+                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;">📋 Copiar</button>
+                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer;">Cerrar</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(overlay);
 
             const textarea = overlay.querySelector('textarea');
+            const botonWhatsApp = overlay.querySelector('#btnEnviarWhatsAppOverlay');
+            if (botonWhatsApp) botonWhatsApp.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
             textarea.value = mensaje;
 
             overlay.querySelector('#btnCopiarMensajeOverlay').onclick = async () => {
@@ -1112,6 +1161,7 @@
             if (!confirm('¿Borrar TODAS las fotos de muestra de este álbum? Después vas a poder subir hasta 6 nuevas.')) return;
             try {
                 await updateDoc(doc(db, 'albumes', albumId), { fotosPreview: [] });
+                await sincronizarAlbum(albumId);
                 alert('✅ Muestras borradas');
                 cargarAlbumes();
             } catch (error) {
@@ -1151,6 +1201,7 @@
                 await updateDoc(doc(db, 'albumes', albumId), {
                     fotosPreview: [...fotosActuales, ...urlsNuevas]
                 });
+                await sincronizarAlbum(albumId);
 
                 alert('✅ Fotos de muestra guardadas correctamente');
                 cargarAlbumes();
@@ -1173,6 +1224,7 @@
 
             try {
                 await updateDoc(doc(db, 'albumes', id), { cantidadFotos: numero });
+                await sincronizarAlbum(id);
                 alert('✅ Cantidad de fotos actualizada');
                 cargarAlbumes();
             } catch (error) {
@@ -1234,6 +1286,7 @@
 
             try {
                 await updateDoc(doc(db, 'albumes', id), datosActualizados);
+                await sincronizarAlbum(id);
                 alert('✅ Cambios guardados correctamente');
                 location.reload();
             } catch (error) {
@@ -1261,6 +1314,7 @@
                     metodo: 'gratis_o_cafecito',
                     precio: nuevoPrecio
                 });
+                await sincronizarAlbum(id);
                 alert('✅ Listo: ahora el cliente puede elegir entre Gratis o Cafecito en este álbum');
                 location.reload();
             } catch (error) {
@@ -1407,9 +1461,12 @@
             }
         };
 
-        window.cerrarSesion = function() {
-            localStorage.removeItem('adminLoggedIn');
-            window.location.href = 'login.html';
+        window.cerrarSesion = async function() {
+            try {
+                await signOut(auth);
+            } finally {
+                window.location.replace('login.html');
+            }
         };
 
         window.nuevoAlbum = function() {

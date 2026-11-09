@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ph. Rinascere Fotografías — by Verónica Gambino</title>
@@ -20,14 +21,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
     // ✅ FIREBASE UNIFICADO — CORREGIDO
-firebase.initializeApp({
-  apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-  authDomain: "rinascere-web-2025.firebaseapp.com",
-  projectId: "rinascere-web-2025",
-  storageBucket: "rinascere-web-2025.firebasestorage.app",
-  messagingSenderId: "781300280640",
-  appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-    });
+firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     const db = firebase.firestore();
     const CLOUD = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
@@ -566,13 +560,31 @@ firebase.initializeApp({
   // ── Cargar álbumes desde Firebase ─────────────────────
 async function cargarAlbumes() {
     try {
-      const snap = await db.collection('albumes').get();
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      console.log('Álbumes cargados desde Firebase:', lista.length, lista);
-      renderAlbumes(lista.length > 0 ? lista : albumesEj);
+      // La colección nueva es la fuente principal y no contiene enlaces privados.
+      const publicSnap = await db.collection('albumesPublicos').where('esPublico', '==', true).get();
+      const porId = new Map(
+        publicSnap.docs.map(d => [d.id, { id: d.id, ...d.data(), publico: true }])
+      );
+
+      // Compatibilidad temporal: mientras se ejecuta la migración, completar
+      // los álbumes aún no copiados desde la colección histórica. Después de
+      // desplegar las reglas nuevas esta consulta puede ser denegada; no impide
+      // mostrar los documentos ya migrados.
+      try {
+        const legacySnap = await db.collection('albumes').where('esPublico', '==', true).get();
+        legacySnap.forEach(d => {
+          if (!porId.has(d.id)) porId.set(d.id, { id: d.id, ...d.data(), publico: true });
+        });
+      } catch (legacyError) {
+        console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
+      }
+
+      const lista = Array.from(porId.values());
+      console.log('Álbumes públicos cargados desde Firebase:', lista.length);
+      renderAlbumes(lista);
     } catch(e) {
       console.error('Error al cargar álbumes:', e);
-      renderAlbumes(albumesEj);
+      renderAlbumes([]);
     }
 }
 

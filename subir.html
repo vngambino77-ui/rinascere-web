@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subir Fotos - Ph. Rinascere</title>
@@ -301,19 +302,26 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
+        const adminReady = new Promise((resolve) => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user && user.uid === ADMIN_UID) {
+                    resolve(true);
+                    return;
+                }
+                if (user) await signOut(auth);
+                window.location.replace('login.html');
+                resolve(false);
+            });
+        });
 
         let portadaFile = null;
         let muestraFiles = [];
@@ -403,6 +411,7 @@
 
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!(await adminReady)) return;
 
             if (!portadaFile) {
                 mostrarMensaje('error', 'Seleccioná una foto de portada');
@@ -474,6 +483,16 @@
                 }
 
                 const docRef = await addDoc(collection(db, 'albumes'), albumData);
+                const adminUser = auth.currentUser;
+                if (!adminUser || adminUser.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const adminToken = await adminUser.getIdToken();
+                const syncResponse = await fetch('/.netlify/functions/sincronizar-album', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ albumId: docRef.id })
+                });
+                const syncResult = await syncResponse.json();
+                if (!syncResponse.ok || !syncResult.ok) throw new Error(syncResult.error || 'El álbum se creó pero no pudo sincronizarse para la galería');
 
                 if (!esPublico) {
                     // ÁLBUM PRIVADO - Mostrar link

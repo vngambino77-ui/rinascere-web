@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Ph. Rinascere</title>
@@ -62,7 +63,7 @@
             font-weight: bold;
         }
 
-        input[type="password"] {
+        input[type="email"], input[type="password"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #d4af37;
@@ -72,7 +73,7 @@
             font-size: 1.1em;
         }
 
-        input[type="password"]:focus {
+        input[type="email"]:focus, input[type="password"]:focus {
             outline: none;
             border-color: #f0c14b;
             background: rgba(255,255,255,0.15);
@@ -133,12 +134,22 @@
         <h1>Acceso Admin</h1>
         <p class="subtitle">Panel de administración</p>
 
-        <form id="loginForm" onsubmit="login(event)">
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Ingresá tu correo"
+                    required
+                    autocomplete="username"
+                >
+            </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input 
-                    type="password" 
-                    id="password" 
+                <input
+                    type="password"
+                    id="password"
                     placeholder="Ingresá tu contraseña"
                     required
                     autocomplete="current-password"
@@ -157,35 +168,62 @@
         <a href="index.html" class="btn-home">← Volver al sitio</a>
     </div>
 
-    <script>
-        // ⚠️ ESTO ES SOLO PARA DESARROLLO
-        // En producción, deberías usar Firebase Authentication
-        const ADMIN_PASSWORD = 'rinascere2024';
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            signOut
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
-        function login(event) {
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
+        const form = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user && user.uid === ADMIN_UID) {
+                window.location.replace('admin.html');
+            } else if (user) {
+                await signOut(auth);
+            }
+        });
+
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.style.display = 'none';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Verificando...';
 
-            if (password === ADMIN_PASSWORD) {
-                // Guardar sesión
-                localStorage.setItem('adminLoggedIn', 'true');
-                
-                // Redirigir a admin
-                window.location.href = 'admin.html';
-            } else {
-                // Mostrar error
+            try {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const credential = await signInWithEmailAndPassword(auth, email, password);
+
+                if (credential.user.uid !== ADMIN_UID) {
+                    await signOut(auth);
+                    throw new Error('Esta cuenta no está autorizada para administrar el sitio.');
+                }
+
+                window.location.replace('admin.html');
+            } catch (error) {
+                console.error('Error de autenticación:', error);
+                errorMessage.textContent = error.message.includes('no está autorizada')
+                    ? error.message
+                    : 'No se pudo iniciar sesión. Revisá el correo y la contraseña.';
                 errorMessage.style.display = 'block';
                 document.getElementById('password').value = '';
                 document.getElementById('password').focus();
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Ingresar →';
             }
-        }
-
-        // Verificar si ya está logueado
-        if (localStorage.getItem('adminLoggedIn') === 'true') {
-            window.location.href = 'admin.html';
-        }
+        });
     </script>
 </body>
 </html>

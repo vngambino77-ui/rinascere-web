@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evento - Ph. Rinascere</title>
@@ -284,7 +285,7 @@
                 <div class="info-box">
                     <h3>📦 ¿Cómo funciona?</h3>
                     <p>1. Elegí el pack que mejor se adapte a vos</p>
-                    <p>2. Pagá de forma segura con Mercado Pago</p>
+                    <p>2. Transferí directamente al alias indicado</p>
                     <p>3. Accedé a todas las fotos del álbum en Google Drive</p>
                     <p>4. Descargá las fotos que más te gusten (según tu pack)</p>
                 </div>
@@ -296,13 +297,13 @@
                 
                 <div style="text-align: center;">
                     <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled>
-                        💳 Pagar Pack Seleccionado
+                        💵 Pagar por transferencia
                     </button>
                     <button class="btn-pay" id="btnTransferenciaPack" onclick="iniciarTransferencia()" disabled style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                         💵 Pagar por Transferencia
                     </button>
                 </div>
-                <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                <p class="confianza">💵 Transferencia directa a Mercado Pago por alias · Sin Checkout</p>
             </div>
 
             <!-- ACCESO DESPUÉS DE PAGAR -->
@@ -378,16 +379,16 @@
                 <!-- PRECIO FIJO -->
                 <div id="boxPrecioFijo" style="display: none;">
                     <p style="color: #d4af37; font-size: 1.8em; font-weight: bold; text-align: center; margin: 20px 0 5px;" id="precioFijo"></p>
-                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Pagás y descargás al instante, todas las fotos en alta resolución.</p>
+                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Transferís al alias indicado. La descarga se habilita cuando confirmemos el ingreso.</p>
                     <div style="text-align: center;">
                         <button class="btn-pay" onclick="pagarPrecioFijo()">
-                            💳 Pagar y Acceder
+                            💵 Pagar por transferencia
                         </button>
                         <button class="btn-pay" onclick="iniciarTransferencia()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                    <p class="confianza">💵 Transferencia directa a Mercado Pago por alias · Sin Checkout</p>
                 </div>
 
                 <!-- CAFECITO -->
@@ -406,13 +407,13 @@
                     </div>
                     <div style="text-align: center;">
                         <button class="btn-pay" onclick="pagarCafecito()">
-                            💳 Contribuir
+                            💵 Aportar por transferencia
                         </button>
                         <button class="btn-pay" onclick="iniciarTransferenciaCafecito()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                    <p class="confianza">💵 Transferencia directa a Mercado Pago por alias · Sin Checkout</p>
                 </div>
 
                 <!-- ACCESO PAGADO (PRECIO FIJO / CAFECITO) -->
@@ -475,24 +476,37 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, runTransaction, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
+        let esAdminAutenticada = false;
+        let resolverAuthInicial;
+        const adminAuthReady = new Promise((resolve) => { resolverAuthInicial = resolve; });
+        onAuthStateChanged(auth, (user) => {
+            esAdminAutenticada = !!user && user.uid === ADMIN_UID;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
+        }, () => {
+            esAdminAutenticada = false;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
+        });
+        await adminAuthReady;
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
                 console.log('Visita no contada (modo admin/vista previa)');
@@ -518,7 +532,7 @@
         // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarClickDrive(origen) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia || !albumData) return;
             try {
@@ -539,10 +553,13 @@
         // Botón verde de descarga gratis: primero pide los datos, después abre Drive
         // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
         document.getElementById('linkDriveGratis').addEventListener('click', (e) => {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
-            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
-            if (esAdmin || esVistaPrevia) return;
             e.preventDefault();
+            const esAdmin = esAdminAutenticada;
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia) {
+                window.open(document.getElementById('linkDriveGratis').href, '_blank', 'noopener');
+                return;
+            }
             document.getElementById('gratisPaso1').style.display = 'block';
             document.getElementById('gratisPaso2').style.display = 'none';
             document.getElementById('modalGratis').style.display = 'flex';
@@ -591,14 +608,14 @@
         // Valida un código de acceso de un solo uso y lo marca como usado
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
             try {
-                const ref = doc(db, 'codigosAcceso', codigo);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) return null;
-                const data = snap.data();
-                if (data.usado) return null;
-                if (data.albumId !== albumIdEsperado) return null;
-                await updateDoc(ref, { usado: true, usadoEn: serverTimestamp() });
-                return data;
+                const response = await fetch('/.netlify/functions/canjear-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo, albumId: albumIdEsperado })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) return null;
+                return result;
             } catch (error) {
                 console.error('Error validando código de acceso:', error);
                 return null;
@@ -610,7 +627,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
-        let pagado = urlParams.get('pagado');
+        let pagado = null; // No se acepta pagado=true desde la URL como comprobante de pago.
         let packPagado = urlParams.get('pack');
         const codigoAcceso = urlParams.get('codigo');
 
@@ -622,22 +639,25 @@
 
         async function loadAlbum(albumId) {
             try {
-                const albumDoc = await getDoc(doc(db, 'albumes', albumId));
-                
-                if (!albumDoc.exists()) {
-                    showError('El álbum no existe');
+                await adminAuthReady;
+                const headers = { 'Accept': 'application/json' };
+                if (auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
+                    headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                }
+                const response = await fetch(`/.netlify/functions/obtener-album?albumId=${encodeURIComponent(albumId)}`, { headers });
+                const result = await response.json();
+                if (!response.ok || !result.ok || !result.album) {
+                    showError(result.error || 'El álbum no existe o no está disponible');
                     return;
                 }
 
-                albumData = { id: albumId, ...albumDoc.data() };
-
+                albumData = result.album;
                 // Registrar la visita (no bloquea la carga de la página)
                 registrarVisita(albumId, albumData.nombre);
 
-                document.getElementById('albumName').textContent = albumData.nombre;
-                document.getElementById('albumDate').textContent = albumData.fecha;
+                document.getElementById('albumName').textContent = albumData.nombre || 'Álbum';
+                document.getElementById('albumDate').textContent = albumData.fecha || '';
 
-                // Si viene con un código de acceso (compra por transferencia), validarlo
                 if (codigoAcceso) {
                     const dataCodigo = await validarCodigoAcceso(codigoAcceso, albumId);
                     if (!dataCodigo) {
@@ -652,33 +672,30 @@
                     }
                     pagado = 'true';
                     packPagado = dataCodigo.pack || packPagado;
+                    albumData.driveLink = dataCodigo.downloadUrl;
+                }
+
+                if (!albumData.driveLink && ['gratis', 'gratis_o_cafecito'].includes(albumData.metodo)) {
+                    albumData.driveLink = `/.netlify/functions/descargar-album?albumId=${encodeURIComponent(albumId)}`;
                 }
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
-                // Mostrar la galería de muestra, solo si todavía no pagó
-                if (pagado !== 'true') {
-                    mostrarMuestra();
-                }
+                if (pagado !== 'true') mostrarMuestra();
 
-                // DETERMINAR QUÉ MOSTRAR
                 if (albumData.metodo === 'pack_fotos') {
                     if (pagado === 'true' && packPagado) {
-                        // YA PAGÓ → Mostrar acceso a Drive
                         mostrarAccesoPagado(packPagado);
                     } else {
-                        // NO PAGÓ → Mostrar packs
                         mostrarPacks();
                     }
                 } else {
-                    // GRATIS / PRECIO FIJO / CAFECITO
                     mostrarMetodoNormal();
                 }
-
             } catch (error) {
                 console.error('Error:', error);
-                showError('Error al cargar el álbum');
+                showError('No se pudo cargar el álbum. Intentá nuevamente.');
             }
         }
 
@@ -757,35 +774,7 @@
                 alert('Seleccioná un pack primero');
                 return;
             }
-
-            const datosComprador = pedirDatosComprador();
-            if (!datosComprador) return;
-            
-            try {
-                const response = await fetch('/.netlify/functions/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        titulo: `${albumData.nombre} - Pack ${packSeleccionado.nombre}`,
-                        precio: packSeleccionado.precio,
-                        albumId: albumData.id,
-                        metodoPago: 'pack_fotos',
-                        nombrePack: packSeleccionado.nombre,
-                        comprador: datosComprador.nombre,
-                        contacto: datosComprador.contacto
-                    })
-                });
-
-                const data = await response.json();
-                if (data.init_point) {
-                    window.location.href = data.init_point;
-                } else {
-                    alert('Error al crear el pago');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar el pago');
-            }
+            await procesarTransferencia(packSeleccionado.precio, packSeleccionado.nombre);
         };
 
         function mostrarAccesoPagado(nombrePack) {
@@ -852,19 +841,19 @@
         }
 
         window.pagarPrecioFijo = async function() {
-            procesarPago(albumData.precio, 'precio_fijo');
+            await procesarTransferencia(albumData.precio, null);
         };
 
         window.pagarCafecito = async function() {
-            const precio = parseInt(document.getElementById('inputCafecito').value);
-            const montoMinimo = albumData.precio || 3000;
-            
-            if (!precio || precio < montoMinimo) {
+            const precio = parseInt(document.getElementById('inputCafecito').value, 10);
+            const montoMinimo = Number(albumData.precio) || 3000;
+
+            if (!Number.isFinite(precio) || precio < montoMinimo) {
                 alert(`El monto mínimo es $${montoMinimo.toLocaleString('es-AR')}`);
                 return;
             }
 
-            procesarPago(precio, 'cafecito');
+            await procesarTransferencia(precio, null);
         };
 
         window.iniciarTransferencia = async function() {
@@ -897,62 +886,44 @@
         };
 
         async function procesarTransferencia(precio, packNombre) {
+            const monto = Number(precio);
+            if (!Number.isFinite(monto) || monto <= 0) {
+                alert('El importe de la transferencia no es válido. Contactanos para continuar.');
+                return;
+            }
+
             const datosComprador = pedirDatosComprador();
             if (!datosComprador) return;
 
+            let montoConfirmado = monto;
             try {
-                await addDoc(collection(db, 'transferencias'), {
-                    albumId: albumData.id,
-                    albumNombre: albumData.nombre,
-                    pack: packNombre,
-                    monto: precio,
-                    comprador: datosComprador.nombre,
-                    contacto: datosComprador.contacto,
-                    estado: 'pendiente',
-                    fecha: serverTimestamp()
+                const response = await fetch('/.netlify/functions/crear-transferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        albumId: albumData.id,
+                        pack: packNombre,
+                        monto,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
+                    })
                 });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
+                montoConfirmado = Number(result.monto);
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
+                alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
+                return;
             }
 
             document.getElementById('seccionPacks').style.display = 'none';
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '$' + Number(precio).toLocaleString('es-AR');
-
-            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('transferenciaMonto').textContent = '$' + montoConfirmado.toLocaleString('es-AR');
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
-        }
-
-        async function procesarPago(precio, metodoPago) {
-            const datosComprador = pedirDatosComprador();
-            if (!datosComprador) return;
-
-            try {
-                const response = await fetch('/.netlify/functions/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        titulo: `${albumData.nombre} - Fotos`,
-                        precio: precio,
-                        albumId: albumData.id,
-                        metodoPago: metodoPago,
-                        comprador: datosComprador.nombre,
-                        contacto: datosComprador.contacto
-                    })
-                });
-
-                const data = await response.json();
-                if (data.init_point) {
-                    window.location.href = data.init_point;
-                } else {
-                    alert('Error al crear el pago');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar el pago');
-            }
         }
 
         function showError(message) {

@@ -1,0 +1,55 @@
+name: Validación de seguridad y funciones
+
+on:
+  push:
+    branches:
+      - seguridad-transferencias-integrada
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependencias
+        run: npm install --ignore-scripts
+      - name: Verificar sintaxis JavaScript
+        run: |
+          find netlify/functions netlify/lib scripts -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Probar generación de configuración Firebase por contexto
+        env:
+          FIREBASE_WEB_CONFIG_JSON: '{"apiKey":"ci-key","authDomain":"ci.firebaseapp.com","projectId":"demo-rinascere","appId":"1:1:web:ci"}'
+          FIREBASE_ADMIN_UID: "ci-admin"
+        run: |
+          npm run build
+          node --check firebase-config.js
+      - name: Verificar sintaxis de scripts JavaScript en HTML
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, subprocess, tempfile
+          files = list(pathlib.Path('.').rglob('*.html'))
+          checked = 0
+          for html in files:
+              source = html.read_text(encoding='utf-8')
+              for index, match in enumerate(re.finditer(r'<script([^>]*)>([\s\S]*?)</script>', source, re.I)):
+                  attrs, code = match.group(1).lower(), match.group(2)
+                  if 'application/json' in attrs or not code.strip():
+                      continue
+                  with tempfile.NamedTemporaryFile('w', suffix='.mjs', encoding='utf-8') as tmp:
+                      tmp.write(code)
+                      tmp.flush()
+                      subprocess.run(['node', '--check', tmp.name], check=True)
+                  checked += 1
+          print(f'Scripts HTML verificados: {checked}')
+          PY
+      - name: Verificar dependencias
+        run: npm ls --depth=0
+      - name: Revisar vulnerabilidades de dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
