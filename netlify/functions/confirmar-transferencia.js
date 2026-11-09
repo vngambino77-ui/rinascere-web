@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getFirebaseAdmin, send, requireAdmin } = require('./_firebase');
+const { getFirebaseAdmin, send, requireAdmin } = require('../lib/firebase-admin');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return send(405, { error: 'Método no permitido' });
