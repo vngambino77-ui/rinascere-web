@@ -2,8 +2,13 @@
   "name": "rinascere-web",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "firebase-admin": "^13.0.2"
+  },
+  "scripts": {
+    "build": "node scripts/generate-firebase-config.js"
   }
 }
