@@ -18,16 +18,6 @@ exports.handler = async (event) => {
       data = privateSnap.data();
     }
 
-    let isAdmin = false;
-    const header = event.headers && (event.headers.authorization || event.headers.Authorization);
-    if (header && header.startsWith('Bearer ')) {
-      try {
-        const { auth } = getFirebaseAdmin();
-        const decoded = await auth.verifyIdToken(header.slice(7));
-        isAdmin = decoded.uid === (process.env.FIREBASE_ADMIN_UID || 'wuvIwxJyUcYvtgxRDZkYw7qo97v2');
-      } catch (_) { isAdmin = false; }
-    }
-
     const { driveLink, driveFolderId, privateTokenHash, ...safeAlbum } = data;
     return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
