@@ -22,14 +22,16 @@ exports.handler = async (event) => {
     if (snapshot.empty) return send(200, { ok: true, migrated: 0, public: 0, private: 0, nextCursor: null, done: true });
 
     const batch = db.batch();
-    let publicCount = 0, privateCount = 0;
+    let publicCount = 0, privateCount = 0, skipped = 0, migrated = 0;
     for (const item of snapshot.docs) {
       const data = item.data();
       if (!data.driveLink) {
         console.warn('Álbum sin driveLink omitido:', item.id);
+        skipped++;
         continue;
       }
       batch.set(db.collection('albumesPrivados').doc(item.id), { ...data, migratedAt: new Date().toISOString() });
+      migrated++;
       if (data.esPublico === true) {
         batch.set(db.collection('albumesPublicos').doc(item.id), publicData(data));
         publicCount++;
@@ -42,7 +44,8 @@ exports.handler = async (event) => {
     const last = snapshot.docs[snapshot.docs.length - 1].id;
     return send(200, {
       ok: true,
-      migrated: snapshot.size,
+      migrated,
+      skipped,
       public: publicCount,
       private: privateCount,
       nextCursor: snapshot.size === 180 ? last : null,
