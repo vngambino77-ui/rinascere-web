@@ -28,6 +28,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /descargasAutorizadas/{token} {
+      allow read, write: if false;
+    }
+
     // Las solicitudes se crean exclusivamente desde crear-transferencia.js.
     // Firebase Admin SDK del servidor no está sujeto a estas reglas.
     match /transferencias/{transferenciaId} {
