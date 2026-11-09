@@ -614,15 +614,14 @@
         // Valida un código de acceso de un solo uso y lo marca como usado
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
             try {
-                const ref = doc(db, 'codigosAcceso', codigo);
-                return await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return null;
-                    const data = snap.data();
-                    if (data.usado || data.albumId !== albumIdEsperado) return null;
-                    transaction.update(ref, { usado: true, usadoEn: serverTimestamp() });
-                    return data;
+                const response = await fetch('/.netlify/functions/canjear-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo, albumId: albumIdEsperado })
                 });
+                const result = await response.json();
+                if (!response.ok || !result.ok) return null;
+                return result;
             } catch (error) {
                 console.error('Error validando código de acceso:', error);
                 return null;
@@ -676,6 +675,7 @@
                     }
                     pagado = 'true';
                     packPagado = dataCodigo.pack || packPagado;
+                    albumData.driveLink = dataCodigo.driveLink;
                 }
 
                 document.getElementById('loading').style.display = 'none';
@@ -902,20 +902,25 @@
             const datosComprador = pedirDatosComprador();
             if (!datosComprador) return;
 
+            let montoConfirmado = monto;
             try {
-                await addDoc(collection(db, 'transferencias'), {
-                    albumId: albumData.id,
-                    albumNombre: albumData.nombre,
-                    pack: packNombre,
-                    monto,
-                    comprador: datosComprador.nombre,
-                    contacto: datosComprador.contacto,
-                    estado: 'pendiente',
-                    fecha: serverTimestamp()
+                const response = await fetch('/.netlify/functions/crear-transferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        albumId: albumData.id,
+                        pack: packNombre,
+                        monto,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
+                    })
                 });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
+                montoConfirmado = Number(result.monto);
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
-                alert('No pudimos registrar tu solicitud de transferencia. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
+                alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
                 return;
             }
 
@@ -923,7 +928,21 @@
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '$' + Number(precio).toLocaleString('es-AR');
+            document.getElementById('transferenciaMonto').textContent = '
+
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por ${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
 
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
