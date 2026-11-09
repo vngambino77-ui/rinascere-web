@@ -223,12 +223,16 @@
 
         async function cargarAlbumes() {
             try {
-                const q = query(
+                let q = query(
                     collection(db, 'albumesPublicos'),
                     where('esPublico', '==', true)
                 );
-                
-                const snapshot = await getDocs(q);
+                let snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    // Compatibilidad temporal mientras se migran los álbumes existentes.
+                    q = query(collection(db, 'albumes'), where('esPublico', '==', true));
+                    snapshot = await getDocs(q);
+                }
                 const select = document.getElementById('albumSelect');
                 
                 albumes = [];
