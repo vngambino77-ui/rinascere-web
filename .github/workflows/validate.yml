@@ -23,6 +23,13 @@ jobs:
       - name: Verificar sintaxis JavaScript
         run: |
           find netlify/functions netlify/lib -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Probar generación de configuración Firebase por contexto
+        env:
+          FIREBASE_WEB_CONFIG_JSON: '{"apiKey":"ci-key","authDomain":"ci.firebaseapp.com","projectId":"demo-rinascere","appId":"1:1:web:ci"}'
+          FIREBASE_ADMIN_UID: "ci-admin"
+        run: |
+          npm run build
+          node --check firebase-config.js
       - name: Verificar sintaxis de scripts JavaScript en HTML
         run: |
           python3 - <<'PY'
