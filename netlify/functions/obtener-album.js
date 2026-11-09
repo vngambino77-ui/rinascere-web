@@ -12,7 +12,8 @@ exports.handler = async (event) => {
     if (publicSnap.exists) {
       data = publicSnap.data();
     } else {
-      const privateSnap = await db.collection('albumesPrivados').doc(albumId).get();
+      let privateSnap = await db.collection('albumesPrivados').doc(albumId).get();
+      if (!privateSnap.exists) privateSnap = await db.collection('albumes').doc(albumId).get();
       if (!privateSnap.exists) return send(404, { error: 'El álbum no existe o no está disponible' });
       data = privateSnap.data();
     }
