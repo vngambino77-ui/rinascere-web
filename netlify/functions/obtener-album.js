@@ -28,7 +28,7 @@ exports.handler = async (event) => {
     }
 
     const { driveLink, driveFolderId, privateTokenHash, ...safeAlbum } = data;
-    return send(200, { ok: true, album: { id: albumId, ...safeAlbum, ...(isAdmin ? { driveLink } : {}) } });
+    return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
     console.error('obtener-album:', error);
     return send(500, { error: 'No se pudo cargar el álbum' });
