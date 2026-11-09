@@ -444,6 +444,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -456,17 +457,31 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = "wuvIwxJyUcYvtgxRDZkYw7qo97v2";
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            await cargarEstadisticas();
-            await cargarAlbumes();
-            escucharContadores();
-            escucharActividadReciente();
-            escucharPedidosGratis();
-            escucharTransferenciasPendientes();
-            escucharTransferenciasConfirmadas();
-            escucharPortfolio();
+        // No cargar datos ni habilitar el panel sin la sesión del administrador autorizado.
+        onAuthStateChanged(auth, async (user) => {
+            if (!user || user.uid !== ADMIN_UID) {
+                if (user) await signOut(auth);
+                window.location.replace('login.html');
+                return;
+            }
+
+            try {
+                await cargarEstadisticas();
+                await cargarAlbumes();
+                escucharContadores();
+                escucharActividadReciente();
+                escucharPedidosGratis();
+                escucharTransferenciasPendientes();
+                escucharTransferenciasConfirmadas();
+                escucharPortfolio();
+            } catch (error) {
+                console.error('No se pudo iniciar el panel:', error);
+                alert('No se pudo cargar el panel. Volvé a iniciar sesión.');
+            }
         });
 
         window.toggleTransferenciasPendientes = function() {
@@ -1413,9 +1428,12 @@
             }
         };
 
-        window.cerrarSesion = function() {
-            localStorage.removeItem('adminLoggedIn');
-            window.location.href = 'login.html';
+        window.cerrarSesion = async function() {
+            try {
+                await signOut(auth);
+            } finally {
+                window.location.replace('login.html');
+            }
         };
 
         window.nuevoAlbum = function() {
