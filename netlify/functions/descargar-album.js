@@ -18,7 +18,8 @@ exports.handler = async (event) => {
         const data = tokenSnap.data();
         if (data.usado || !data.vence || data.vence.toMillis() < Date.now()) throw new Error('INVALID_DOWNLOAD');
         const albumRef = db.collection('albumesPrivados').doc(data.albumId);
-        const albumSnap = await tx.get(albumRef);
+        let albumSnap = await tx.get(albumRef);
+        if (!albumSnap.exists) albumSnap = await tx.get(db.collection('albumes').doc(data.albumId));
         if (!albumSnap.exists || !albumSnap.data().driveLink) throw new Error('NO_ALBUM');
         tx.update(tokenRef, { usado: true, usadoEn: admin.firestore.FieldValue.serverTimestamp() });
         return albumSnap.data().driveLink;
@@ -26,7 +27,8 @@ exports.handler = async (event) => {
       driveLink = result;
     } else {
       if (!/^[A-Za-z0-9_-]{5,150}$/.test(albumId)) return { statusCode: 400, body: 'Álbum inválido' };
-      const snap = await db.collection('albumesPrivados').doc(albumId).get();
+      let snap = await db.collection('albumesPrivados').doc(albumId).get();
+      if (!snap.exists) snap = await db.collection('albumes').doc(albumId).get();
       if (!snap.exists) return { statusCode: 404, body: 'Álbum no disponible' };
       const album = snap.data();
       if (!['gratis', 'gratis_o_cafecito'].includes(album.metodo)) {
