@@ -515,7 +515,7 @@
                 button.textContent = 'Migrando álbumes…';
                 try {
                     const token = await tokenAdmin();
-                    let cursor = null, total = 0, publicos = 0, privados = 0, omitidos = 0;
+                    let cursor = null, total = 0, publicos = 0, privados = 0, sinDrive = 0;
                     do {
                         const response = await fetch('/.netlify/functions/migrar-albumes', {
                             method: 'POST',
@@ -525,13 +525,13 @@
                         const result = await response.json();
                         if (!response.ok || !result.ok) throw new Error(result.error || 'Falló la migración');
                         total += result.migrated || 0;
-                        omitidos += result.skipped || 0;
+                        sinDrive += result.withoutDrive || 0;
                         publicos += result.public || 0;
                         privados += result.private || 0;
                         cursor = result.nextCursor || null;
                         button.textContent = `Migrando… ${total} álbumes`;
                     } while (cursor);
-                    alert(`Migración finalizada. Migrados: ${total}. Públicos: ${publicos}. Privados: ${privados}. Sin carpeta Drive: ${omitidos}. Los originales siguen guardados como respaldo.`);
+                    alert(`Migración finalizada. Migrados: ${total}. Públicos: ${publicos}. Privados: ${privados}. Sin carpeta Drive: ${sinDrive}. Los originales siguen guardados como respaldo.`);
                 } catch (error) {
                     alert('No se pudo completar la migración: ' + error.message + '. Podés volver a ejecutar el proceso; no borra los originales.');
                 } finally {
