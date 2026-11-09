@@ -36,9 +36,11 @@ exports.handler = async (event) => {
     });
     if (!allowed) return send(429, { error: 'Se alcanzó el límite temporal de solicitudes. Intentá más tarde.' });
 
-    const albumSnap = await db.collection('albumesPrivados').doc(albumId).get();
+    let albumSnap = await db.collection('albumesPrivados').doc(albumId).get();
+    if (!albumSnap.exists) albumSnap = await db.collection('albumes').doc(albumId).get();
     if (!albumSnap.exists) return send(404, { error: 'El álbum no existe' });
     const album = albumSnap.data();
+    if (!album.driveLink) return send(409, { error: 'Este álbum todavía no tiene una carpeta de Drive configurada. Contactanos para continuar.' });
     let monto = 0;
 
     if (album.metodo === 'pack_fotos') {
