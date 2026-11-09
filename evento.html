@@ -475,6 +475,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, runTransaction, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -487,12 +488,17 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
+        const adminAuthReady = new Promise((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(!!user && user.uid === ADMIN_UID), () => resolve(false));
+        });
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = await adminAuthReady;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
                 console.log('Visita no contada (modo admin/vista previa)');
@@ -518,7 +524,7 @@
         // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarClickDrive(origen) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = await adminAuthReady;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia || !albumData) return;
             try {
@@ -538,11 +544,14 @@
         document.getElementById('linkDriveNormal').addEventListener('click', () => registrarClickDrive('pagado'));
         // Botón verde de descarga gratis: primero pide los datos, después abre Drive
         // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
-        document.getElementById('linkDriveGratis').addEventListener('click', (e) => {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
-            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
-            if (esAdmin || esVistaPrevia) return;
+        document.getElementById('linkDriveGratis').addEventListener('click', async (e) => {
             e.preventDefault();
+            const esAdmin = await adminAuthReady;
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia) {
+                window.open(document.getElementById('linkDriveGratis').href, '_blank', 'noopener');
+                return;
+            }
             document.getElementById('gratisPaso1').style.display = 'block';
             document.getElementById('gratisPaso2').style.display = 'none';
             document.getElementById('modalGratis').style.display = 'flex';
