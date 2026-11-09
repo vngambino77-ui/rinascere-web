@@ -507,11 +507,11 @@
                 resolverAuthInicial = null;
             }
         });
+        await adminAuthReady;
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
-            await adminAuthReady;
             const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
@@ -538,7 +538,6 @@
         // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarClickDrive(origen) {
-            await adminAuthReady;
             const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia || !albumData) return;
@@ -559,9 +558,8 @@
         document.getElementById('linkDriveNormal').addEventListener('click', () => registrarClickDrive('pagado'));
         // Botón verde de descarga gratis: primero pide los datos, después abre Drive
         // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
-        document.getElementById('linkDriveGratis').addEventListener('click', async (e) => {
+        document.getElementById('linkDriveGratis').addEventListener('click', (e) => {
             e.preventDefault();
-            await adminAuthReady;
             const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
