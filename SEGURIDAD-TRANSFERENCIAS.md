@@ -66,9 +66,15 @@ El archivo `firebase.json` apunta a las reglas. Desplegarlas únicamente despué
 7. En la web publicada, entrar al panel y ejecutar **Proteger enlaces de Drive**. Verificar que los contadores de álbumes públicos/privados y los álbumes sin Drive sean correctos.
 8. Solo después de verificar la migración, desplegar las reglas con `firebase deploy --only firestore:rules --project rinascere-web-2025`.
 
+## Migración de álbumes
+
+El panel administrativo incorpora el botón **Proteger enlaces de Drive**. Una vez desplegadas las funciones Netlify y configuradas las variables, iniciá sesión en `admin.html` y ejecutá la migración. Copia los documentos de `albumes` a `albumesPrivados` y crea una versión sin `driveLink` ni `driveFolderId` en `albumesPublicos`. La migración es repetible y conserva los documentos originales como respaldo. Revisá el resumen de álbumes sin carpeta antes de continuar.
+
+Después de confirmar que la galería pública y los enlaces privados funcionan con las colecciones nuevas, desplegá `firestore.rules`. No cierres la colección histórica antes de migrar y comprobar los álbumes. Las reglas del repositorio no se aplican automáticamente por el deploy de Netlify.
+
 ## Verificación obligatoria en un entorno de prueba
 
-El workflow de GitHub Actions comprueba sintaxis JavaScript e instalación de dependencias. Eso no sustituye pruebas conectadas a Firebase/Netlify. Antes de fusionar o publicar, probar en staging:
+El workflow de GitHub Actions comprueba sintaxis de funciones y scripts JavaScript e instalación de dependencias. Eso no sustituye pruebas conectadas a Firebase/Netlify. Antes de fusionar o publicar, probar en staging:
 
 1. Crear una transferencia con importe correcto.
 2. Alterar el precio desde el navegador y confirmar que el servidor lo rechaza.
