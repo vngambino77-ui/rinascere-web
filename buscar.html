@@ -223,25 +223,24 @@
 
         async function cargarAlbumes() {
             try {
-                let q = query(
-                    collection(db, 'albumesPublicos'),
-                    where('esPublico', '==', true)
-                );
-                let snapshot = await getDocs(q);
-                if (snapshot.empty) {
-                    // Compatibilidad temporal mientras se migran los álbumes existentes.
-                    q = query(collection(db, 'albumes'), where('esPublico', '==', true));
-                    snapshot = await getDocs(q);
+                const q = query(collection(db, 'albumesPublicos'), where('esPublico', '==', true));
+                const snapshot = await getDocs(q);
+                const porId = new Map();
+                try {
+                    const legacyQuery = query(collection(db, 'albumes'), where('esPublico', '==', true));
+                    const legacySnapshot = await getDocs(legacyQuery);
+                    legacySnapshot.forEach(d => porId.set(d.id, { id: d.id, ...d.data() }));
+                } catch (legacyError) {
+                    console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
                 }
+                snapshot.forEach(d => porId.set(d.id, { id: d.id, ...d.data() }));
+                const albumsDisponibles = Array.from(porId.values());
                 const select = document.getElementById('albumSelect');
                 
-                albumes = [];
+                albumes = albumsDisponibles;
                 select.innerHTML = '<option value="">Seleccioná un evento</option>';
 
-                snapshot.forEach(doc => {
-                    const album = { id: doc.id, ...doc.data() };
-                    albumes.push(album);
-                    
+                albumes.forEach(album => {
                     const option = document.createElement('option');
                     option.value = album.id;
                     option.textContent = `${album.nombre} - ${album.fecha}`;
