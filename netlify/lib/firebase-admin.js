@@ -39,7 +39,8 @@ async function requireAdmin(event) {
   if (!header || !header.startsWith('Bearer ')) throw new Error('UNAUTHORIZED');
   const { auth } = getFirebaseAdmin();
   const decoded = await auth.verifyIdToken(header.slice(7));
-  const allowedUid = process.env.FIREBASE_ADMIN_UID || 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
+  const allowedUid = process.env.FIREBASE_ADMIN_UID;
+  if (!allowedUid) throw new Error('ADMIN_UID_NOT_CONFIGURED');
   if (decoded.uid !== allowedUid) throw new Error('FORBIDDEN');
   return decoded;
 }
