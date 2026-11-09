@@ -1,7 +1,7 @@
 const { getFirebaseAdmin, send, readBody, requireAdmin } = require('../lib/firebase-admin');
 
 function publicData(data) {
-  const { driveLink, driveFolderId, ...safe } = data;
+  const { driveLink, driveFolderId, privateTokenHash, privateAccessToken, downloadUrl, codigoAcceso, ...safe } = data;
   return safe;
 }
 
