@@ -31,7 +31,7 @@ jobs:
           checked = 0
           for html in files:
               source = html.read_text(encoding='utf-8')
-              for index, match in enumerate(re.finditer(r'<script([^>]*)>([\\s\\S]*?)</script>', source, re.I)):
+              for index, match in enumerate(re.finditer(r'<script([^>]*)>([\s\S]*?)</script>', source, re.I)):
                   attrs, code = match.group(1).lower(), match.group(2)
                   if 'application/json' in attrs or not code.strip():
                       continue
