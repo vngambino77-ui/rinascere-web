@@ -1,1 +1,8 @@
-{}
+{
+  "rewrites": [
+    {
+      "source": "/.netlify/functions/:function*",
+      "destination": "/api/:function"
+    }
+  ]
+}
