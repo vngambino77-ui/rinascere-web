@@ -344,7 +344,7 @@
         </div>
 
         <h2 class="section-title" onclick="toggleTransferenciasPendientes()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
-            <span>💵 Transferencias Pendientes</span>
+            <span>💵 Transferencias Pendientes <span id="contadorTransferencias" style="font-size: 0.6em; color: #f59e0b;"></span></span>
             <span id="flechaTransferenciasPendientes" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
         <div class="table-container" id="transferenciasPendientesWrapper" style="display: none;">
@@ -535,6 +535,7 @@
 
         // Lista en vivo de pedidos de acceso gratis (los que dejan sus datos y piden el link por WhatsApp)
         const pedidosGratisCache = {};
+        const transferenciasConfirmadasCache = {};
 
         function escucharPedidosGratis() {
             const q = query(collection(db, 'eventos'), where('tipo', '==', 'registro_gratis'));
@@ -633,10 +634,13 @@
             const q = query(collection(db, 'transferencias'), where('estado', '==', 'pendiente'));
             onSnapshot(q, (snapshot) => {
                 const tbody = document.getElementById('transferenciasTableBody');
+                const contadorTransf = document.getElementById('contadorTransferencias');
                 if (snapshot.empty) {
+                    contadorTransf.textContent = '';
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay transferencias pendientes</td></tr>';
                     return;
                 }
+                contadorTransf.textContent = `(${snapshot.size} pendiente${snapshot.size === 1 ? '' : 's'})`;
                 const items = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0));
@@ -646,9 +650,9 @@
                     const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
-                        <td>${t.albumNombre || t.albumId || '—'}</td>
-                        <td>${t.pack || '—'}</td>
+                        <td>${escaparHtml(t.comprador) || '—'}${t.contacto ? ' (' + escaparHtml(t.contacto) + ')' : ''}${t.numeroPedido ? '<br><small style="color:#d4af37;">Pedido N° ' + escaparHtml(t.numeroPedido) + '</small>' : ''}</td>
+                        <td>${escaparHtml(t.albumNombre || t.albumId) || '—'}</td>
+                        <td>${escaparHtml(t.pack) || '—'}</td>
                         <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
                         <td>${fechaTexto}</td>
                         <td>
@@ -764,17 +768,18 @@
                         </a>`
                         : '';
 
+                    transferenciasConfirmadasCache[t.id] = t;
                     tr.innerHTML = `
-                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
-                        <td>${t.albumNombre || t.albumId || '—'}</td>
-                        <td>${t.pack || '—'}</td>
+                        <td>${escaparHtml(t.comprador) || '—'}${t.contacto ? ' (' + escaparHtml(t.contacto) + ')' : ''}${t.numeroPedido ? '<br><small style="color:#d4af37;">Pedido N° ' + escaparHtml(t.numeroPedido) + '</small>' : ''}</td>
+                        <td>${escaparHtml(t.albumNombre || t.albumId) || '—'}</td>
+                        <td>${escaparHtml(t.pack) || '—'}</td>
                         <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
                         <td style="font-family: monospace;">${t.codigoAcceso || '—'}</td>
                         <td>${fechaTexto}</td>
                         <td>
                             ${botonWhatsapp}
                             ${t.codigoAcceso ? `
-                            <button onclick="revivirCodigo('${t.codigoAcceso}', '${t.albumId}', '${(t.pack || '').replace(/'/g, "\\'")}', '${(t.comprador || '').replace(/'/g, "\\'")}')" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
+                            <button onclick="revivirCodigo('${t.id}')" style="background: #0891b2; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 🔄 Revivir código
                             </button>` : '—'}
                         </td>
@@ -803,7 +808,16 @@
             }
         };
 
-        window.revivirCodigo = async function(codigo, albumId, pack, comprador) {
+        window.revivirCodigo = async function(idTransferencia) {
+            const tr = transferenciasConfirmadasCache[idTransferencia];
+            if (!tr) {
+                alert('No encontré esta transferencia. Recargá la página e intentá de nuevo.');
+                return;
+            }
+            const codigo = tr.codigoAcceso;
+            const albumId = tr.albumId;
+            const pack = tr.pack || '';
+            const comprador = tr.comprador || '';
             if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
 
             try {
@@ -844,11 +858,11 @@
                     const fechaTexto = (ev.fecha && ev.fecha.toDate) ? ev.fecha.toDate().toLocaleString('es-AR') : '—';
                     const montoTexto = ev.monto ? '$' + Number(ev.monto).toLocaleString('es-AR') : '—';
                     const clienteTexto = ev.comprador
-                        ? ev.comprador + (ev.contacto ? ' (' + ev.contacto + ')' : '')
+                        ? escaparHtml(ev.comprador) + (ev.contacto ? ' (' + escaparHtml(ev.contacto) + ')' : '')
                         : (ev.nombre ? escaparHtml(ev.nombre) : '—');
                     tr.innerHTML = `
                         <td>${tipoTexto}</td>
-                        <td>${ev.albumNombre || ev.albumId || '—'}</td>
+                        <td>${escaparHtml(ev.albumNombre || ev.albumId) || '—'}</td>
                         <td>${clienteTexto}</td>
                         <td>${ev.pack || '—'}</td>
                         <td>${montoTexto}</td>
