@@ -133,9 +133,10 @@
         <h1>Acceso Admin</h1>
         <p class="subtitle">Panel de administración</p>
 
-        <form id="loginForm" onsubmit="login(event)">
+        <form id="loginForm">
+            <div class="form-group"><label for="email">Correo de administradora</label><input type="email" id="email" required autocomplete="username" style="width:100%;padding:15px;border:2px solid #d4af37;border-radius:10px;background:#333;color:white"></div>
             <div class="form-group">
-                <label for="password">Contraseña</label>
+                <label for="password">Contraseña de Firebase</label>
                 <input 
                     type="password" 
                     id="password" 
@@ -157,35 +158,44 @@
         <a href="index.html" class="btn-home">← Volver al sitio</a>
     </div>
 
-    <script>
-        // ⚠️ ESTO ES SOLO PARA DESARROLLO
-        // En producción, deberías usar Firebase Authentication
-        const ADMIN_PASSWORD = 'rinascere2024';
-
-        function login(event) {
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
+            authDomain: "rinascere-web-2025.firebaseapp.com",
+            projectId: "rinascere-web-2025",
+            storageBucket: "rinascere-web-2025.firebasestorage.app",
+            messagingSenderId: "781300280640",
+            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
+        };
+        const auth = getAuth(initializeApp(firebaseConfig));
+        const form = document.getElementById('loginForm');
+        const errorBox = document.getElementById('errorMessage');
+        async function comprobarAdmin(user) {
+            const token = await user.getIdToken();
+            const res = await fetch('/.netlify/functions/verificar-admin', { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) throw new Error('Cuenta sin autorización administrativa o servidor sin configurar');
+            localStorage.removeItem('adminLoggedIn');
+            window.location.replace('admin.html');
+        }
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-
-            if (password === ADMIN_PASSWORD) {
-                // Guardar sesión
-                localStorage.setItem('adminLoggedIn', 'true');
-                
-                // Redirigir a admin
-                window.location.href = 'admin.html';
-            } else {
-                // Mostrar error
-                errorMessage.style.display = 'block';
-                document.getElementById('password').value = '';
-                document.getElementById('password').focus();
-            }
-        }
-
-        // Verificar si ya está logueado
-        if (localStorage.getItem('adminLoggedIn') === 'true') {
-            window.location.href = 'admin.html';
-        }
+            errorBox.style.display = 'none';
+            const button = form.querySelector('button');
+            button.disabled = true;
+            try {
+                const result = await signInWithEmailAndPassword(auth, document.getElementById('email').value.trim(), document.getElementById('password').value);
+                await comprobarAdmin(result.user);
+            } catch (error) {
+                await signOut(auth).catch(() => {});
+                errorBox.textContent = 'No se pudo acceder: ' + error.message;
+                errorBox.style.display = 'block';
+            } finally { button.disabled = false; }
+        });
+        onAuthStateChanged(auth, async (user) => {
+            if (user) { try { await comprobarAdmin(user); } catch (_) { /* permanece en login */ } }
+        });
     </script>
 </body>
 </html>
