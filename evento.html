@@ -351,9 +351,15 @@
                     <p style="color: #ccc; margin-top: 20px;">
                         Cuando hagas la transferencia, mandanos el comprobante por WhatsApp. En cuanto lo confirmemos, te enviamos el acceso a tus fotos.
                     </p>
+                    <p style="margin-top: 15px; color: #d4af37;">Pedido <strong id="transferenciaPedidoId"></strong></p>
+                    <p id="transferenciaEstado" role="status" aria-live="polite" style="color: #ccc; margin-top: 10px;">Estado: pendiente de pago</p>
+                    <button type="button" id="copiarAliasTransferencia" class="btn-pay" style="margin-top: 12px; background: transparent; border: 1px solid #d4af37; color: #d4af37;">📋 Copiar alias</button>
+                    <p style="color: #ccc; margin-top: 14px;">Realizá la transferencia desde tu banco o billetera y volvé a esta página. El pedido queda guardado.</p>
                     <a href="#" id="linkWhatsappTransferencia" target="_blank" rel="noopener" class="btn-pay" style="display: inline-block; text-decoration: none; margin-top: 20px;">
-                        💬 Avisar por WhatsApp
+                        💬 Enviar comprobante por WhatsApp
                     </a>
+                    <button type="button" id="consultarEstadoTransferencia" class="btn-pay" style="margin-top: 12px; background: transparent; border: 1px solid #d4af37; color: #d4af37;">🔎 Consultar estado de mi pedido</button>
+                    <p id="transferenciaEstadoDetalle" role="status" aria-live="polite" style="color: #ccc; margin-top: 12px;"></p>
                 </div>
             </div>
 
@@ -701,6 +707,7 @@
                 } else {
                     mostrarMetodoNormal();
                 }
+                if (pagado !== 'true') recuperarPedidoTransferencia();
             } catch (error) {
                 console.error('Error:', error);
                 showError('No se pudo cargar el álbum. Intentá nuevamente.');
@@ -921,6 +928,101 @@
 
             await procesarTransferencia(precio, null);
         };
+
+        // Seguimiento del pedido: el identificador no concede acceso a fotos ni confirma pagos.
+        let transferenciaActual = null;
+        const clavePedidoTransferencia = () => 'rinascere-transferencia-' + albumId;
+        function mostrarPedidoTransferencia(pedido) {
+            transferenciaActual = pedido;
+            document.getElementById('seccionPacks').style.display = 'none';
+            document.getElementById('seccionNormal').style.display = 'none';
+            document.getElementById('seccionTransferencia').style.display = 'block';
+            document.getElementById('transferenciaMonto').textContent = '
+            const monto = Number(precio);
+            if (!Number.isFinite(monto) || monto <= 0) {
+                alert('El importe de la transferencia no es válido. Contactanos para continuar.');
+                return;
+            }
+
+            const datosComprador = await pedirDatosComprador();
+            if (!datosComprador) return;
+
+            let montoConfirmado = monto;
+            let pedidoId = '';
+            try {
+                const response = await fetch('/.netlify/functions/crear-transferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        albumId: albumData.id,
+                        pack: packNombre,
+                        monto,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
+                montoConfirmado = Number(result.monto);
+                pedidoId = String(result.transferenciaId || '');
+                if (!pedidoId) throw new Error('El servidor no confirmó el número de pedido');
+            } catch (error) {
+                console.error('No se pudo registrar la transferencia:', error);
+                alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
+                return;
+            }
+
+            const pedido = { id: pedidoId, albumId: albumData.id, albumNombre: albumData.nombre, pack: packNombre, monto: montoConfirmado, comprador: datosComprador.nombre };
+            try { localStorage.setItem(clavePedidoTransferencia(), JSON.stringify(pedido)); } catch (_) { /* El pedido ya quedó registrado en el servidor */ }
+            mostrarPedidoTransferencia(pedido);
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + Number(pedido.monto).toLocaleString('es-AR');
+            document.getElementById('transferenciaPedidoId').textContent = pedido.id;
+            document.getElementById('transferenciaEstado').textContent = 'Estado: pendiente de verificación';
+            const mensaje = `Hola! Soy ${pedido.comprador}. Mi pedido es ${pedido.id}. Hice una transferencia por el álbum "${pedido.albumNombre}"${pedido.pack ? ' (Pack ' + pedido.pack + ')' : ''} por ${Number(pedido.monto).toLocaleString('es-AR')}. Adjunto el comprobante para que puedas verificar la acreditación.`;
+            document.getElementById('linkWhatsappTransferencia').href = 'https://wa.me/542966346212?text=' + encodeURIComponent(mensaje);
+        }
+        document.getElementById('copiarAliasTransferencia').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText('verogam.fotos.mp');
+                alert('Alias copiado');
+            } catch (_) {
+                window.prompt('Copiá el alias:', 'verogam.fotos.mp');
+            }
+        });
+        document.getElementById('consultarEstadoTransferencia').addEventListener('click', async () => {
+            if (!transferenciaActual) return;
+            const detalle = document.getElementById('transferenciaEstadoDetalle');
+            detalle.textContent = 'Consultando el estado del pedido…';
+            try {
+                const res = await fetch('/.netlify/functions/estado-transferencia?pedido=' + encodeURIComponent(transferenciaActual.id), {cache: 'no-store'});
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo consultar');
+                const estado = data.estado === 'confirmado' ? 'Pago confirmado' : data.estado === 'rechazado' ? 'Pago rechazado' : 'Pendiente de verificación';
+                document.getElementById('transferenciaEstado').textContent = 'Estado: ' + estado;
+                detalle.textContent = data.estado === 'confirmado' ? 'Tu pago fue confirmado. Si aún no recibiste tus fotos, comunicate por WhatsApp con tu número de pedido.' : 'Tu pedido sigue registrado. La confirmación se realiza después de verificar el dinero recibido.';
+            } catch (error) {
+                detalle.textContent = 'No se pudo consultar el estado ahora. Conservá tu número de pedido y probá más tarde.';
+            }
+        });
+        function recuperarPedidoTransferencia() {
+            try {
+                const pedido = JSON.parse(localStorage.getItem(clavePedidoTransferencia()) || 'null');
+                if (pedido && pedido.id && pedido.albumId === albumId && Number(pedido.monto) > 0) {
+                    mostrarPedidoTransferencia(pedido);
+                    document.getElementById('consultarEstadoTransferencia').click();
+                }
+            } catch (_) { /* Navegador sin almacenamiento local */ }
+        }
 
         async function procesarTransferencia(precio, packNombre) {
             const monto = Number(precio);
