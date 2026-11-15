@@ -325,6 +325,11 @@
             <span>🎁 Pedidos Gratis <span id="contadorPedidosGratis" style="font-size: 0.6em; color: #f59e0b;"></span></span>
             <span id="flechaPedidosGratis" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
+        <div style="text-align: right; margin: 0 0 12px;">
+            <button id="btnReiniciarPedidosGratis" type="button" onclick="reiniciarPedidosGratis()" style="background: #dc2626; color: white; border: none; padding: 9px 14px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                🗑️ Reiniciar Pedidos Gratis
+            </button>
+        </div>
         <div class="table-container" id="pedidosGratisWrapper" style="display: none;">
             <table>
                 <thead>
@@ -599,6 +604,36 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
         }
+
+        // Borrado irreversible: requiere sesión administrativa, dos confirmaciones y validación del servidor.
+        window.reiniciarPedidosGratis = async function() {
+            const boton = document.getElementById('btnReiniciarPedidosGratis');
+            if (boton.disabled) return;
+            if (!confirm('¿Querés eliminar DEFINITIVAMENTE todos los registros de Pedidos Gratis de Firebase, incluidos pendientes y enviados? No se pueden recuperar. No se borrarán álbumes, transferencias, compras ni visitas.')) return;
+            const frase = prompt('Para confirmar el borrado irreversible, escribí exactamente: BORRAR PEDIDOS GRATIS');
+            if (frase !== 'BORRAR PEDIDOS GRATIS') {
+                if (frase !== null) alert('Confirmación incorrecta. No se borró ningún pedido.');
+                return;
+            }
+            boton.disabled = true;
+            boton.textContent = '⏳ Eliminando pedidos gratis…';
+            try {
+                const token = await tokenAdmin();
+                const response = await fetch('/.netlify/functions/borrar-pedidos-gratis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                    body: JSON.stringify({ confirmacion: frase })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) throw new Error(data.error || 'No se pudo completar el borrado');
+                alert('Se eliminaron definitivamente ' + data.eliminados + ' pedidos gratis de Firebase. La tabla se actualizará automáticamente.');
+            } catch (error) {
+                alert('No se completó el reinicio: ' + error.message + '. Revisá el panel antes de intentar nuevamente.');
+            } finally {
+                boton.disabled = false;
+                boton.textContent = '🗑️ Reiniciar Pedidos Gratis';
+            }
+        };
 
         // Lista en vivo de pedidos de acceso gratis (los que dejan sus datos y piden el link por WhatsApp)
         const pedidosGratisCache = {};
