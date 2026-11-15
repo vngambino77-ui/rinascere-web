@@ -284,8 +284,8 @@
                 <div class="info-box">
                     <h3>📦 ¿Cómo funciona?</h3>
                     <p>1. Elegí el pack que mejor se adapte a vos</p>
-                    <p>2. Pagá de forma segura con Mercado Pago</p>
-                    <p>3. Accedé a todas las fotos del álbum en Google Drive</p>
+                    <p>2. Pagá por transferencia a nuestro alias</p>
+                    <p>3. Cuando confirmemos tu pago, te enviamos el acceso a las fotos en Google Drive</p>
                     <p>4. Descargá las fotos que más te gusten (según tu pack)</p>
                 </div>
 
@@ -295,14 +295,14 @@
                 <div class="packs-container" id="packsGrid"></div>
                 
                 <div style="text-align: center;">
-                    <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled>
+                    <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled style="display: none;">
                         💳 Pagar Pack Seleccionado
                     </button>
-                    <button class="btn-pay" id="btnTransferenciaPack" onclick="iniciarTransferencia()" disabled style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                    <button class="btn-pay" id="btnTransferenciaPack" onclick="iniciarTransferencia()" disabled>
                         💵 Pagar por Transferencia
                     </button>
                 </div>
-                <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                <p class="confianza">🔒 Transferencia directa desde cualquier banco o billetera virtual · Te enviamos el acceso apenas confirmamos tu pago</p>
             </div>
 
             <!-- ACCESO DESPUÉS DE PAGAR -->
@@ -347,8 +347,9 @@
                         Alias: <strong style="color: #d4af37;">verogam.fotos.mp</strong>
                     </p>
                     <p style="color: #ccc;">Titular: Verónica Gambino Rinascere Fotografías</p>
+                    <p style="color: #ccc; margin-top: 10px;">Tu número de pedido: <strong id="transferenciaPedido" style="color: #d4af37; font-size: 1.2em;"></strong></p>
                     <p style="color: #ccc; margin-top: 20px;">
-                        Cuando hagas la transferencia, mandanos el comprobante por WhatsApp. En cuanto lo confirmemos, te enviamos el acceso a tus fotos.
+                        Cuando hagas la transferencia, mandanos el comprobante por WhatsApp con tu número de pedido. En cuanto veamos el pago en nuestra cuenta, te enviamos el acceso a tus fotos.
                     </p>
                     <a href="#" id="linkWhatsappTransferencia" target="_blank" rel="noopener" class="btn-pay" style="display: inline-block; text-decoration: none; margin-top: 20px;">
                         💬 Avisar por WhatsApp
@@ -378,16 +379,16 @@
                 <!-- PRECIO FIJO -->
                 <div id="boxPrecioFijo" style="display: none;">
                     <p style="color: #d4af37; font-size: 1.8em; font-weight: bold; text-align: center; margin: 20px 0 5px;" id="precioFijo"></p>
-                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Pagás y descargás al instante, todas las fotos en alta resolución.</p>
+                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Pagás por transferencia y te enviamos el acceso apenas confirmamos tu pago. Todas las fotos en alta resolución.</p>
                     <div style="text-align: center;">
-                        <button class="btn-pay" onclick="pagarPrecioFijo()">
+                        <button class="btn-pay" onclick="pagarPrecioFijo()" style="display: none;">
                             💳 Pagar y Acceder
                         </button>
-                        <button class="btn-pay" onclick="iniciarTransferencia()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                        <button class="btn-pay" onclick="iniciarTransferencia()">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                    <p class="confianza">🔒 Transferencia directa desde cualquier banco o billetera virtual · Te enviamos el acceso apenas confirmamos tu pago</p>
                 </div>
 
                 <!-- CAFECITO -->
@@ -405,14 +406,14 @@
                         >
                     </div>
                     <div style="text-align: center;">
-                        <button class="btn-pay" onclick="pagarCafecito()">
+                        <button class="btn-pay" onclick="pagarCafecito()" style="display: none;">
                             💳 Contribuir
                         </button>
-                        <button class="btn-pay" onclick="iniciarTransferenciaCafecito()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
+                        <button class="btn-pay" onclick="iniciarTransferenciaCafecito()">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago seguro con Mercado Pago · Tarjeta de crédito, débito o dinero en cuenta · También podés pagar por transferencia</p>
+                    <p class="confianza">🔒 Transferencia directa desde cualquier banco o billetera virtual · Te enviamos el acceso apenas confirmamos tu pago</p>
                 </div>
 
                 <!-- ACCESO PAGADO (PRECIO FIJO / CAFECITO) -->
@@ -610,8 +611,10 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
-        let pagado = urlParams.get('pagado');
-        let packPagado = urlParams.get('pack');
+        // Solo transferencias: el acceso se habilita únicamente con un código que se genera al confirmar el pago.
+        // Se ignora ?pagado=true de la dirección, porque cualquiera podría escribirlo a mano.
+        let pagado = null;
+        let packPagado = null;
         const codigoAcceso = urlParams.get('codigo');
 
         if (!albumId) {
@@ -742,12 +745,22 @@
         }
 
         // Pide nombre y contacto antes de pagar. Devuelve null si cancela.
-        function pedirDatosComprador() {
+        function pedirDatosComprador(contactoObligatorio = false) {
             const nombre = prompt('Para identificar tu compra, decinos tu nombre y apellido:');
             if (nombre === null || nombre.trim() === '') {
                 alert('Necesitamos tu nombre para continuar con el pago.');
                 return null;
             }
+
+            if (contactoObligatorio) {
+                const whatsapp = prompt('Dejanos tu número de WhatsApp, con código de área y sin 0 ni 15 (ej: 2966123456), para enviarte el acceso:');
+                if (whatsapp === null || whatsapp.replace(/\D/g, '').length < 10) {
+                    alert('Necesitamos un número de WhatsApp válido (con código de área) para enviarte el acceso a las fotos.');
+                    return null;
+                }
+                return { nombre: nombre.trim(), contacto: whatsapp.trim() };
+            }
+
             const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
             return { nombre: nombre.trim(), contacto: contacto.trim() };
         }
@@ -897,11 +910,16 @@
         };
 
         async function procesarTransferencia(precio, packNombre) {
-            const datosComprador = pedirDatosComprador();
+            const datosComprador = pedirDatosComprador(true);
             if (!datosComprador) return;
 
+            // Guarda el pedido ANTES de mostrar los datos de pago.
+            // Si no se pudo guardar, no seguimos: así nunca hay un pago que no aparezca en tu panel.
+            const refPedido = doc(collection(db, 'transferencias'));
+            const numeroPedido = refPedido.id.slice(0, 6).toUpperCase();
             try {
-                await addDoc(collection(db, 'transferencias'), {
+                await setDoc(refPedido, {
+                    numeroPedido: numeroPedido,
                     albumId: albumData.id,
                     albumNombre: albumData.nombre,
                     pack: packNombre,
@@ -913,6 +931,8 @@
                 });
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
+                alert('No pudimos registrar tu pedido. Probá de nuevo en unos minutos o escribinos por WhatsApp.');
+                return;
             }
 
             document.getElementById('seccionPacks').style.display = 'none';
@@ -920,8 +940,9 @@
             document.getElementById('seccionTransferencia').style.display = 'block';
 
             document.getElementById('transferenciaMonto').textContent = '$' + Number(precio).toLocaleString('es-AR');
+            document.getElementById('transferenciaPedido').textContent = numeroPedido;
 
-            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Pedido N° ${numeroPedido}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
 
