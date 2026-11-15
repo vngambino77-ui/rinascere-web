@@ -10,7 +10,7 @@ exports.handler = async (event) => {
     const snap = await db.collection('transferencias').doc(id).get();
     if (!snap.exists) return send(404, { error: 'Pedido no encontrado' });
     const estado = String(snap.data().estado || 'pendiente');
-    return send(200, { ok: true, estado: ['pendiente', 'confirmado', 'rechazado'].includes(estado) ? estado : 'pendiente' }, { 'Cache-Control': 'no-store' });
+    return send(200, { ok: true, estado: ['pendiente', 'confirmada', 'rechazado'].includes(estado) ? estado : 'pendiente' }, { 'Cache-Control': 'no-store' });
   } catch (error) {
     console.error('estado-transferencia:', error);
     return send(500, { error: 'No se pudo consultar el estado' });
