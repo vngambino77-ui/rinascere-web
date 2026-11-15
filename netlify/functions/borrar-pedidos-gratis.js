@@ -7,6 +7,10 @@ exports.handler = async (event) => {
   } catch (error) {
     return send(403, { error: 'Solo la administradora autorizada puede borrar pedidos gratis' });
   }
+  // Nunca ejecutar un borrado irreversible desde una vista previa de Vercel.
+  if (process.env.VERCEL_ENV === 'preview') {
+    return send(403, { error: 'El borrado definitivo está deshabilitado en entornos de prueba' });
+  }
   const body = readBody(event);
   if (!body || body.confirmacion !== 'BORRAR PEDIDOS GRATIS') {
     return send(400, { error: 'Confirmación de seguridad inválida' });
