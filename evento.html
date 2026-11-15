@@ -570,7 +570,7 @@
             document.getElementById('modalGratis').style.display = 'none';
         });
 
-        document.getElementById('formGratis').addEventListener('submit', (e) => {
+        document.getElementById('formGratis').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nombre = document.getElementById('gratisNombre').value.trim();
             if (!nombre) {
@@ -581,7 +581,10 @@
             const conociste = document.getElementById('gratisConociste').value;
 
             // Guarda el pedido (queda pendiente hasta que vos mandes el link por WhatsApp)
-            addDoc(collection(db, 'eventos'), {
+            const botonGratis = document.querySelector('#formGratis button[type="submit"]');
+            botonGratis.disabled = true;
+            try {
+                await addDoc(collection(db, 'eventos'), {
                 tipo: 'registro_gratis',
                 estado: 'pendiente',
                 nombre: nombre,
@@ -590,9 +593,14 @@
                 albumId: albumData.id,
                 albumNombre: albumData.nombre || '',
                 fecha: serverTimestamp()
-            }).catch((error) => {
+                });
+            } catch (error) {
                 console.error('No se pudo guardar el registro:', error);
-            });
+                alert('No pudimos registrar tus datos. No se abrió WhatsApp. Intentá nuevamente.');
+                botonGratis.disabled = false;
+                return;
+            }
+            botonGratis.disabled = false;
 
             // Muestra el botón para pedirte el link por WhatsApp, con el mensaje ya armado
             const mensaje = `Hola Vero! Soy ${nombre}${instagram ? ' (' + instagram + ')' : ''}. Quiero acceder a las fotos gratis del álbum "${albumData.nombre}". ¿Me pasás el link?`;
@@ -758,15 +766,44 @@
             });
         }
 
-        // Pide nombre y contacto antes de pagar. Devuelve null si cancela.
+        // Registrar datos completos antes de habilitar la transferencia.
         function pedirDatosComprador() {
-            const nombre = prompt('Para identificar tu compra, decinos tu nombre y apellido:');
-            if (nombre === null || nombre.trim() === '') {
-                alert('Necesitamos tu nombre para continuar con el pago.');
-                return null;
-            }
-            const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
-            return { nombre: nombre.trim(), contacto: contacto.trim() };
+            return new Promise((resolve) => {
+                const fondo = document.createElement('div');
+                fondo.className = 'modal-fondo';
+                fondo.style.display = 'flex';
+                fondo.style.zIndex = '99999';
+                fondo.innerHTML = \`
+                    <div class="modal-caja" role="dialog" aria-modal="true" aria-label="Datos de compra">
+                        <h3>Datos para registrar tu pedido</h3>
+                        <form id="formDatosTransferencia">
+                            <label for="compraNombre">Nombre y apellido *</label>
+                            <input id="compraNombre" type="text" maxlength="120" autocomplete="name" required placeholder="Nombre y apellido">
+                            <label for="compraContacto">WhatsApp o correo electrónico *</label>
+                            <input id="compraContacto" type="text" maxlength="160" required placeholder="WhatsApp o correo electrónico">
+                            <div class="modal-botones">
+                                <button type="button" class="modal-cancelar" id="cancelarDatosCompra">Cancelar</button>
+                                <button type="submit" class="modal-ok">Registrar pedido</button>
+                            </div>
+                        </form>
+                    </div>\`;
+                document.body.appendChild(fondo);
+                const cerrar = (datos) => { fondo.remove(); resolve(datos); };
+                fondo.querySelector('#cancelarDatosCompra').addEventListener('click', () => cerrar(null));
+                fondo.querySelector('#formDatosTransferencia').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const nombre = fondo.querySelector('#compraNombre').value.trim();
+                    const contacto = fondo.querySelector('#compraContacto').value.trim();
+                    const emailValido = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contacto);
+                    const telefonoValido = /^[+()\\d\\s-]{8,25}$/.test(contacto) && contacto.replace(/\\D/g, '').length >= 8;
+                    if (!nombre.includes(' ') || !(emailValido || telefonoValido)) {
+                        alert('Ingresá nombre y apellido y un WhatsApp o correo válido.');
+                        return;
+                    }
+                    cerrar({ nombre, contacto });
+                });
+                fondo.querySelector('#compraNombre').focus();
+            });
         }
 
         window.pagarPack = async function() {
@@ -892,10 +929,11 @@
                 return;
             }
 
-            const datosComprador = pedirDatosComprador();
+            const datosComprador = await pedirDatosComprador();
             if (!datosComprador) return;
 
             let montoConfirmado = monto;
+            let pedidoId = '';
             try {
                 const response = await fetch('/.netlify/functions/crear-transferencia', {
                     method: 'POST',
@@ -911,6 +949,8 @@
                 const result = await response.json();
                 if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
                 montoConfirmado = Number(result.monto);
+                pedidoId = String(result.transferenciaId || '');
+                if (!pedidoId) throw new Error('El servidor no confirmó el número de pedido');
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
                 alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
@@ -922,7 +962,7 @@
             document.getElementById('seccionTransferencia').style.display = 'block';
 
             document.getElementById('transferenciaMonto').textContent = '$' + montoConfirmado.toLocaleString('es-AR');
-            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
 
