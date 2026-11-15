@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <style>body{visibility:hidden}</style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Ph. Rinascere</title>
@@ -447,7 +448,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -493,7 +494,24 @@
             }
         };
 
+        async function verificarAcceso() {
+            await auth.authStateReady();
+            const user = auth.currentUser;
+            if (!user) { window.location.replace('login.html'); return false; }
+            try {
+                const token = await user.getIdToken();
+                const respuesta = await fetch('/.netlify/functions/verificar-admin', { headers: { Authorization: 'Bearer ' + token } });
+                if (!respuesta.ok) throw new Error('Acceso no autorizado');
+                document.body.style.visibility = 'visible';
+                return true;
+            } catch (error) {
+                alert('No se pudo validar el acceso administrativo. Revisá la configuración Firebase en Netlify.');
+                window.location.replace('login.html');
+                return false;
+            }
+        }
         document.addEventListener('DOMContentLoaded', async () => {
+            if (!await verificarAcceso()) return;
             await cargarEstadisticas();
             await cargarAlbumes();
             escucharContadores();
@@ -1443,8 +1461,10 @@
         };
 
         window.cerrarSesion = function() {
-            localStorage.removeItem('adminLoggedIn');
-            window.location.href = 'login.html';
+            signOut(auth).finally(() => {
+                localStorage.removeItem('adminLoggedIn');
+                window.location.href = 'login.html';
+            });
         };
 
         window.nuevoAlbum = function() {
