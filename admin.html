@@ -713,9 +713,9 @@
                     const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
-                        <td>${t.albumNombre || t.albumId || '—'}</td>
-                        <td>${t.pack || '—'}</td>
+                        <td>${escaparHtml(t.comprador) || '—'}${t.contacto ? ' (' + escaparHtml(t.contacto) + ')' : ''}</td>
+                        <td>${escaparHtml(t.albumNombre || t.albumId) || '—'}</td>
+                        <td>${escaparHtml(t.pack) || '—'}</td>
                         <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
                         <td>${fechaTexto}</td>
                         <td>
