@@ -12,7 +12,9 @@ exports.handler = async (event) => {
   const limpiarTexto = (value, max) => String(value || '').replace(/[<>]/g, '').replace(/[\x00-\x1F]/g, '').trim().slice(0, max);
   const compradorSeguro = limpiarTexto(comprador, 120);
   const contactoSeguro = limpiarTexto(contacto, 160);
-  if (!albumId || !/^[A-Za-z0-9_-]{5,150}$/.test(albumId) || !compradorSeguro) {
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactoSeguro);
+  const telefonoValido = /^[+()\d\s-]{8,25}$/.test(contactoSeguro) && contactoSeguro.replace(/\D/g, '').length >= 8;
+  if (!albumId || !/^[A-Za-z0-9_-]{5,150}$/.test(albumId) || !compradorSeguro.includes(' ') || !(emailValido || telefonoValido)) {
     return send(400, { error: 'Faltan datos válidos del comprador o del álbum' });
   }
 
