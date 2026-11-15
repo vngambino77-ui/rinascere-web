@@ -345,14 +345,14 @@
         </div>
 
         <h2 class="section-title" onclick="toggleTransferenciasPendientes()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
-            <span>💵 Transferencias Pendientes</span>
+            <span>💵 Transferencias Pendientes <span id="contadorTransferenciasPendientes" style="font-size:.7em;color:#f59e0b"></span></span>
             <span id="flechaTransferenciasPendientes" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
         <div class="table-container" id="transferenciasPendientesWrapper" style="display: none;">
             <table>
                 <thead>
                     <tr>
-                        <th>Cliente</th>
+                        <th>Pedido / Cliente</th>
                         <th>Álbum</th>
                         <th>Pack</th>
                         <th>Monto</th>
@@ -700,6 +700,8 @@
             const q = query(collection(db, 'transferencias'), where('estado', '==', 'pendiente'));
             onSnapshot(q, (snapshot) => {
                 const tbody = document.getElementById('transferenciasTableBody');
+                const contador = document.getElementById('contadorTransferenciasPendientes');
+                if (contador) contador.textContent = snapshot.empty ? '' : '(' + snapshot.size + ' sin verificar)';
                 if (snapshot.empty) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay transferencias pendientes</td></tr>';
                     return;
@@ -713,9 +715,9 @@
                     const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
-                        <td>${t.albumNombre || t.albumId || '—'}</td>
-                        <td>${t.pack || '—'}</td>
+                        <td><small style="color:#d4af37">${escaparHtml(t.id)}</small><br>${escaparHtml(t.comprador || '—')}${t.contacto ? ' (' + escaparHtml(t.contacto) + ')' : ''}</td>
+                        <td>${escaparHtml(t.albumNombre || t.albumId || '—')}</td>
+                        <td>${escaparHtml(t.pack || '—')}</td>
                         <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
                         <td>${fechaTexto}</td>
                         <td>
