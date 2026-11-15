@@ -344,6 +344,7 @@
                 <div class="info-box" style="text-align: center;">
                     <h3>💵 Pagar por Transferencia</h3>
                     <p style="margin: 15px 0;">Transferí <strong id="transferenciaMonto" style="color: #d4af37; font-size: 1.3em;"></strong> a:</p>
+                    <p style="color:#fff; margin:10px 0;">Pedido: <strong id="transferenciaPedidoId" style="color:#d4af37"></strong></p>
                     <p style="font-size: 1.2em; color: #fff; margin: 10px 0;">
                         Alias: <strong style="color: #d4af37;">verogam.fotos.mp</strong>
                     </p>
@@ -430,6 +431,22 @@
         </div>
     </div>
 
+    <div class="modal-fondo" id="modalCompraTransferencia" role="dialog" aria-modal="true" aria-labelledby="tituloCompraTransferencia">
+      <div class="modal-caja">
+        <h3 id="tituloCompraTransferencia">Datos para registrar tu pedido</h3>
+        <p>Antes de transferir, registramos tu pedido para poder identificarlo y enviarte las fotos.</p>
+        <form id="formCompraTransferencia">
+          <label for="compraNombre">Nombre y apellido *</label>
+          <input id="compraNombre" name="nombre" autocomplete="name" maxlength="120" required>
+          <label for="compraContacto">WhatsApp o correo electrónico *</label>
+          <input id="compraContacto" name="contacto" maxlength="160" required>
+          <div class="modal-botones">
+            <button type="button" class="modal-cancelar" id="cancelarCompraTransferencia">Cancelar</button>
+            <button type="submit" class="modal-ok">Registrar pedido</button>
+          </div>
+        </form>
+      </div>
+    </div>
     <!-- FORMULARIO ANTES DE LA DESCARGA GRATIS -->
     <div class="modal-fondo" id="modalGratis">
         <div class="modal-caja">
@@ -758,15 +775,31 @@
             });
         }
 
-        // Pide nombre y contacto antes de pagar. Devuelve null si cancela.
+        // El formulario se completa antes de registrar el pedido; no se usan prompts.
         function pedirDatosComprador() {
-            const nombre = prompt('Para identificar tu compra, decinos tu nombre y apellido:');
-            if (nombre === null || nombre.trim() === '') {
-                alert('Necesitamos tu nombre para continuar con el pago.');
-                return null;
-            }
-            const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
-            return { nombre: nombre.trim(), contacto: contacto.trim() };
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modalCompraTransferencia');
+                const form = document.getElementById('formCompraTransferencia');
+                const cancelar = document.getElementById('cancelarCompraTransferencia');
+                modal.style.display = 'flex';
+                const cerrar = (datos) => {
+                    modal.style.display = 'none';
+                    form.removeEventListener('submit', enviar);
+                    cancelar.removeEventListener('click', cancelarFormulario);
+                    resolve(datos);
+                };
+                const cancelarFormulario = () => cerrar(null);
+                const enviar = (event) => {
+                    event.preventDefault();
+                    if (!form.reportValidity()) return;
+                    const nombre = document.getElementById('compraNombre').value.trim();
+                    const contacto = document.getElementById('compraContacto').value.trim();
+                    if (!nombre || !contacto) return;
+                    cerrar({ nombre, contacto });
+                };
+                form.addEventListener('submit', enviar);
+                cancelar.addEventListener('click', cancelarFormulario);
+            });
         }
 
         window.pagarPack = async function() {
@@ -892,10 +925,11 @@
                 return;
             }
 
-            const datosComprador = pedirDatosComprador();
+            const datosComprador = await pedirDatosComprador();
             if (!datosComprador) return;
 
             let montoConfirmado = monto;
+            let pedidoId = '';
             try {
                 const response = await fetch('/.netlify/functions/crear-transferencia', {
                     method: 'POST',
@@ -911,6 +945,8 @@
                 const result = await response.json();
                 if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
                 montoConfirmado = Number(result.monto);
+                pedidoId = String(result.transferenciaId || '');
+                if (!pedidoId) throw new Error('No se recibió el identificador del pedido');
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
                 alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
@@ -921,7 +957,21 @@
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '$' + montoConfirmado.toLocaleString('es-AR');
+            document.getElementById('transferenciaMonto').textContent = '
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
+            document.getElementById('transferenciaPedidoId').textContent = pedidoId;
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
