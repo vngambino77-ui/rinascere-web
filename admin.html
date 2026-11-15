@@ -447,7 +447,7 @@
     <script type="module">
         // Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -471,13 +471,10 @@
             boton.disabled = true;
             boton.textContent = 'Eliminando pedidos…';
             try {
-                let usuario = auth.currentUser;
+                const usuario = auth.currentUser;
                 if (!usuario) {
-                    const email = prompt('Correo de tu cuenta administradora de Firebase:');
-                    if (!email) return;
-                    const password = prompt('Contraseña de Firebase Authentication:');
-                    if (!password) return;
-                    usuario = (await signInWithEmailAndPassword(auth, email, password)).user;
+                    alert('La sesión actual del panel no tiene una identidad Firebase verificada. No se puede borrar el historial de forma segura. No se eliminó ningún pedido.');
+                    return;
                 }
                 const token = await usuario.getIdToken(true);
                 const respuesta = await fetch('/.netlify/functions/borrar-pedidos-gratis', {
