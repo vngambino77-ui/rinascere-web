@@ -12,7 +12,7 @@ exports.handler = async (event) => {
   const limpiarTexto = (value, max) => String(value || '').replace(/[<>]/g, '').replace(/[\x00-\x1F]/g, '').trim().slice(0, max);
   const compradorSeguro = limpiarTexto(comprador, 120);
   const contactoSeguro = limpiarTexto(contacto, 160);
-  if (!albumId || !/^[A-Za-z0-9_-]{5,150}$/.test(albumId) || !compradorSeguro) {
+  if (!albumId || !/^[A-Za-z0-9_-]{5,150}$/.test(albumId) || !compradorSeguro || !contactoSeguro) {
     return send(400, { error: 'Faltan datos válidos del comprador o del álbum' });
   }
 
@@ -75,7 +75,7 @@ exports.handler = async (event) => {
       fecha: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return send(201, { ok: true, transferenciaId: ref.id, monto, alias: 'verogam.fotos.mp' });
+    return send(201, { ok: true, transferenciaId: ref.id, estado: 'pendiente', monto, alias: 'verogam.fotos.mp' });
   } catch (error) {
     console.error('crear-transferencia:', error);
     return send(500, { error: 'No se pudo registrar la solicitud de transferencia' });
