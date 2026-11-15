@@ -1007,9 +1007,9 @@
                 const res = await fetch('/.netlify/functions/estado-transferencia?pedido=' + encodeURIComponent(transferenciaActual.id), {cache: 'no-store'});
                 const data = await res.json();
                 if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo consultar');
-                const estado = data.estado === 'confirmado' ? 'Pago confirmado' : data.estado === 'rechazado' ? 'Pago rechazado' : 'Pendiente de verificación';
+                const estado = data.estado === 'confirmada' ? 'Pago confirmado' : data.estado === 'rechazado' ? 'Pago rechazado' : 'Pendiente de verificación';
                 document.getElementById('transferenciaEstado').textContent = 'Estado: ' + estado;
-                detalle.textContent = data.estado === 'confirmado' ? 'Tu pago fue confirmado. Si aún no recibiste tus fotos, comunicate por WhatsApp con tu número de pedido.' : 'Tu pedido sigue registrado. La confirmación se realiza después de verificar el dinero recibido.';
+                detalle.textContent = data.estado === 'confirmada' ? 'Tu pago fue confirmado. Si aún no recibiste tus fotos, comunicate por WhatsApp con tu número de pedido.' : 'Tu pedido sigue registrado. La confirmación se realiza después de verificar el dinero recibido.';
             } catch (error) {
                 detalle.textContent = 'No se pudo consultar el estado ahora. Conservá tu número de pedido y probá más tarde.';
             }
