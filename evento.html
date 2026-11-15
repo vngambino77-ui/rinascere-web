@@ -794,8 +794,8 @@
                     e.preventDefault();
                     const nombre = fondo.querySelector('#compraNombre').value.trim();
                     const contacto = fondo.querySelector('#compraContacto').value.trim();
-                    const emailValido = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contacto);
-                    const telefonoValido = /^[+()\\d\\s-]{8,25}$/.test(contacto) && contacto.replace(/\\D/g, '').length >= 8;
+                    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto);
+                    const telefonoValido = /^[+()\d\s-]{8,25}$/.test(contacto) && contacto.replace(/\D/g, '').length >= 8;
                     if (!nombre.includes(' ') || !(emailValido || telefonoValido)) {
                         alert('Ingresá nombre y apellido y un WhatsApp o correo válido.');
                         return;
