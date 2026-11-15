@@ -325,6 +325,9 @@
             <span>🎁 Pedidos Gratis <span id="contadorPedidosGratis" style="font-size: 0.6em; color: #f59e0b;"></span></span>
             <span id="flechaPedidosGratis" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
+        <div style="text-align:right;margin:0 0 12px;">
+            <button id="btnReiniciarPedidosGratis" class="btn btn-eliminar" onclick="reiniciarPedidosGratis()">🗑️ Reiniciar Pedidos Gratis</button>
+        </div>
         <div class="table-container" id="pedidosGratisWrapper" style="display: none;">
             <table>
                 <thead>
@@ -542,6 +545,29 @@
             const abierto = wrapper.style.display !== 'none';
             wrapper.style.display = abierto ? 'none' : 'block';
             flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
+
+        window.reiniciarPedidosGratis = async function() {
+            const boton = document.getElementById('btnReiniciarPedidosGratis');
+            if (!confirm('¿Eliminar definitivamente TODOS los pedidos gratis? Los álbumes, compras y transferencias no se modificarán.')) return;
+            boton.disabled = true;
+            boton.textContent = 'Eliminando pedidos gratis…';
+            try {
+                const token = await tokenAdmin();
+                const response = await fetch('/.netlify/functions/reiniciar-pedidos-gratis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo reiniciar');
+                Object.keys(pedidosGratisCache).forEach(id => delete pedidosGratisCache[id]);
+                alert(`Se eliminaron ${result.eliminados} pedidos gratis. La tabla se actualizará automáticamente.`);
+            } catch (error) {
+                alert('No se pudieron reiniciar los pedidos gratis: ' + error.message);
+            } finally {
+                boton.disabled = false;
+                boton.textContent = '🗑️ Reiniciar Pedidos Gratis';
+            }
         };
 
         window.togglePedidosGratis = function() {
