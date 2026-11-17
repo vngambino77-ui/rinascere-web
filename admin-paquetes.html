@@ -1,0 +1,61 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paquetes y precios | Administración Rinascere</title><script src="/firebase-config.js"></script>
+<style>*{box-sizing:border-box}body{visibility:hidden;background:#121212;color:#f7f2e9;font:16px/1.5 system-ui;margin:0}main{max-width:1080px;margin:auto;padding:24px}a{color:#d4af37}.box{border:1px solid #555;background:#242424;border-radius:14px;padding:20px;margin:18px 0}h1,h2{color:#d4af37}form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block}input,select,textarea{width:100%;display:block;background:#111;color:#fff;border:1px solid #777;border-radius:7px;padding:10px;font:inherit}textarea{min-height:90px}.wide{grid-column:1/-1}button{border:0;border-radius:8px;background:#d4af37;color:#111;font-weight:700;padding:10px 16px;cursor:pointer}button.secondary{background:#444;color:white}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.item{padding:12px 0;border-bottom:1px solid #555}.muted{color:#bdbdbd}@media(max-width:600px){form{grid-template-columns:1fr}.wide{grid-column:auto}}</style></head>
+<body><main><div class="row"><a href="admin.html">← Volver al panel</a><a href="contrataciones.html" target="_blank" rel="noopener">Ver página pública</a></div>
+<h1>Paquetes y precios de contrataciones</h1><p class="muted">Publicá y modificá los precios sin editar código. Los borradores no aparecen en la página pública.</p>
+<div class="box"><h2 id="formTitle">Nuevo paquete</h2><form id="formPaquete">
+<input type="hidden" id="id"><label>Título *<input id="titulo" required maxlength="100" placeholder="Ej.: Cobertura de show"></label>
+<label>Servicio *<select id="categoria" required><option>Espectáculos</option><option>Eventos</option><option>Deporte</option><option>Retratos personalizados</option></select></label>
+<label>Precio en pesos argentinos *<input id="precio" type="number" min="1" max="100000000" step="1" required placeholder="Importe en ARS"></label>
+<label>Orden de publicación<input id="orden" type="number" min="0" max="9999" value="0"></label>
+<label class="wide">Descripción *<textarea id="descripcion" required maxlength="600"></textarea></label>
+<label class="wide">Qué incluye<textarea id="incluye" maxlength="600"></textarea></label>
+<label class="wide"><input id="publicado" type="checkbox" style="display:inline;width:auto"> Publicar en la web</label>
+<div class="wide row"><button id="guardar" type="submit">Guardar paquete</button><button class="secondary" type="button" id="limpiar">Nuevo / limpiar</button></div></form></div>
+<p id="estado" role="status"></p><div class="box"><h2>Paquetes guardados</h2><div id="lista">Cargando…</div></div>
+</main>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+const config=window.RINASCERE_FIREBASE_CONFIG,uid=window.RINASCERE_ADMIN_UID;
+if(!config||!uid){document.body.style.visibility='visible';document.getElementById('estado').textContent='Falta configuración Firebase en Netlify.';throw Error('Firebase no configurado')}
+const auth=getAuth(initializeApp(config)),form=document.getElementById('formPaquete'),estado=document.getElementById('estado');
+let paquetes=[];
+const request=async(method,body=null,query='')=>{
+ const user=auth.currentUser;if(!user||user.uid!==uid)throw Error('Sesión no autorizada');
+ const headers={Authorization:'Bearer '+await user.getIdToken(),Accept:'application/json'};
+ if(body)headers['Content-Type']='application/json';
+ const response=await fetch('/.netlify/functions/paquetes-servicios'+query,{method,headers,body:body?JSON.stringify(body):undefined});
+ const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Error de servidor');return result;
+};
+const nuevo=()=>{form.reset();document.getElementById('id').value='';document.getElementById('formTitle').textContent='Nuevo paquete'};
+document.getElementById('limpiar').onclick=nuevo;
+const cargar=async()=>{
+ const data=await request('GET',null,'?admin=1');paquetes=data.paquetes;const lista=document.getElementById('lista');lista.replaceChildren();
+ if(!paquetes.length){lista.textContent='Todavía no hay paquetes. Creá el primero arriba.';return}
+ for(const p of paquetes){
+  const item=document.createElement('div');item.className='item';
+  const title=document.createElement('strong');title.textContent=p.titulo+' · $'+Number(p.precio).toLocaleString('es-AR')+' · '+(p.publicado?'Publicado':'Borrador');
+  const controls=document.createElement('div');controls.className='row';
+  const editar=document.createElement('button');editar.textContent='Editar';editar.onclick=()=>{
+   for(const key of ['id','titulo','categoria','descripcion','incluye','precio','orden'])document.getElementById(key).value=p[key]??'';
+   document.getElementById('publicado').checked=p.publicado;document.getElementById('formTitle').textContent='Editar '+p.titulo;window.scrollTo({top:0,behavior:'smooth'});
+  };
+  const eliminar=document.createElement('button');eliminar.className='secondary';eliminar.textContent='Eliminar';eliminar.onclick=async()=>{
+   if(!confirm('¿Eliminar el paquete '+p.titulo+'?'))return;
+   try{await request('DELETE',{id:p.id});estado.textContent='Paquete eliminado';await cargar()}catch(e){estado.textContent=e.message}
+  };
+  controls.append(editar,eliminar);item.append(title,controls);lista.appendChild(item);
+ }
+};
+form.onsubmit=async e=>{
+ e.preventDefault();const boton=document.getElementById('guardar');boton.disabled=true;estado.textContent='Guardando…';
+ try{const body={};for(const key of ['id','titulo','categoria','descripcion','incluye','precio','orden'])body[key]=document.getElementById(key).value;body.publicado=document.getElementById('publicado').checked;
+ await request('POST',body);estado.textContent='Paquete guardado correctamente';nuevo();await cargar();
+ }catch(e){estado.textContent=e.message}finally{boton.disabled=false}
+};
+onAuthStateChanged(auth,async user=>{
+ if(!user||user.uid!==uid){if(user)await signOut(auth);location.replace('login.html');return}
+ try{await request('GET',null,'?admin=1');document.body.style.visibility='visible';await cargar()}
+ catch(e){document.body.style.visibility='visible';estado.textContent='No se pudo validar el acceso: '+e.message}
+});
+</script></body></html>
