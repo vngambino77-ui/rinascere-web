@@ -22,6 +22,8 @@ exports.handler=async event=>{
  if(!album.exists)album=await db.collection('albumes').doc(albumId).get();
  if(!album.exists)return send(404,{error:'Álbum no encontrado'});
  const data=album.data();
+ // No aceptar pagos de fotos individuales hasta disponer de entrega segura por archivo.
+ if(data.entregaIndividualActiva!==true)return send(409,{error:'La compra individual aún no está habilitada para este álbum. Podés comprar los packs disponibles o solicitar información.'});
  if(!data.driveLink)return send(409,{error:'Este álbum no tiene entrega configurada'});
  const previews=Array.isArray(data.fotosPreview)?data.fotosPreview:[];
  const fotos=body.fotos;
