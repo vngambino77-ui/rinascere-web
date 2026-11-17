@@ -346,7 +346,7 @@
                     <p style="margin: 15px 0;">Transferí <strong id="transferenciaMonto" style="color: #d4af37; font-size: 1.3em;"></strong> a:</p>
                     <p style="color:#fff; margin:10px 0;">Pedido: <strong id="transferenciaPedidoId" style="color:#d4af37"></strong></p>
                     <p style="font-size: 1.2em; color: #fff; margin: 10px 0;">
-                        Alias: <strong style="color: #d4af37;">verogfotos.nx.arg</strong>
+                        Alias: <strong id="aliasTransferencia" style="color: #d4af37;">verogfotos.nx.arg</strong>
                     </p>
                     <p style="color: #ccc;">Titular: Verónica Gambino Rinascere Fotografías</p>
                     <p style="color: #ccc; margin-top: 20px;">
@@ -947,6 +947,9 @@
                 montoConfirmado = Number(result.monto);
                 pedidoId = String(result.transferenciaId || '');
                 if (!pedidoId) throw new Error('No se recibió el identificador del pedido');
+                const aliasRecibido = String(result.alias || '').trim();
+                if (aliasRecibido !== 'verogfotos.nx.arg') throw new Error('Los datos bancarios no coinciden. No transfieras todavía; contactanos para verificar el alias.');
+                document.getElementById('aliasTransferencia').textContent = aliasRecibido;
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
                 alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
@@ -957,7 +960,34 @@
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '
+            document.getElementById('transferenciaMonto').textContent = ' `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
+            document.getElementById('transferenciaPedidoId').textContent = pedidoId;
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+ + montoConfirmado.toLocaleString('es-AR');
+            document.getElementById('transferenciaPedidoId').textContent = pedidoId;
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
