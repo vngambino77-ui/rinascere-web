@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contrataciones y presupuestos | Rinascere Fotografías</title>
+<meta name="description" content="Conocé los servicios fotográficos de Rinascere y solicitá una cotización personalizada.">
+<style>
+:root{color-scheme:dark;--gold:#d4af37;--bg:#111;--panel:#202020}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#f5f0e8;font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+header,main,footer{max-width:1050px;margin:auto;padding:22px}header{display:flex;align-items:center;justify-content:space-between;gap:12px}a{color:var(--gold)}
+.logo{font-weight:800;letter-spacing:.05em;text-decoration:none;font-size:1.2rem}
+.hero{padding:48px 0 22px}h1{font-size:clamp(2rem,5vw,3.8rem);line-height:1.12;margin:0 0 16px}h2{margin-top:36px}
+.muted{color:#bdb8ae}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.card,form{background:var(--panel);border:1px solid #444;border-radius:16px;padding:22px}.card h3{color:var(--gold);margin:0 0 8px}.card p{margin:0}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}label{display:block;font-weight:600;font-size:.92rem}
+input,select,textarea{display:block;width:100%;padding:12px;margin-top:6px;background:#111;border:1px solid #686868;border-radius:8px;color:white;font:inherit}
+textarea{min-height:110px;resize:vertical}.wide{grid-column:1/-1}button{background:var(--gold);border:0;border-radius:9px;color:#151515;font-weight:800;padding:14px 20px;cursor:pointer;font-size:1rem}button:disabled{opacity:.55;cursor:wait}
+#estado{min-height:1.5em}.notice{border-left:3px solid var(--gold);padding:10px 16px;background:#29251b}
+@media(max-width:650px){form{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style></head><body>
+<header><a class="logo" href="index.html">RINASCERE FOTOGRAFÍAS</a><a href="index.html#albumes">Ver galerías</a></header>
+<main>
+<section class="hero"><p style="color:var(--gold);font-weight:700">SERVICIOS FOTOGRÁFICOS</p><h1>Contratá una sesión o pedí tu presupuesto.</h1>
+<p class="muted">Espectáculos, eventos, deporte y retratos personalizados. Contame qué necesitás y preparo una propuesta a medida.</p></section>
+<section aria-labelledby="servicios"><h2 id="servicios">Servicios y paquetes</h2><div class="grid">
+<article class="card"><h3>Espectáculos</h3><p>Fotografía de shows, bandas, danza y presentaciones. Cobertura según duración y cantidad de artistas.</p></article>
+<article class="card"><h3>Eventos</h3><p>Registro de celebraciones, encuentros e instituciones. Opciones por horas de cobertura.</p></article>
+<article class="card"><h3>Deporte</h3><p>Competencias, carreras y equipos. Fotografías para participantes y organizadores.</p></article>
+<article class="card"><h3>Retratos personalizados</h3><p>Sesiones individuales, parejas, familias y mascotas. Propuestas según locación y entrega.</p></article>
+</div><p class="notice">Los precios y paquetes se publicarán cuando los configures. Por ahora, solicitá una cotización sin compromiso: no mostramos importes inventados.</p></section>
+<section aria-labelledby="cotizar"><h2 id="cotizar">Solicitar cotización</h2>
+<form id="formCotizacion">
+<div><label for="nombre">Nombre y apellido *</label><input id="nombre" name="nombre" required maxlength="120" autocomplete="name"></div>
+<div><label for="contacto">WhatsApp o correo *</label><input id="contacto" name="contacto" required maxlength="160"></div>
+<div><label for="servicio">Tipo de servicio *</label><select id="servicio" name="servicio" required><option value="">Seleccionar</option><option>Espectáculos</option><option>Eventos</option><option>Deporte</option><option>Retratos personalizados</option><option>Otro</option></select></div>
+<div><label for="fecha">Fecha estimada</label><input type="date" id="fecha" name="fecha"></div>
+<div><label for="lugar">Ciudad o lugar</label><input id="lugar" name="lugar" maxlength="160" placeholder="Ej.: Río Gallegos"></div>
+<div><label for="duracion">Duración estimada</label><select id="duracion" name="duracion"><option value="">A definir</option><option>Hasta 1 hora</option><option>2 a 3 horas</option><option>4 a 6 horas</option><option>Jornada completa</option><option>Otra</option></select></div>
+<div class="wide"><label for="detalles">Contame qué necesitás *</label><textarea id="detalles" name="detalles" required maxlength="1500" placeholder="Cantidad de personas, tipo de fotos, entrega esperada..."></textarea></div>
+<div class="wide"><button id="enviar" type="submit">Enviar solicitud</button><p id="estado" role="status" aria-live="polite"></p><p class="muted">La solicitud se registra en Rinascere para que puedas responderla. Enviar no implica una contratación ni un pago.</p></div>
+</form></section>
+</main><footer><p class="muted">© Rinascere Fotografías · <a href="index.html">Volver al inicio</a></p></footer>
+<script>
+document.getElementById('formCotizacion').addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.currentTarget,button=document.getElementById('enviar'),status=document.getElementById('estado');
+ button.disabled=true;status.textContent='Enviando solicitud…';
+ try{const body=Object.fromEntries(new FormData(form).entries());
+ const response=await fetch('/.netlify/functions/solicitar-cotizacion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'No se pudo registrar la solicitud');
+ status.textContent='¡Solicitud registrada! Referencia: '+data.solicitudId+'. Te responderemos por el contacto indicado.';form.reset();
+ }catch(err){status.textContent='No se pudo enviar: '+err.message}finally{button.disabled=false}
+});
+</script></body></html>
