@@ -4,8 +4,8 @@ const path = require('path');
 const rawConfig = process.env.FIREBASE_WEB_CONFIG_JSON;
 const adminUid = process.env.FIREBASE_ADMIN_UID;
 
-if (!rawConfig) throw new Error('Falta FIREBASE_WEB_CONFIG_JSON en el contexto de Netlify');
-if (!adminUid) throw new Error('Falta FIREBASE_ADMIN_UID en el contexto de Netlify');
+if (!rawConfig) throw new Error('Falta FIREBASE_WEB_CONFIG_JSON en el entorno de despliegue');
+if (!adminUid) throw new Error('Falta FIREBASE_ADMIN_UID en el entorno de despliegue');
 
 let config;
 try {
@@ -21,7 +21,7 @@ for (const key of ['apiKey', 'authDomain', 'projectId', 'appId']) {
 }
 
 const output = [
-  '/* Generated during Netlify build. Do not commit project credentials here. */',
+  '/* Generated during deployment build. Do not commit project credentials here. */',
   `window.RINASCERE_FIREBASE_CONFIG = Object.freeze(${JSON.stringify(config)});`,
   `window.RINASCERE_ADMIN_UID = ${JSON.stringify(adminUid)};`,
   ''
