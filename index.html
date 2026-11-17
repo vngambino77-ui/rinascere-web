@@ -579,7 +579,11 @@ async function cargarAlbumes() {
         console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
       }
 
-      const lista = Array.from(porId.values()).sort((a,b) => {\n        const oa = Number.isFinite(Number(a.ordenPublicacion)) ? Number(a.ordenPublicacion) : 9999;\n        const ob = Number.isFinite(Number(b.ordenPublicacion)) ? Number(b.ordenPublicacion) : 9999;\n        return oa-ob || String(b.fecha||'').localeCompare(String(a.fecha||''));\n      });
+      const lista = Array.from(porId.values()).sort((a,b) => {
+        const oa = Number.isFinite(Number(a.ordenPublicacion)) ? Number(a.ordenPublicacion) : 9999;
+        const ob = Number.isFinite(Number(b.ordenPublicacion)) ? Number(b.ordenPublicacion) : 9999;
+        return oa-ob || String(b.fecha||'').localeCompare(String(a.fecha||''));
+      });
       console.log('Álbumes públicos cargados desde Firebase:', lista.length);
       renderAlbumes(lista);
     } catch(e) {
