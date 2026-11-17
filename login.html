@@ -186,11 +186,27 @@
         const errorMessage = document.getElementById('errorMessage');
         const submitButton = form.querySelector('button[type="submit"]');
 
+        // El UID del navegador no basta: la función de Netlify valida la sesión.
+        async function comprobarAdmin(user) {
+            if (!user || user.uid !== ADMIN_UID) {
+                throw new Error('Esta cuenta no está autorizada para administrar el sitio.');
+            }
+            const token = await user.getIdToken();
+            const response = await fetch('/.netlify/functions/verificar-admin', {
+                headers: { Authorization: 'Bearer ' + token },
+                cache: 'no-store'
+            });
+            if (!response.ok) throw new Error('No se pudo verificar el acceso administrativo en Netlify.');
+            window.location.replace('admin.html');
+        }
         onAuthStateChanged(auth, async (user) => {
-            if (user && user.uid === ADMIN_UID) {
-                window.location.replace('admin.html');
-            } else if (user) {
-                await signOut(auth);
+            if (!user) return;
+            try {
+                await comprobarAdmin(user);
+            } catch (error) {
+                await signOut(auth).catch(() => {});
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
             }
         });
 
@@ -205,15 +221,11 @@
                 const password = document.getElementById('password').value;
                 const credential = await signInWithEmailAndPassword(auth, email, password);
 
-                if (credential.user.uid !== ADMIN_UID) {
-                    await signOut(auth);
-                    throw new Error('Esta cuenta no está autorizada para administrar el sitio.');
-                }
-
-                window.location.replace('admin.html');
+                await comprobarAdmin(credential.user);
             } catch (error) {
+                await signOut(auth).catch(() => {});
                 console.error('Error de autenticación:', error);
-                errorMessage.textContent = error.message.includes('no está autorizada')
+                errorMessage.textContent = (error.message.includes('no está autorizada') || error.message.includes('Netlify'))
                     ? error.message
                     : 'No se pudo iniciar sesión. Revisá el correo y la contraseña.';
                 errorMessage.style.display = 'block';
