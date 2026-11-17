@@ -424,7 +424,7 @@
         </div>
 
         <!-- Lista de álbumes -->
-        <h2 class="section-title">Álbumes</h2>
+        <h2 class="section-title">Álbumes</h2><p style="color:#d4af37">📁 Publicación: cada álbum puede estar visible u oculto. Orden 1 aparece primero; los álbumes sin orden van al final. El diseño público se conserva.</p>
         <div class="table-container">
             <table>
                 <thead>
@@ -1006,6 +1006,7 @@
                             <span style="color: #f59e0b;">⏳ Pendiente</span>
                         </td>
                         <td>
+                            <button onclick="configurarPublicacionAlbum('${id}', ${Number.isFinite(Number(album.ordenPublicacion)) ? Number(album.ordenPublicacion) : 9999}, ${album.esPublico === true})" style="background:#065f46;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📌 ${album.esPublico === true ? 'Publicado' : 'Oculto'} · Orden ${album.ordenPublicacion ?? '—'}</button>
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
                             </button>
@@ -1039,6 +1040,28 @@
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: #dc2626;">Error: ${error.message}</td></tr>`;
             }
         }
+
+        window.configurarPublicacionAlbum = async function(id, ordenActual, publicado) {
+            const respuesta = prompt('Orden de aparición del álbum (1 = primero, 2 = segundo; 9999 = al final):', ordenActual === 9999 ? '9999' : String(ordenActual));
+            if (respuesta === null) return;
+            const orden = Number(respuesta);
+            if (!Number.isSafeInteger(orden) || orden < 0 || orden > 9999) { alert('Ingresá un número entero entre 0 y 9999.'); return; }
+            const publicar = confirm(publicado
+                ? 'El álbum está PUBLICADO. Aceptar = mantener publicado; Cancelar = ocultarlo.'
+                : 'El álbum está OCULTO. Aceptar = publicarlo; Cancelar = mantenerlo oculto.');
+            if (publicar !== publicado && !confirm(publicar ? '¿Confirmás PUBLICAR este álbum en tu página?' : '¿Confirmás OCULTAR este álbum de la página?')) return;
+            try {
+                const token = await tokenAdmin();
+                const res = await fetch('/.netlify/functions/configurar-publicacion-album', {
+                    method:'POST', headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+                    body:JSON.stringify({albumId:id,orden,publicar})
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw Error(data.error || 'No se guardó');
+                alert('Guardado: '+(publicar?'Publicado':'Oculto')+' · Orden '+orden);
+                await cargarAlbumes();
+            } catch (error) { alert('Error al guardar: '+error.message); }
+        };
 
         window.verAlbum = function(id) {
             window.location.href = `evento.html?album=${id}`;
