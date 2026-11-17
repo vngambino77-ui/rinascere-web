@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <style>body{visibility:hidden}</style>
   <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -484,6 +485,9 @@
                 return;
             }
 
+            // Recién ahora, con la sesión de administradora verificada, se muestra el panel
+            document.body.style.visibility = 'visible';
+
             try {
                 await cargarEstadisticas();
                 await cargarAlbumes();
@@ -549,7 +553,10 @@
 
         window.reiniciarPedidosGratis = async function() {
             const boton = document.getElementById('btnReiniciarPedidosGratis');
-            if (!confirm('¿Eliminar definitivamente TODOS los pedidos gratis? Los álbumes, compras y transferencias no se modificarán.')) return;
+            if (boton.disabled) return;
+            if (!confirm('¿Eliminar DEFINITIVAMENTE todos los pedidos gratis, incluidos pendientes y enviados? Los álbumes, compras y transferencias no se modificarán. Esta acción no se puede deshacer.')) return;
+            const confirmacion = prompt('Escribí BORRAR PEDIDOS GRATIS para confirmar:');
+            if (confirmacion !== 'BORRAR PEDIDOS GRATIS') return;
             boton.disabled = true;
             boton.textContent = 'Eliminando pedidos gratis…';
             try {
