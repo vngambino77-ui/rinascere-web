@@ -278,6 +278,17 @@
                     Estas son algunas fotos del álbum, con marca de agua. Al comprar accedés a todas, sin marca de agua.
                 </p>
                 <div id="galeriaMuestra" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 35px;"></div>
+                <div id="carritoFotos" style="display:none;background:#222;border:1px solid #d4af37;border-radius:12px;padding:18px;margin:20px 0 35px">
+                    <h3 style="color:#d4af37;margin:0 0 8px">🛒 Tu carrito de fotografías</h3>
+                    <p id="carritoResumen" style="color:#ddd"></p>
+                    <p style="color:#aaa;font-size:.9rem">El total y los descuentos por cantidad se calculan en el servidor. La transferencia se verifica antes de habilitar la entrega.</p>
+                    <form id="formCarritoFotos" style="display:grid;gap:10px">
+                        <input id="carritoNombre" aria-label="Nombre y apellido" placeholder="Nombre y apellido" required maxlength="120" style="padding:12px;border-radius:6px">
+                        <input id="carritoContacto" aria-label="WhatsApp o correo" placeholder="WhatsApp o correo" required maxlength="160" style="padding:12px;border-radius:6px">
+                        <button class="btn-pay" type="submit" id="btnCarritoFotos">Solicitar compra por transferencia</button>
+                    </form>
+                    <p id="carritoEstado" role="status" aria-live="polite" style="color:#d4af37;margin-top:12px"></p>
+                </div>
             </div>
 
             <!-- ELEGIR Y PAGAR PACK (ANTES DE PAGAR) -->
@@ -721,21 +732,83 @@
             return url.replace('/upload/', '/upload/l_y9ukn66j0hvwsauv4efg,w_1.0,o_35,g_center/fl_layer_apply/');
         }
 
-        function mostrarMuestra() {
-            if (!albumData.fotosPreview || albumData.fotosPreview.length === 0) return;
+        // Carrito por selección de muestras. Los precios se recalculan en Netlify.
+        const fotosCarrito = new Set();
+        function actualizarCarritoFotos() {
+            const panel = document.getElementById('carritoFotos');
+            const habilitado = Number.isSafeInteger(Number(albumData?.precioFoto)) && Number(albumData?.precioFoto) > 0;
+            panel.style.display = habilitado ? 'block' : 'none';
+            if (!habilitado) return;
+            document.getElementById('carritoResumen').textContent = fotosCarrito.size
+                ? fotosCarrito.size + ' foto(s) seleccionada(s). Precio individual publicado: $' + Number(albumData.precioFoto).toLocaleString('es-AR') + '. Los packs se aplican al confirmar.'
+                : 'Seleccioná las fotografías que quieras comprar tocando sus casillas.';
+        }
 
+        function mostrarMuestra() {
+            if (!Array.isArray(albumData.fotosPreview) || albumData.fotosPreview.length === 0) return;
             document.getElementById('seccionMuestra').style.display = 'block';
             const galeria = document.getElementById('galeriaMuestra');
             galeria.innerHTML = '';
-
-            albumData.fotosPreview.forEach((url) => {
+            fotosCarrito.clear();
+            const habilitado = Number.isSafeInteger(Number(albumData.precioFoto)) && Number(albumData.precioFoto) > 0;
+            albumData.fotosPreview.forEach((url, index) => {
+                const item = document.createElement('label');
+                item.style.cssText = 'display:block;position:relative;cursor:pointer';
                 const img = document.createElement('img');
                 img.src = conMarcaDeAgua(url);
                 img.loading = 'lazy';
-                img.style.cssText = 'width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #d4af37;';
-                galeria.appendChild(img);
+                img.alt = 'Fotografía ' + (index + 1);
+                img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #d4af37';
+                item.appendChild(img);
+                if (habilitado) {
+                    const check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.setAttribute('aria-label','Agregar fotografía '+(index+1)+' al carrito');
+                    check.style.cssText='position:absolute;top:10px;left:10px;width:23px;height:23px;accent-color:#d4af37';
+                    check.addEventListener('change', () => {
+                        if (check.checked) fotosCarrito.add(index); else fotosCarrito.delete(index);
+                        actualizarCarritoFotos();
+                    });
+                    item.appendChild(check);
+                }
+                galeria.appendChild(item);
             });
+            actualizarCarritoFotos();
         }
+
+        document.getElementById('formCarritoFotos').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const estado = document.getElementById('carritoEstado');
+            const boton = document.getElementById('btnCarritoFotos');
+            if (!fotosCarrito.size) { estado.textContent = 'Seleccioná al menos una fotografía.'; return; }
+            boton.disabled = true;
+            estado.textContent = 'Registrando carrito…';
+            try {
+                const response = await fetch('/.netlify/functions/crear-carrito', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        albumId,
+                        fotos: Array.from(fotosCarrito).sort((a,b)=>a-b),
+                        comprador: document.getElementById('carritoNombre').value.trim(),
+                        contacto: document.getElementById('carritoContacto').value.trim()
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar el carrito');
+                estado.textContent = 'Pedido '+result.transferenciaId+' registrado. Total: $'+Number(result.monto).toLocaleString('es-AR')+'. Transferí al alias '+result.alias+' y enviá el comprobante por WhatsApp. Las fotos se entregan después de confirmar el pago.';
+                const aviso = 'Hola Rinascere, registré el carrito '+result.transferenciaId+' del álbum '+(albumData.nombre||albumId)+'. Importe: $'+result.monto+'. Envío mi comprobante.';
+                const enlace = document.createElement('a');
+                enlace.href = 'https://wa.me/542966346212?text='+encodeURIComponent(aviso);
+                enlace.target = '_blank'; enlace.rel = 'noopener noreferrer';
+                enlace.textContent = '💬 Enviar comprobante por WhatsApp';
+                enlace.style.cssText = 'display:inline-block;color:#d4af37;margin-top:10px';
+                estado.appendChild(document.createElement('br'));
+                estado.appendChild(enlace);
+            } catch (error) {
+                estado.textContent = 'No se registró el pedido: '+error.message;
+            } finally { boton.disabled = false; }
+        });
 
         function mostrarPacks() {
             document.getElementById('seccionPacks').style.display = 'block';
