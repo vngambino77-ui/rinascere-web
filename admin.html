@@ -472,10 +472,10 @@
             boton.disabled = true;
             boton.textContent = 'Eliminando pedidos…';
             try {
+                await auth.authStateReady();
                 const usuario = auth.currentUser;
                 if (!usuario) {
-                    alert('La sesión actual del panel no tiene una identidad Firebase verificada. No se puede borrar el historial de forma segura. No se eliminó ningún pedido.');
-                    return;
+                    throw new Error('La sesión administrativa no está activa. Volvé a ingresar desde login.html.');
                 }
                 const token = await usuario.getIdToken(true);
                 const respuesta = await fetch('/.netlify/functions/borrar-pedidos-gratis', {
@@ -483,6 +483,8 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ confirmacion })
                 });
+                const tipo = respuesta.headers.get('content-type') || '';
+                if (!tipo.includes('application/json')) throw new Error('Netlify no devolvió una respuesta válida. Revisá el despliegue de la función borrar-pedidos-gratis.');
                 const resultado = await respuesta.json();
                 if (!respuesta.ok || !resultado.ok) throw new Error(resultado.error || 'No se pudo borrar el historial');
                 alert('Se eliminaron ' + resultado.eliminados + ' pedidos gratis. Los álbumes y las ventas permanecen intactos.');
