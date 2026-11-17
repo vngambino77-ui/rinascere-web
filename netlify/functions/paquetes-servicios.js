@@ -9,8 +9,10 @@ exports.handler=async(event)=>{
  const {db,admin}=getFirebaseAdmin(),collection=db.collection('paquetesServicios');
  if(method==='GET'){
   const snapshot=await collection.limit(100).get();
-  const paquetes=snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.publicado===true)
-   .map(p=>({id:p.id,titulo:p.titulo,categoria:p.categoria,descripcion:p.descripcion,incluye:p.incluye,precio:p.precio,moneda:'ARS',orden:p.orden||0}))
+  const verTodos=event.queryStringParameters?.admin==='1';
+  if(verTodos)await requireAdmin(event);
+  const paquetes=snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(p=>verTodos||p.publicado===true)
+   .map(p=>({id:p.id,titulo:p.titulo,categoria:p.categoria,descripcion:p.descripcion,incluye:p.incluye,precio:p.precio,moneda:'ARS',orden:p.orden||0,publicado:p.publicado===true}))
    .sort((a,b)=>a.orden-b.orden||a.titulo.localeCompare(b.titulo,'es'));
   return send(200,{ok:true,paquetes});
  }
