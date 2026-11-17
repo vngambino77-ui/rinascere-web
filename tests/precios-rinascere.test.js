@@ -1,0 +1,12 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { calcularCarrito } = require('../lib/precios-rinascere');
+const foto = n => 'DSC_' + String(n).padStart(4,'0') + '.jpg';
+const lista = n => Array.from({ length: n }, (_,i) => foto(i+1));
+assert.equal(calcularCarrito({fotos:lista(1),precioUnitario:5000}).total,5000);
+assert.equal(calcularCarrito({fotos:lista(5),precioUnitario:5000,packs:[{nombre:'Pack 3',cantidad:3,precio:12000}]}).total,22000);
+assert.equal(calcularCarrito({fotos:lista(6),precioUnitario:5000,packs:[{nombre:'Pack 3',cantidad:3,precio:12000},{nombre:'Pack 5',cantidad:5,precio:21000}]}).total,24000);
+assert.equal(calcularCarrito({fotos:lista(3),precioUnitario:5000,cupon:{tipo:'porcentaje',valor:10}}).total,13500);
+assert.throws(()=>calcularCarrito({fotos:[foto(1),foto(1)],precioUnitario:5000}));
+assert.throws(()=>calcularCarrito({fotos:lista(1),precioUnitario:-1}));
+console.log('Motor de precios Rinascere: pruebas correctas');
