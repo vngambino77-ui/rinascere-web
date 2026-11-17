@@ -21,6 +21,9 @@ exports.handler = async (event) => {
       if (!transferSnap.exists) throw new Error('NOT_FOUND');
       const t = transferSnap.data();
       if (t.estado !== 'pendiente') throw new Error('NOT_PENDING');
+      // Un carrito de fotos individuales nunca puede generar acceso al álbum completo.
+      // Requiere primero un mecanismo de entrega limitada a las fotos adquiridas.
+      if (t.tipo === 'carrito_fotos') throw new Error('PHOTO_DELIVERY_PENDING');
       if (!t.albumId || !Number.isFinite(Number(t.monto)) || Number(t.monto) <= 0) throw new Error('INVALID_TRANSFER');
 
       const counterSnap = await tx.get(counterRef);
@@ -69,6 +72,7 @@ exports.handler = async (event) => {
     if (error.message === 'UNAUTHORIZED') return send(401, { error: 'Sesión no autorizada' });
     if (error.message === 'FORBIDDEN') return send(403, { error: 'No tenés permisos para confirmar pagos' });
     if (error.message === 'NOT_FOUND') return send(404, { error: 'La transferencia no existe' });
+    if (error.message === 'PHOTO_DELIVERY_PENDING') return send(409, { error: 'La entrega de fotografías individuales aún no está configurada. No se confirmó el pedido ni se habilitó ninguna descarga.' });
     if (error.message === 'NOT_PENDING') return send(409, { error: 'La transferencia ya fue procesada o no está pendiente' });
     if (error.message === 'INVALID_TRANSFER') return send(400, { error: 'Los datos de la transferencia no son válidos' });
     console.error('confirmar-transferencia:', error);
