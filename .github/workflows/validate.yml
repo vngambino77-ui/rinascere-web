@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - seguridad-transferencias-integrada
+      - fix-formulario-avisos-transferencias-20261115
   pull_request:
     branches:
       - main
@@ -49,6 +50,15 @@ jobs:
                   checked += 1
           print(f'Scripts HTML verificados: {checked}')
           PY
+      - name: Comprobar que las ventas de prueba usen solo Naranja X
+        run: |
+          grep -q 'verogfotos.nx.arg' evento.html
+          grep -q 'verogfotos.nx.arg' netlify/functions/crear-transferencia.js
+          grep -q 'Transferís a Naranja X' index.html
+          if grep -REni 'verogam\.fotos\.mp|mercadopago|mercado pago|crear-preferencia|checkout/preferences' evento.html index.html netlify/functions; then
+            echo 'Error: referencias de Checkout o alias anterior en circuito activo'
+            exit 1
+          fi
       - name: Verificar dependencias
         run: npm ls --depth=0
       - name: Revisar vulnerabilidades de dependencias de producción
