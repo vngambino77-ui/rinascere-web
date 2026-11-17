@@ -10,6 +10,7 @@
     "firebase-admin": "^13.0.2"
   },
   "scripts": {
-    "build": "node scripts/generate-firebase-config.js"
+    "build": "node scripts/generate-firebase-config.js",
+    "test": "node tests/precios-rinascere.test.js"
   }
 }
