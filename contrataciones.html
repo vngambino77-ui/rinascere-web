@@ -20,13 +20,12 @@ textarea{min-height:110px;resize:vertical}.wide{grid-column:1/-1}button{backgrou
 <main>
 <section class="hero"><p style="color:var(--gold);font-weight:700">SERVICIOS FOTOGRÁFICOS</p><h1>Contratá una sesión o pedí tu presupuesto.</h1>
 <p class="muted">Espectáculos, eventos, deporte y retratos personalizados. Contame qué necesitás y preparo una propuesta a medida.</p></section>
-<section aria-labelledby="servicios"><h2 id="servicios">Servicios y paquetes</h2><div class="grid">
-<article class="card"><h3>Espectáculos</h3><p>Fotografía de shows, bandas, danza y presentaciones. Cobertura según duración y cantidad de artistas.</p></article>
-<article class="card"><h3>Eventos</h3><p>Registro de celebraciones, encuentros e instituciones. Opciones por horas de cobertura.</p></article>
-<article class="card"><h3>Deporte</h3><p>Competencias, carreras y equipos. Fotografías para participantes y organizadores.</p></article>
-<article class="card"><h3>Retratos personalizados</h3><p>Sesiones individuales, parejas, familias y mascotas. Propuestas según locación y entrega.</p></article>
-</div><p class="notice">Los precios y paquetes se publicarán cuando los configures. Por ahora, solicitá una cotización sin compromiso: no mostramos importes inventados.</p></section>
-<section aria-labelledby="cotizar"><h2 id="cotizar">Solicitar cotización</h2>
+<section aria-labelledby="servicios"><h2 id="servicios">Paquetes y precios publicados</h2>
+<p class="muted">Elegí un paquete como punto de partida o pedí un presupuesto adaptado a tu evento. Los valores publicados son en pesos argentinos (ARS).</p>
+<div class="grid" id="listaPaquetes"><p class="muted">Cargando paquetes disponibles…</p></div>
+<p class="notice" id="avisoPaquetes" hidden>Los paquetes con precios se publicarán próximamente. Mientras tanto, podés solicitar una cotización personalizada.</p>
+</section>
+<section aria-labelledby="cotizar" id="cotizar"><h2>Solicitar cotización</h2>
 <form id="formCotizacion">
 <div><label for="nombre">Nombre y apellido *</label><input id="nombre" name="nombre" required maxlength="120" autocomplete="name"></div>
 <div><label for="contacto">WhatsApp o correo *</label><input id="contacto" name="contacto" required maxlength="160"></div>
@@ -38,6 +37,32 @@ textarea{min-height:110px;resize:vertical}.wide{grid-column:1/-1}button{backgrou
 <div class="wide"><button id="enviar" type="submit">Enviar solicitud</button><p id="estado" role="status" aria-live="polite"></p><p class="muted">La solicitud se registra en Rinascere para que puedas responderla. Enviar no implica una contratación ni un pago.</p></div>
 </form></section>
 </main><footer><p class="muted">© Rinascere Fotografías · <a href="index.html">Volver al inicio</a></p></footer>
+<script>
+(async function cargarPaquetes(){
+ const lista=document.getElementById('listaPaquetes');
+ try{
+  const response=await fetch('/.netlify/functions/paquetes-servicios',{headers:{Accept:'application/json'}});
+  const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Error al cargar precios');
+  lista.replaceChildren();
+  if(!data.paquetes.length){document.getElementById('avisoPaquetes').hidden=false;return}
+  for(const p of data.paquetes){
+   const card=document.createElement('article');card.className='card';
+   const categoria=document.createElement('p');categoria.className='muted';categoria.textContent=p.categoria;
+   const title=document.createElement('h3');title.textContent=p.titulo;
+   const desc=document.createElement('p');desc.textContent=p.descripcion;
+   const incluye=document.createElement('p');incluye.style.marginTop='10px';incluye.textContent=p.incluye||'';
+   const precio=document.createElement('p');precio.style.cssText='font-size:1.5rem;font-weight:800;color:var(--gold);margin-top:16px';precio.textContent='$'+Number(p.precio).toLocaleString('es-AR')+' ARS';
+   const button=document.createElement('button');button.type='button';button.style.marginTop='12px';button.textContent='Consultar este paquete';
+   button.addEventListener('click',()=>{
+    const select=document.getElementById('servicio');select.value=p.categoria;
+    const textarea=document.getElementById('detalles');textarea.value='Me interesa el paquete "'+p.titulo+'" ('+precio.textContent+'). Quisiera consultar disponibilidad y condiciones.\n';
+    document.getElementById('cotizar').scrollIntoView({behavior:'smooth'});
+   });
+   card.append(categoria,title,desc,incluye,precio,button);lista.appendChild(card);
+  }
+ }catch(e){lista.textContent='No se pudieron cargar los precios. Podés solicitar una cotización mediante el formulario.'}
+})();
+</script>
 <script>
 document.getElementById('formCotizacion').addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget,button=document.getElementById('enviar'),status=document.getElementById('estado');
