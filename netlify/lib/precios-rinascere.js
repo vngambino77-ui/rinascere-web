@@ -7,30 +7,37 @@ function pesos(value) {
   if (!Number.isSafeInteger(n) || n < 0) throw new TypeError('Precio inválido en pesos');
   return n;
 }
-function calcularCarrito({ fotos, precioUnitario, packs = [], cupon = null }) {
+function calcularCarrito({ fotos, precioUnitario, packs = [], cupon = null, modalidad = 'automatico' }) {
   if (!Array.isArray(fotos) || fotos.length === 0 || fotos.length > 500) throw new TypeError('Seleccioná entre 1 y 500 fotos');
   const ids = fotos.map(id => String(id));
   if (ids.some(id => !/^[a-zA-Z0-9_.-]{1,160}$/.test(id)) || new Set(ids).size !== ids.length) throw new TypeError('Identificadores de fotos inválidos o repetidos');
   const unitario = pesos(precioUnitario);
   if (unitario === 0) throw new TypeError('El precio unitario debe ser positivo');
   const n = ids.length;
-  // Optimización por programación dinámica: permite combinar packs y fotos individuales.
-  const dp = Array.from({ length: n + 1 }, () => ({ total: Infinity, desglose: [] }));
-  dp[0] = { total: 0, desglose: [] };
-  const opciones = [{ cantidad: 1, precio: unitario, nombre: 'Foto individual' }];
-  for (const pack of packs) {
-    const cantidad = Number(pack.cantidad);
-    if (!Number.isSafeInteger(cantidad) || cantidad < 2 || cantidad > 500) throw new TypeError('Cantidad de pack inválida');
-    const precio = pesos(pack.precio);
-    if (precio === 0) throw new TypeError('Precio de pack inválido');
-    opciones.push({ cantidad, precio, nombre: String(pack.nombre || 'Pack').slice(0, 80) });
-  }
-  for (let i = 1; i <= n; i++) {
-    for (const opcion of opciones) {
-      if (i < opcion.cantidad) continue;
-      const prev = dp[i - opcion.cantidad];
-      const total = prev.total + opcion.precio;
-      if (total < dp[i].total) dp[i] = { total, desglose: [...prev.desglose, { nombre: opcion.nombre, cantidad: opcion.cantidad, precio: opcion.precio }] };
+  const modo = modalidad;
+  if (!['exacto','hasta','automatico'].includes(modo)) throw new TypeError('Modalidad inválida');
+  const activos = packs.filter(p => p.activo !== false).map(p => {
+    const cantidad = Number(p.cantidad), precio = pesos(p.precio);
+    if (!Number.isSafeInteger(cantidad) || cantidad < 2 || cantidad > 500 || precio <= 0)
+      throw new TypeError('Pack inválido');
+    const tipo = p.tipo || 'exacto';
+    if (!['exacto','hasta'].includes(tipo)) throw new TypeError('Tipo de pack inválido');
+    return { cantidad, precio, tipo, nombre: String(p.nombre || 'Pack').slice(0,80) };
+  });
+  const dp = Array.from({ length:n+1 }, () => ({total:Infinity, desglose:[]}));
+  dp[0]={total:0,desglose:[]};
+  for (let i=1;i<=n;i++) {
+    const individual=dp[i-1];
+    dp[i]={total:individual.total+unitario,desglose:[...individual.desglose,{nombre:'Foto individual',cantidad:1,precio:unitario}]};
+    for(const p of activos) {
+      const tamaños = modo === 'exacto' ? (i === n && n === p.cantidad ? [p.cantidad] : [])
+        : modo === 'hasta' ? (i === n && n <= p.cantidad ? [n] : [])
+        : p.tipo === 'hasta' ? Array.from({length:Math.min(i,p.cantidad)},(_,k)=>k+1) : [p.cantidad];
+      for(const cantidad of tamaños) {
+        if(i<cantidad) continue;
+        const prev=dp[i-cantidad],total=prev.total+p.precio;
+        if(total<dp[i].total) dp[i]={total,desglose:[...prev.desglose,{nombre:p.nombre,cantidad,precio:p.precio}]};
+      }
     }
   }
   const subtotal = dp[n].total;
