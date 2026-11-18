@@ -9,4 +9,12 @@ assert.equal(calcularCarrito({fotos:lista(6),precioUnitario:5000,packs:[{nombre:
 assert.equal(calcularCarrito({fotos:lista(3),precioUnitario:5000,cupon:{tipo:'porcentaje',valor:10}}).total,13500);
 assert.throws(()=>calcularCarrito({fotos:[foto(1),foto(1)],precioUnitario:5000}));
 assert.throws(()=>calcularCarrito({fotos:lista(1),precioUnitario:-1}));
+// Modalidades configurables por álbum y packs inactivos.
+assert.equal(calcularCarrito({fotos:lista(10),precioUnitario:1500,modalidad:'exacto',packs:[{nombre:'Diez',cantidad:10,precio:10000,tipo:'exacto',activo:true}]}).total,10000);
+assert.equal(calcularCarrito({fotos:lista(9),precioUnitario:1500,modalidad:'exacto',packs:[{nombre:'Diez',cantidad:10,precio:10000}]}).total,13500);
+assert.equal(calcularCarrito({fotos:lista(8),precioUnitario:1500,modalidad:'hasta',packs:[{nombre:'Hasta diez',cantidad:10,precio:10000,tipo:'hasta'}]}).total,10000);
+assert.equal(calcularCarrito({fotos:lista(5),precioUnitario:1500,modalidad:'hasta',packs:[{nombre:'Hasta diez',cantidad:10,precio:10000,tipo:'hasta'}]}).total,7500);
+assert.equal(calcularCarrito({fotos:lista(11),precioUnitario:1500,modalidad:'automatico',packs:[{nombre:'Diez',cantidad:10,precio:10000,tipo:'exacto'}]}).total,11500);
+assert.equal(calcularCarrito({fotos:lista(10),precioUnitario:1500,modalidad:'automatico',packs:[{nombre:'Diez',cantidad:10,precio:10000,activo:false}]}).total,15000);
+assert.throws(()=>calcularCarrito({fotos:lista(2),precioUnitario:1500,modalidad:'desconocido'}));
 console.log('Motor de precios Rinascere: pruebas correctas');
