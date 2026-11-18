@@ -25,16 +25,23 @@ exports.handler=async event=>{
  // No aceptar pagos de fotos individuales hasta disponer de entrega segura por archivo.
  if(data.entregaIndividualActiva!==true)return send(409,{error:'La compra individual aún no está habilitada para este álbum. Podés comprar los packs disponibles o solicitar información.'});
  if(!data.driveLink)return send(409,{error:'Este álbum no tiene entrega configurada'});
+ // Una carpeta compartida no sirve para entregar compras individuales: expone fotos no compradas.
+ // Exigir un inventario privado de archivos originales con identificadores únicos de Drive.
+ const originales=Array.isArray(data.fotosOriginales)?data.fotosOriginales:[];
+ if(!originales.length)return send(409,{error:'Falta configurar el inventario privado de fotos originales de Drive para este álbum'});
  const previews=Array.isArray(data.fotosPreview)?data.fotosPreview:[];
  const fotos=body.fotos;
  if(!Array.isArray(fotos)||fotos.length>500||fotos.length===0)return send(400,{error:'Seleccioná fotos del álbum'});
  const indices=fotos.map(Number);
  if(indices.some(i=>!Number.isSafeInteger(i)||i<0||i>=previews.length)||new Set(indices).size!==indices.length)return send(400,{error:'Selección inválida'});
+ const originalesSeleccionados=indices.map(i=>originales.find(f=>f&&f.previewIndex===i));
+ if(originalesSeleccionados.some(f=>!f||typeof f.driveFileId!=='string'||!/^[A-Za-z0-9_-]{10,200}$/.test(f.driveFileId)))return send(409,{error:'No están vinculados los originales de Drive para todas las fotos seleccionadas'});
+ if(new Set(originalesSeleccionados.map(f=>f.driveFileId)).size!==indices.length)return send(409,{error:'El inventario de originales contiene archivos duplicados'});
  const unitario=Number(data.precioFoto);
  if(!Number.isSafeInteger(unitario)||unitario<=0)return send(409,{error:'El precio individual todavía no está configurado para este álbum'});
  const packs=Array.isArray(data.packs)?data.packs.filter(p=>Number.isSafeInteger(Number(p.cantidad))&&Number(p.cantidad)>1&&Number.isSafeInteger(Number(p.precio))&&Number(p.precio)>0).map(p=>({nombre:String(p.nombre||'Pack'),cantidad:Number(p.cantidad),precio:Number(p.precio)})):[];
  const calculo=calcularCarrito({fotos:indices.map(i=>'foto_'+i),precioUnitario:unitario,packs});
- const pedido=await db.collection('transferencias').add({albumId,albumNombre:clean(data.nombre,180),comprador,contacto,metodo:'transferencia',tipo:'carrito_fotos',fotosIndices:indices, cantidadFotos:indices.length,monto:calculo.total,desglose:calculo.desglose,estado:'pendiente',fecha:admin.firestore.FieldValue.serverTimestamp()});
+ const pedido=await db.collection('transferencias').add({albumId,albumNombre:clean(data.nombre,180),comprador,contacto,metodo:'transferencia',tipo:'carrito_fotos',fotosIndices:indices, fotosDriveIds:originalesSeleccionados.map(f=>f.driveFileId), cantidadFotos:indices.length,monto:calculo.total,desglose:calculo.desglose,estado:'pendiente',fecha:admin.firestore.FieldValue.serverTimestamp()});
  return send(201,{ok:true,transferenciaId:pedido.id,estado:'pendiente',monto:calculo.total,alias:'verogfotos.nx.arg',cantidadFotos:indices.length});
  }catch(error){console.error('crear-carrito:',error);return send(500,{error:'No se pudo registrar el carrito'});}
 };
