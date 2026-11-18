@@ -39,8 +39,9 @@ exports.handler=async event=>{
  if(new Set(originalesSeleccionados.map(f=>f.driveFileId)).size!==indices.length)return send(409,{error:'El inventario de originales contiene archivos duplicados'});
  const unitario=Number(data.precioFoto);
  if(!Number.isSafeInteger(unitario)||unitario<=0)return send(409,{error:'El precio individual todavía no está configurado para este álbum'});
- const packs=Array.isArray(data.packs)?data.packs.filter(p=>Number.isSafeInteger(Number(p.cantidad))&&Number(p.cantidad)>1&&Number.isSafeInteger(Number(p.precio))&&Number(p.precio)>0).map(p=>({nombre:String(p.nombre||'Pack'),cantidad:Number(p.cantidad),precio:Number(p.precio)})):[];
- const calculo=calcularCarrito({fotos:indices.map(i=>'foto_'+i),precioUnitario:unitario,packs});
+ const packs=Array.isArray(data.packsCarrito)?data.packsCarrito:[];
+ const modalidad=data.modalidadPacks||'automatico';
+ const calculo=calcularCarrito({fotos:indices.map(i=>'foto_'+i),precioUnitario:unitario,packs,modalidad});
  const pedido=await db.collection('transferencias').add({albumId,albumNombre:clean(data.nombre,180),comprador,contacto,metodo:'transferencia',tipo:'carrito_fotos',fotosIndices:indices, fotosDriveIds:originalesSeleccionados.map(f=>f.driveFileId), cantidadFotos:indices.length,monto:calculo.total,desglose:calculo.desglose,estado:'pendiente',fecha:admin.firestore.FieldValue.serverTimestamp()});
  return send(201,{ok:true,transferenciaId:pedido.id,estado:'pendiente',monto:calculo.total,alias:'verogfotos.nx.arg',cantidadFotos:indices.length});
  }catch(error){console.error('crear-carrito:',error);return send(500,{error:'No se pudo registrar el carrito'});}
