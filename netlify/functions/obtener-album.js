@@ -7,18 +7,34 @@ exports.handler = async (event) => {
     const albumId = String(params.albumId || params.album || '').trim();
     if (!/^[A-Za-z0-9_-]{5,150}$/.test(albumId)) return send(400, { error: 'Álbum inválido' });
     const { db } = getFirebaseAdmin();
-    const publicSnap = await db.collection('albumesPublicos').doc(albumId).get();
-    let data;
-    if (publicSnap.exists) {
-      data = publicSnap.data();
-    } else {
-      let privateSnap = await db.collection('albumesPrivados').doc(albumId).get();
-      if (!privateSnap.exists) privateSnap = await db.collection('albumes').doc(albumId).get();
-      if (!privateSnap.exists) return send(404, { error: 'El álbum no existe o no está disponible' });
-      data = privateSnap.data();
+    const [publicSnap, privateSnap, legacySnap] = await Promise.all([
+      db.collection('albumesPublicos').doc(albumId).get(),
+      db.collection('albumesPrivados').doc(albumId).get(),
+      db.collection('albumes').doc(albumId).get()
+    ]);
+    if (!publicSnap.exists && !privateSnap.exists && !legacySnap.exists) {
+      return send(404, { error: 'El álbum no existe o no está disponible' });
+    }
+    // El catálogo público puede tener datos desactualizados respecto del álbum
+    // administrativo. Solo recuperar los campos de muestra necesarios.
+    const data = {
+      ...(legacySnap.exists ? legacySnap.data() : {}),
+      ...(privateSnap.exists ? privateSnap.data() : {}),
+      ...(publicSnap.exists ? publicSnap.data() : {})
+    };
+    const previews = [
+      publicSnap.exists ? publicSnap.data().fotosPreview : null,
+      privateSnap.exists ? privateSnap.data().fotosPreview : null,
+      legacySnap.exists ? legacySnap.data().fotosPreview : null
+    ].find(v => Array.isArray(v) && v.length > 0);
+    data.fotosPreview = Array.isArray(previews) ? previews.filter(url => typeof url === 'string' && /^https:\/\//i.test(url)) : [];
+    if (privateSnap.exists) {
+      const privado = privateSnap.data();
+      if (privado.precioFoto != null) data.precioFoto = privado.precioFoto;
+      data.entregaIndividualActiva = privado.entregaIndividualActiva === true;
     }
 
-    const { driveLink, driveFolderId, privateTokenHash, privateAccessToken, downloadUrl, codigoAcceso, fotosOriginales, fotosDriveIds, ...safeAlbum } = data;
+    const { driveLink, driveFolderId, privateTokenHash, privateAccessToken, downloadUrl, codigoAcceso, fotosOriginales, fotosDriveIds, codigo, token, ...safeAlbum } = data;
     return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
     console.error('obtener-album:', error);
