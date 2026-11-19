@@ -34,4 +34,18 @@ async function downloadFile(id,folderId){
  if(bytes.length!==size)throw Error('DRIVE_FILE_UNAVAILABLE');
  return {bytes,name:String(meta.name||'fotografia.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120),mime:meta.mimeType||'application/octet-stream'};
 }
-module.exports={downloadFile,streamFile};
+async function listFolderImages(folderId){
+ if(!/^[\\w-]{10,200}$/.test(folderId))throw Error('DRIVE_INVALID_ID');
+ const token=await accessToken(),files=[];let pageToken;
+ do{
+  const params=new URLSearchParams({q:"'"+folderId+"' in parents and trashed = false and mimeType contains 'image/'",fields:'nextPageToken,files(id,name,mimeType,size,parents)',pageSize:'1000',orderBy:'name',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+  if(pageToken)params.set('pageToken',pageToken);
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?'+params,{headers:{Authorization:'Bearer '+token}});
+  if(!r.ok)throw Error('DRIVE_LIST_FAILED');
+  const data=await r.json();files.push(...(data.files||[]).filter(f=>/^[\\w-]{10,200}$/.test(f.id)&&f.mimeType?.startsWith('image/')));
+  pageToken=data.nextPageToken;
+  if(files.length>5000)throw Error('DRIVE_TOO_MANY_FILES');
+ }while(pageToken);
+ return files.sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));
+}
+module.exports={downloadFile,streamFile,listFolderImages};
