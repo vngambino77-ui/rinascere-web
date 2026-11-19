@@ -533,6 +533,7 @@
                 if (panelInicializado) return;
                 panelInicializado = true;
                 await cargarSolicitudesEspeciales();
+                window.setInterval(()=>{if(document.visibilityState==='visible' && auth.currentUser?.uid===ADMIN_UID)cargarSolicitudesEspeciales()},60000);
                 await cargarEstadisticas();
                 await cargarAlbumes();
                 escucharContadores();
