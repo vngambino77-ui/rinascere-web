@@ -1,6 +1,6 @@
 'use strict';
 const {getFirebaseAdmin,send,readBody,requireAdmin}=require('../lib/firebase-admin');
-const {listFolderImages}=require('../lib/drive-private');
+const {listFolderImages,previewSource}=require('../lib/drive-private');
 exports.handler=async event=>{
  if(event.httpMethod!=='POST')return send(405,{error:'Método no permitido'});
  try{
@@ -14,6 +14,8 @@ exports.handler=async event=>{
   if(files.length>500)return send(409,{error:'La galería supera el límite actual de 500 fotografías; no se activó la venta'});
   const precio=Number(snap.data().precioFoto);
   if(!Number.isSafeInteger(precio)||precio<1)return send(409,{error:'Primero configurá el precio por unidad en el administrador'});
+  // Comprobar acceso a miniaturas antes de activar la venta.
+  await previewSource(files[0].id,folderId);
   const fotosOriginales=files.map((f,previewIndex)=>({previewIndex,driveFileId:f.id}));
   const fotosPreview=files.map((_,i)=>'/.netlify/functions/preview-foto?albumId='+encodeURIComponent(albumId)+'&foto='+i);
   const stamp=admin.firestore.FieldValue.serverTimestamp();
