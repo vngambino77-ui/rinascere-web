@@ -1072,10 +1072,14 @@
         window.cambiarCategoriaAlbum=async function(id,actual){
           const opciones=['espectaculos','eventos','deportes','retratos'];
           const nombres=['Festivales y espectáculos','Eventos','Deportes','Retratos personalizados'];
-          const elegido=prompt('Elegí la sección del álbum:\\n1 - Festivales y espectáculos\\n2 - Eventos\\n3 - Deportes\\n4 - Retratos personalizados',String(Math.max(0,opciones.indexOf(actual))+1));
+          try{
+            const respuesta=await fetch('/.netlify/functions/secciones-galeria');
+            if(respuesta.ok){const datos=await respuesta.json();for(const item of (datos.secciones||[])){opciones.push(item.slug);nombres.push(item.nombre)}}
+          }catch(e){console.warn('Sin secciones adicionales',e)}
+          const elegido=prompt('Elegí la sección del álbum:\\n'+nombres.map((n,i)=>(i+1)+' - '+n).join('\\n'),String(Math.max(0,opciones.indexOf(actual))+1));
           if(elegido===null)return;
           const numero=Number(elegido);
-          if(!Number.isInteger(numero)||numero<1||numero>4){alert('Ingresá un número entre 1 y 4');return}
+          if(!Number.isInteger(numero)||numero<1||numero>opciones.length){alert('Elegí un número de la lista');return}
           if(!confirm('¿Cambiar este álbum a '+nombres[numero-1]+'? Las fotografías de Drive no se moverán.'))return;
           try{
             const token=await tokenAdmin();
