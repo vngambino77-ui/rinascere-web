@@ -12,10 +12,10 @@ exports.handler=async event=>{
   const files=await listFolderImages(folderId);
   if(!files.length)return send(409,{error:'La carpeta no contiene imágenes accesibles para la cuenta de servicio'});
   if(files.length>500)return send(409,{error:'La galería supera el límite actual de 500 fotografías; no se activó la venta'});
-  const precio=Number(snap.data().precioFoto);
-  if(!Number.isSafeInteger(precio)||precio<1)return send(409,{error:'Primero configurá el precio por unidad en el administrador'});
-  // Comprobar acceso a miniaturas antes de activar la venta.
-  await previewSource(files[0].id,folderId);
+  const precio=Number(body.precioFoto ?? snap.data().precioFoto);
+  if(!Number.isSafeInteger(precio)||precio<1||precio>100000000)return send(409,{error:'Indicá un precio válido por fotografía antes de sincronizar'});
+  // Verificar todas las miniaturas antes de habilitar una venta.
+  for(const file of files)await previewSource(file.id,folderId);
   const fotosOriginales=files.map((f,previewIndex)=>({previewIndex,driveFileId:f.id}));
   const fotosPreview=files.map((_,i)=>'/.netlify/functions/preview-foto?albumId='+encodeURIComponent(albumId)+'&foto='+i);
   const stamp=admin.firestore.FieldValue.serverTimestamp();
