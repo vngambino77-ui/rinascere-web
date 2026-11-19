@@ -1449,9 +1449,10 @@
                 'Elegí el método de cobro escribiendo el número:\n\n' +
                 '1 = 🎁 Gratis (sin costo)\n' +
                 '2 = ☕ Cafecito (el cliente eligen cuánto aportar, con un mínimo)\n' +
-                '3 = 💰 Precio Fijo (un precio único por el álbum)\n\n' +
+                '3 = 💰 Precio Fijo (un precio único por el álbum)\n' +
+                '4 = 🛒 Por unidad (cada foto tiene su precio y se agrega al carrito)\n\n' +
                 'Método actual: ' + (metodoActual || 'no definido'),
-                metodoActual === 'gratis' ? '1' : metodoActual === 'cafecito' ? '2' : '3'
+                metodoActual === 'gratis' ? '1' : metodoActual === 'cafecito' ? '2' : metodoActual === 'por_unidad' ? '4' : '3'
             );
 
             // Si tocó "Cancelar", no hacemos nada
@@ -1464,8 +1465,10 @@
                 nuevoMetodo = 'cafecito';
             } else if (metodoTexto.trim() === '3') {
                 nuevoMetodo = 'precio_fijo';
+            } else if (metodoTexto.trim() === '4') {
+                nuevoMetodo = 'por_unidad';
             } else {
-                alert('Opción no válida. Escribí 1, 2 o 3.');
+                alert('Opción no válida. Escribí 1, 2, 3 o 4.');
                 return;
             }
 
@@ -1479,6 +1482,8 @@
                 const nuevoPrecioTexto = prompt(
                     nuevoMetodo === 'precio_fijo'
                         ? 'Precio fijo del álbum:'
+                        : nuevoMetodo === 'por_unidad'
+                        ? 'Precio por cada fotografía (ARS):'
                         : 'Monto mínimo sugerido (Cafecito):',
                     precioActual || ''
                 );
@@ -1492,13 +1497,21 @@
                     return;
                 }
 
-                datosActualizados.precio = nuevoPrecio;
+                if (nuevoMetodo === 'por_unidad') {
+                    if (!Number.isSafeInteger(nuevoPrecio) || nuevoPrecio > 100000000) { alert('Ingresá un precio entero válido en pesos.'); return; }
+                    datosActualizados.precioFoto = nuevoPrecio;
+                    datosActualizados.precio = 0;
+                    // La habilitación de venta requiere verificar originales privados desde el formulario de carrito.
+                    datosActualizados.entregaIndividualActiva = false;
+                } else {
+                    datosActualizados.precio = nuevoPrecio;
+                }
             }
 
             try {
                 await updateDoc(doc(db, 'albumes', id), datosActualizados);
                 await sincronizarAlbum(id);
-                alert('✅ Cambios guardados correctamente');
+                alert(nuevoMetodo === 'por_unidad' ? '✅ Precio por foto guardado. Ahora completá la sección Carrito individual: cargá el álbum, vinculá los originales privados y activá el carrito para vender.' : '✅ Cambios guardados correctamente');
                 location.reload();
             } catch (error) {
                 alert('Error al actualizar: ' + error.message);
