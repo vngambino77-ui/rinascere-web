@@ -27,7 +27,7 @@ exports.handler = async (event) => {
       privateSnap.exists ? privateSnap.data().fotosPreview : null,
       legacySnap.exists ? legacySnap.data().fotosPreview : null
     ].find(v => Array.isArray(v) && v.length > 0);
-    data.fotosPreview = Array.isArray(previews) ? previews.filter(url => typeof url === 'string' && /^https:\/\//i.test(url)) : [];
+    data.fotosPreview = Array.isArray(previews) ? previews.filter(url => typeof url === 'string' && (/^https:\/\//i.test(url) || url.startsWith('/.netlify/functions/preview-foto?'))) : [];
     if (privateSnap.exists) {
       const privado = privateSnap.data();
       if (privado.precioFoto != null) data.precioFoto = privado.precioFoto;
