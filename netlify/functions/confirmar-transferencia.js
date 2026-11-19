@@ -66,7 +66,6 @@ exports.handler = async (event) => {
         actualizado: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       return {
-        carrito: t.tipo==='carrito_fotos',cantidadFotos:t.cantidadFotos||0,
         albumId: t.albumId,
         pack: t.pack || null,
         carrito: t.tipo==='carrito_fotos',
