@@ -567,10 +567,11 @@
           const estado=document.getElementById('estadoConfigCarrito'),btn=document.getElementById('sincronizarDriveCarrito');
           const albumId=document.getElementById('configAlbumId').value.trim(),driveFolderId=document.getElementById('configDriveFolder').value.trim();
           if(!albumId||!driveFolderId){estado.textContent='Indicá el ID del álbum y de la carpeta de Google Drive.';return}
+          if(!Number.isSafeInteger(Number(document.getElementById('configPrecioFoto').value))||Number(document.getElementById('configPrecioFoto').value)<1){estado.textContent='Ingresá el precio por fotografía antes de importar.';return}
           if(!confirm('¿Sincronizar la carpeta de Drive y activar la venta por unidad? Comprobá que la carpeta tenga únicamente las fotos que querés vender.'))return;
           btn.disabled=true;estado.textContent='Importando inventario privado de Drive…';
           try{
-            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/sincronizar-galeria-drive',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId,driveFolderId})});
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/sincronizar-galeria-drive',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId,driveFolderId,precioFoto:Number(document.getElementById('configPrecioFoto').value)})});
             const data=await res.json();if(!res.ok)throw Error(data.error||'Error de sincronización');
             configCantidadPreviews=data.cantidadFotos;
             document.getElementById('configActivarCarrito').checked=true;
