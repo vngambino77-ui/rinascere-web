@@ -459,6 +459,12 @@
                 <a class="btn btn-secondary" href="subir.html?categoria=retratos">📸 + Retratos personalizados</a>
             </div>
         </section>
+        <section style="margin:20px 0;padding:20px;border:1px solid #d4af37;border-radius:12px;background:#202020">
+          <h2 style="color:#d4af37">Organizar secciones</h2>
+          <p style="margin:10px 0">Agregá nuevas categorías para organizar tus próximos álbumes. Las cuatro secciones originales se mantienen.</p>
+          <button class="btn btn-secondary" onclick="agregarSeccionGaleria()">＋ Agregar sección</button>
+          <div id="seccionesExtraAdmin" style="margin-top:12px"></div>
+        </section>
         <!-- Lista de álbumes -->
         <h2 class="section-title">Álbumes</h2><p style="color:#d4af37">📁 Publicación: cada álbum puede estar visible u oculto. Orden 1 aparece primero; los álbumes sin orden van al final. El diseño público se conserva.</p>
         <div class="table-container">
@@ -1648,6 +1654,26 @@
             }
         };
 
+        window.agregarSeccionGaleria=async function(){
+          const nombre=prompt('Nombre de la nueva sección (por ejemplo: Institucionales)');
+          if(nombre===null)return;
+          if(nombre.trim().length<2){alert('Ingresá un nombre de al menos 2 caracteres');return}
+          try{
+            const token=await tokenAdmin();
+            const r=await fetch('/.netlify/functions/secciones-galeria',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre.trim()})});
+            const data=await r.json();if(!r.ok)throw Error(data.error||'No se pudo guardar');
+            alert('Sección creada. Para asignarle álbumes, usá el botón Sección de cada álbum.');
+            await cargarSeccionesGaleriaAdmin();
+          }catch(e){alert(e.message)}
+        };
+        async function cargarSeccionesGaleriaAdmin(){
+          try{
+            const r=await fetch('/.netlify/functions/secciones-galeria');if(!r.ok)return;
+            const data=await r.json(),el=document.getElementById('seccionesExtraAdmin');
+            if(el)el.textContent=(data.secciones||[]).map(s=>s.nombre).join(' · ')||'Sin secciones adicionales';
+          }catch(e){console.warn(e)}
+        }
+        cargarSeccionesGaleriaAdmin();
         window.nuevoAlbum = function() {
             window.location.href = 'subir.html';
         }
