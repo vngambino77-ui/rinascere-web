@@ -6,9 +6,9 @@ exports.handler=async event=>{
   await requireAdmin(event);
   const body=readBody(event)||{};
   const id=String(body.albumId||'').trim();
-  const nombre=String(body.nombre||'').trim().replace(/\\s+/g,' ');
+  const nombre=String(body.nombre||'').trim().replace(/\s+/g,' ');
   if(!/^[A-Za-z0-9_-]{5,150}$/.test(id))return send(400,{error:'Álbum inválido'});
-  if(nombre.length<2||nombre.length>120||/[<>\\x00-\\x1f]/.test(nombre))return send(400,{error:'Ingresá un nombre válido (2 a 120 caracteres)'});
+  if(nombre.length<2||nombre.length>120||/[<>\x00-\x1f]/.test(nombre))return send(400,{error:'Ingresá un nombre válido (2 a 120 caracteres)'});
   const {db,admin}=getFirebaseAdmin();
   const base=db.collection('albumes').doc(id),snap=await base.get();
   if(!snap.exists)return send(404,{error:'Álbum no encontrado'});
