@@ -8,7 +8,8 @@ exports.handler=async event=>{
  if(!/^[A-Za-z0-9_-]{5,150}$/.test(albumId)||nombre.length<2||contacto.length<5||!['Banner','Gigantografía','Impresión profesional','Otro'].includes(uso)||!Number.isSafeInteger(foto)||foto<0||foto>499)return send(400,{error:'Completá los datos y seleccioná una fotografía'});
  try{
   const {db,admin}=getFirebaseAdmin();
-  const album=await db.collection('albumesPublicos').doc(albumId).get();
+  let album=await db.collection('albumesPublicos').doc(albumId).get();
+  if(!album.exists)album=await db.collection('albumes').doc(albumId).get();
   if(!album.exists)return send(404,{error:'Álbum no disponible'});
   const previews=album.data().fotosPreview;
   if(!Array.isArray(previews)||foto>=previews.length)return send(400,{error:'Fotografía inválida'});
