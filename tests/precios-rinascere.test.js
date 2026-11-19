@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { calcularCarrito } = require('../lib/precios-rinascere');
+const { calcularCarrito } = require('../netlify/lib/precios-rinascere');
 const foto = n => 'DSC_' + String(n).padStart(4,'0') + '.jpg';
 const lista = n => Array.from({ length: n }, (_,i) => foto(i+1));
 assert.equal(calcularCarrito({fotos:lista(1),precioUnitario:5000}).total,5000);
