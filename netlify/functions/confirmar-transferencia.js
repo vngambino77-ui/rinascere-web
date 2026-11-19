@@ -33,6 +33,13 @@ exports.handler = async (event) => {
         if(!album||album.entregaIndividualActiva!==true||!album.driveFolderId||!process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON)throw new Error('PHOTO_DELIVERY_PENDING');
 
       }
+      // Un pack por cantidad no autoriza acceso indiscriminado a toda la carpeta.
+      // Mantener pendiente hasta que exista entrega limitada a sus fotos.
+      if (t.pack && t.tipo !== 'carrito_fotos') {
+        const albumSnap = await tx.get(db.collection('albumes').doc(t.albumId));
+        const album = albumSnap.exists ? albumSnap.data() : null;
+        if (album && album.metodo === 'pack_fotos') throw new Error('PACK_DELIVERY_PENDING');
+      }
       if (!t.albumId || !Number.isFinite(Number(t.monto)) || Number(t.monto) <= 0) throw new Error('INVALID_TRANSFER');
 
       const counterSnap = await tx.get(counterRef);
@@ -84,6 +91,7 @@ exports.handler = async (event) => {
     if (error.message === 'UNAUTHORIZED') return send(401, { error: 'Sesión no autorizada' });
     if (error.message === 'FORBIDDEN') return send(403, { error: 'No tenés permisos para confirmar pagos' });
     if (error.message === 'NOT_FOUND') return send(404, { error: 'La transferencia no existe' });
+    if (error.message === 'PACK_DELIVERY_PENDING') return send(409, { error: 'El pack por cantidad no puede habilitar acceso a todas las fotos. Pedido pendiente: configurá entrega segura antes de confirmarlo.' });
     if (error.message === 'PHOTO_DELIVERY_PENDING') return send(409, { error: 'La entrega de fotografías individuales aún no está configurada. No se confirmó el pedido ni se habilitó ninguna descarga.' });
     if (error.message === 'NOT_PENDING') return send(409, { error: 'La transferencia ya fue procesada o no está pendiente' });
     if (error.message === 'INVALID_TRANSFER') return send(400, { error: 'Los datos de la transferencia no son válidos' });
