@@ -34,7 +34,13 @@ exports.handler = async (event) => {
       data.entregaIndividualActiva = privado.entregaIndividualActiva === true;
     }
 
-    const { driveLink, driveFolderId, privateTokenHash, privateAccessToken, downloadUrl, codigoAcceso, fotosOriginales, fotosDriveIds, codigo, token, ...safeAlbum } = data;
+    // Lista explícita: no exponer accidentalmente campos privados de Firebase.
+    const visible = ['nombre','fecha','lugar','portadaUrl','cantidadFotos','categoria',
+      'tipoCategoria','metodo','precio','packs','precioFoto','packsCarrito',
+      'modalidadPacks','entregaIndividualActiva','esPublico','descripcion'];
+    const safeAlbum = {};
+    for (const campo of visible) if (data[campo] !== undefined) safeAlbum[campo] = data[campo];
+    safeAlbum.fotosPreview = data.fotosPreview;
     return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
     console.error('obtener-album:', error);
