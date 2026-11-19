@@ -40,6 +40,12 @@ exports.handler = async (event) => {
       'modalidadPacks','entregaIndividualActiva','esPublico','descripcion'];
     const safeAlbum = {};
     for (const campo of visible) if (data[campo] !== undefined) safeAlbum[campo] = data[campo];
+    // El acceso gratuito ya publicado requiere el enlace compartido, pero jamás
+    // divulgar el enlace privado de álbumes pagos o del carrito individual.
+    if (['gratis','gratis_o_cafecito'].includes(data.metodo) &&
+        typeof data.driveLink === 'string' && /^https:\/\//i.test(data.driveLink)) {
+      safeAlbum.driveLink = data.driveLink;
+    }
     safeAlbum.fotosPreview = data.fotosPreview;
     return send(200, { ok: true, album: { id: albumId, ...safeAlbum } });
   } catch (error) {
