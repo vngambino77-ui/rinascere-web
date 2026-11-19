@@ -365,6 +365,15 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     <h2>Álbumes recientes</h2>
     <p>Hacé clic en el evento para ver y comprar tus fotos</p>
   </div>
+  <div id="filtros-rinascere" style="display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:20px auto 26px;max-width:1000px">
+    <button type="button" data-categoria="todos">Todas las fotografías</button>
+    <button type="button" data-categoria="espectaculos">🎤 Festivales y espectáculos</button>
+    <button type="button" data-categoria="eventos">🎉 Eventos</button>
+    <button type="button" data-categoria="deportes">🏃 Deportes</button>
+    <button type="button" data-categoria="retratos">📸 Retratos personalizados</button>
+    <select id="filtro-disciplina" aria-label="Disciplina deportiva" style="display:none;padding:10px;border-radius:8px"><option value="todos">Todos los deportes</option><option value="running">Running</option><option value="trail">Trail</option><option value="otros">Otros deportes</option></select>
+  </div>
+  <style>#filtros-rinascere button{border:1px solid #b9913a;background:#191919;color:#e9c66a;border-radius:9px;padding:11px 13px;cursor:pointer}#filtros-rinascere button[aria-pressed=true]{background:#d4af37;color:#141414;font-weight:bold}#filtro-disciplina{background:#191919;color:#f5e7c8;border:1px solid #b9913a}</style>
   <div class="grilla-albumes" id="grilla"></div>
 </section>
 
@@ -585,10 +594,12 @@ async function cargarAlbumes() {
         return oa-ob || String(b.fecha||'').localeCompare(String(a.fecha||''));
       });
       console.log('Álbumes públicos cargados desde Firebase:', lista.length);
-      renderAlbumes(lista);
+      albumesDisponibles=lista;
+      filtrarAlbumes();
     } catch(e) {
       console.error('Error al cargar álbumes:', e);
-      renderAlbumes([]);
+      albumesDisponibles=[];
+      filtrarAlbumes();
     }
 }
 
@@ -597,6 +608,36 @@ async function cargarAlbumes() {
     { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
+
+  let albumesDisponibles=[],categoriaActiva='todos',disciplinaActiva='todos';
+  const categoriaDe=a=>{
+    const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
+    if(/deport|running|trail|carrera|maraton|ciclismo/.test(explicit)||(!explicit&&/running|trail|carrera|maraton|ciclismo/.test(texto)))return 'deportes';
+    if(/retrato|sesion|book|personalizad/.test(explicit)||(!explicit&&/retrato|sesion|book/.test(texto)))return 'retratos';
+    return 'eventos';
+  };
+  function filtrarAlbumes(){
+    const filtrados=albumesDisponibles.filter(a=>{
+      if(categoriaActiva!=='todos'&&categoriaDe(a)!==categoriaActiva)return false;
+      if(categoriaActiva==='deportes'&&disciplinaActiva!=='todos'){
+        const d=String(a.disciplina||a.nombre||'').toLowerCase();
+        if(disciplinaActiva==='otros')return !/running|trail/.test(d);
+        return d.includes(disciplinaActiva);
+      }
+      return true;
+    });
+    renderAlbumes(filtrados);
+  }
+  document.querySelectorAll('#filtros-rinascere [data-categoria]').forEach(b=>b.addEventListener('click',()=>{
+    categoriaActiva=b.dataset.categoria;
+    document.querySelectorAll('#filtros-rinascere [data-categoria]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    document.getElementById('filtro-disciplina').style.display=categoriaActiva==='deportes'?'block':'none';
+    filtrarAlbumes();
+  }));
+  document.getElementById('filtro-disciplina').addEventListener('change',e=>{disciplinaActiva=e.target.value;filtrarAlbumes()});
+  document.querySelector('#filtros-rinascere [data-categoria=todos]').setAttribute('aria-pressed','true');
 
   function renderAlbumes(lista) {
     const g = document.getElementById('grilla');
