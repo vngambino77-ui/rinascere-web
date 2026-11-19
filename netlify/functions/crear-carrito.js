@@ -18,10 +18,9 @@ exports.handler=async event=>{
  if(n>=15)return false;tx.set(refLimite,{inicio:activo?p.inicio:admin.firestore.Timestamp.fromMillis(now),cantidad:n+1});return true;
  });
  if(!permitido)return send(429,{error:'Límite de pedidos alcanzado. Intentá más tarde'});
- let album=await db.collection('albumesPrivados').doc(albumId).get();
- if(!album.exists)album=await db.collection('albumes').doc(albumId).get();
- if(!album.exists)return send(404,{error:'Álbum no encontrado'});
- const data=album.data();
+ const [privateAlbum,legacyAlbum]=await Promise.all([db.collection('albumesPrivados').doc(albumId).get(),db.collection('albumes').doc(albumId).get()]);
+ if(!privateAlbum.exists&&!legacyAlbum.exists)return send(404,{error:'Álbum no encontrado'});
+ const data={...(legacyAlbum.exists?legacyAlbum.data():{}),...(privateAlbum.exists?privateAlbum.data():{})};
  // No aceptar pagos de fotos individuales hasta disponer de entrega segura por archivo.
  if(data.entregaIndividualActiva!==true)return send(409,{error:'La compra individual aún no está habilitada para este álbum. Podés comprar los packs disponibles o solicitar información.'});
  if(!data.driveFolderId)return send(409,{error:'Este álbum no tiene carpeta privada de originales configurada'});
