@@ -757,7 +757,10 @@
         function actualizarCarritoFotos() {
             const panel = document.getElementById('carritoFotos');
             const habilitado = Number.isSafeInteger(Number(albumData?.precioFoto)) && Number(albumData?.precioFoto) > 0;
-            panel.style.display = habilitado ? 'block' : 'none';
+            panel.style.display = habilitado && albumData.entregaIndividualActiva === true ? 'block' : 'none';
+            if (habilitado && albumData.entregaIndividualActiva !== true) {
+                console.info('Compra individual deshabilitada: falta configurar el inventario privado de originales en el administrador.');
+            }
             if (!habilitado) return;
             document.getElementById('carritoResumen').textContent = fotosCarrito.size
                 ? fotosCarrito.size + ' foto(s) seleccionada(s). Precio individual publicado: $' + Number(albumData.precioFoto).toLocaleString('es-AR') + '. Los packs se aplican al confirmar.'
@@ -765,7 +768,12 @@
         }
 
         function mostrarMuestra() {
-            if (!Array.isArray(albumData.fotosPreview) || albumData.fotosPreview.length === 0) return;
+            if (!Array.isArray(albumData.fotosPreview) || albumData.fotosPreview.length === 0) {
+                document.getElementById('seccionMuestra').style.display = 'block';
+                document.getElementById('galeriaMuestra').textContent = 'Este álbum todavía no tiene fotografías de muestra configuradas para seleccionar. No se puede armar un carrito hasta que la fotógrafa vincule las imágenes de muestra con los originales privados de Drive.';
+                document.getElementById('carritoFotos').style.display = 'none';
+                return;
+            }
             document.getElementById('seccionMuestra').style.display = 'block';
             const galeria = document.getElementById('galeriaMuestra');
             galeria.innerHTML = '';
