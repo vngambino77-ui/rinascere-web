@@ -555,16 +555,36 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
   // ── Subir foto personal a Cloudinary ──────────────────
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
-    try {
-      const doc = await db.collection('configuracion').doc('sitio').get();
-      if (doc.exists && doc.data().fotoPersonalUrl) {
-        const url = doc.data().fotoPersonalUrl;
-        const img = document.getElementById('foto-personal-img');
-        img.src = url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
+    const img = document.getElementById('foto-personal-img');
+    const placeholder = document.getElementById('sobre-placeholder');
+    const fuentes = [
+      () => db.collection('configuracion').doc('sitio').get(),
+      () => db.collection('config').doc('portfolio').get()
+    ];
+    const urls = [];
+    for (const obtener of fuentes) {
+      try {
+        const doc = await obtener();
+        if (doc.exists) {
+          const data = doc.data();
+          const url = data.fotoPersonalUrl || data.profileUrl;
+          if (typeof url === 'string' && url.trim() && !urls.includes(url.trim())) urls.push(url.trim());
+        }
+      } catch (e) { console.warn('No se pudo leer una configuración de foto personal:', e); }
+    }
+    let indice = 0;
+    function siguiente() {
+      if (indice >= urls.length) {
+        img.style.display = 'none';
+        placeholder.style.display = '';
+        placeholder.textContent = urls.length ? 'La foto de presentación no está disponible. Revisá el enlace de la imagen en el administrador.' : 'Agregá tu fotografía desde el administrador.';
+        return;
       }
-    } catch(e) { /* silencioso */ }
+      img.onload = () => { img.style.display = 'block'; placeholder.style.display = 'none'; };
+      img.onerror = siguiente;
+      img.src = urls[indice++];
+    }
+    siguiente();
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
