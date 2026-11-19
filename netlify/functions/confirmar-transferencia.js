@@ -31,11 +31,12 @@ exports.handler = async (event) => {
         const albumSnap=await tx.get(albumRef);
         const album=albumSnap.exists?albumSnap.data():null;
         if(!album||album.entregaIndividualActiva!==true||!album.driveFolderId||!process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON)throw new Error('PHOTO_DELIVERY_PENDING');
-        tx.create(fotoTokenRef,{albumId:t.albumId,fotosDriveIds:t.fotosDriveIds,transferenciaId:id,vence:admin.firestore.Timestamp.fromMillis(Date.now()+24*60*60*1000)});
+
       }
       if (!t.albumId || !Number.isFinite(Number(t.monto)) || Number(t.monto) <= 0) throw new Error('INVALID_TRANSFER');
 
       const counterSnap = await tx.get(counterRef);
+      if(t.tipo==='carrito_fotos')tx.create(fotoTokenRef,{albumId:t.albumId,fotosDriveIds:t.fotosDriveIds,transferenciaId:id,vence:admin.firestore.Timestamp.fromMillis(Date.now()+24*60*60*1000)});
       if(t.tipo!=='carrito_fotos')tx.create(codeRef, {
         albumId: t.albumId,
         pack: t.pack || null,
