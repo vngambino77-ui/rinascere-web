@@ -217,14 +217,16 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     .portfolio-box { max-width:1100px; margin:0 auto; }
     .portfolio-intro { text-align:center; margin-bottom:32px; }
     .portfolio-intro p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 20px; font-size:0.92rem; }
-    .portfolio-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
-    .portfolio-foto { border-radius:12px; overflow:hidden; aspect-ratio:4/3; background:var(--crema); cursor:pointer; }
-    .portfolio-foto img { width:100%; height:100%; object-fit:contain; display:block; transition:transform 0.3s; }
-    .portfolio-foto:hover img { transform:scale(1.04); }
-    .portfolio-foto-vacia { border-radius:12px; aspect-ratio:4/3; background:var(--crema); border:2px dashed #ddd; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:#bbb; font-size:0.78rem; cursor:pointer; transition:border-color 0.2s; }
-    .portfolio-foto-vacia:hover { border-color:var(--dorado); color:var(--dorado-oscuro); }
+    /* Portfolio editorial: ritmo visual consistente sin recortar originales */
+    .portfolio-grilla { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-bottom:32px; }
+    .portfolio-foto { margin:0; border-radius:4px; overflow:hidden; aspect-ratio:4/5; background:#f1eee9; display:flex; align-items:center; justify-content:center; position:relative; }
+    .portfolio-foto img { width:100%; height:100%; object-fit:contain; display:block; transition:transform .35s ease; }
+    .portfolio-foto:hover img { transform:scale(1.025); }
+    .portfolio-foto figcaption { position:absolute; bottom:0; left:0; right:0; padding:18px 12px 10px; color:#fff; font-size:.78rem; letter-spacing:.025em; background:linear-gradient(transparent,rgba(0,0,0,.55)); opacity:0; transition:opacity .2s; pointer-events:none; }
+    .portfolio-foto:hover figcaption,.portfolio-foto:focus-within figcaption { opacity:1; }
     .portfolio-cta { text-align:center; }
-
+    @media(max-width:800px){.portfolio-grilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+    @media(max-width:480px){.portfolio-grilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.portfolio-foto{aspect-ratio:4/5}}
     /* TESTIMONIOS */
     .test-sec { background:var(--crema); }
     .test-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; max-width:960px; margin:0 auto; }
@@ -300,7 +302,7 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
       .sobre-texto-col { padding:32px 20px; }
       .footer-grid { grid-template-columns:1fr; gap:28px; }
       .bot-ventana { width:calc(100vw - 32px); right:16px; }
-      .portfolio-grilla { grid-template-columns:repeat(2,1fr); gap:8px; }
+      .portfolio-grilla { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
       .test-grilla { grid-template-columns:1fr; }
     }
   </style>
@@ -730,25 +732,35 @@ async function cargarAlbumes() {
   // ── Cargar portfolio desde Firebase ───────────────────
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
-    const SLOTS = 9;
     try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
-      const fotos = snap.docs.map(d => d.data());
-      let html = fotos.map(f => {
-        const url = f.url.startsWith('http') ? f.url
-          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
-        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
-      }).join('');
-      // Completar slots vacíos con placeholders de carga
-      const vacios = SLOTS - fotos.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+      const snap = await db.collection('portfolio').orderBy('orden').limit(30).get();
+      const fotos = snap.docs.map(d => d.data()).filter(f => typeof f.url === 'string' && f.url.trim());
+      if (!fotos.length) {
+        grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777">Próximamente, una selección de mis trabajos.</p>';
+        return;
       }
-      grilla.innerHTML = html;
+      grilla.replaceChildren();
+      fotos.forEach(f => {
+        const url = /^https?:\\/\\//i.test(f.url) ? f.url
+          : 'https://res.cloudinary.com/' + CLOUD + '/image/upload/w_900,q_85,f_auto/' + encodeURI(f.url);
+        const figura = document.createElement('figure');
+        figura.className = 'portfolio-foto';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = String(f.titulo || 'Fotografía del portfolio');
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        figura.appendChild(img);
+        if (f.titulo) {
+          const pie = document.createElement('figcaption');
+          pie.textContent = String(f.titulo);
+          figura.appendChild(pie);
+        }
+        grilla.appendChild(figura);
+      });
     } catch(e) {
       console.error('Error al cargar el portfolio desde Firebase:', e);
-      // Sin Firebase → mostrar placeholders
-      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+      grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777">No se pudo cargar el portfolio en este momento.</p>';
     }
   }
 
