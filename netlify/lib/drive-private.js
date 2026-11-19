@@ -48,4 +48,14 @@ async function listFolderImages(folderId){
  }while(pageToken);
  return files.sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));
 }
-module.exports={downloadFile,streamFile,listFolderImages};
+async function thumbnailFile(id,folderId){
+ const token=await accessToken(),meta=await fileMetadata(id,token);
+ if(meta.trashed||!meta.parents?.includes(folderId)||!meta.mimeType?.startsWith('image/'))throw Error('DRIVE_FILE_UNAVAILABLE');
+ const url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media&supportsAllDrives=true';
+ const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});
+ if(!r.ok)throw Error('DRIVE_FILE_UNAVAILABLE');
+ const chunks=[];let total=0;
+ for await(const chunk of r.body){total+=chunk.length;if(total>4000000)throw Error('DRIVE_PREVIEW_TOO_LARGE');chunks.push(chunk);}
+ return {bytes:Buffer.concat(chunks),mime:meta.mimeType};
+}
+module.exports={downloadFile,streamFile,listFolderImages,thumbnailFile};
