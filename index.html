@@ -611,6 +611,7 @@ async function cargarAlbumes() {
 
   let albumesDisponibles=[],categoriaActiva='todos',disciplinaActiva='todos';
   const categoriaDe=a=>{
+    if(String(a.id||'')==='exACC5umMzj4SnaG7Vsr')return 'eventos'; // SARABI FEST 2026: clasificación solicitada
     const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
