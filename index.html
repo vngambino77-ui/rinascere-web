@@ -588,6 +588,16 @@ async function cargarAlbumes() {
         console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
       }
 
+      // Los privados muestran solo portada y nombre; sus fotos y enlaces no son públicos.
+      try {
+        const respuesta=await fetch('/.netlify/functions/listar-portadas-privadas',{cache:'no-store'});
+        if(respuesta.ok){
+          const datos=await respuesta.json();
+          for(const a of (Array.isArray(datos.albumes)?datos.albumes:[])){
+            if(!porId.has(a.id))porId.set(a.id,{...a,publico:false});
+          }
+        }else console.warn('Catálogo privado no disponible:',respuesta.status);
+      }catch(errorPrivados){console.warn('No se pudieron cargar las portadas privadas:',errorPrivados)}
       const lista = Array.from(porId.values()).sort((a,b) => {
         const oa = Number.isFinite(Number(a.ordenPublicacion)) ? Number(a.ordenPublicacion) : 9999;
         const ob = Number.isFinite(Number(b.ordenPublicacion)) ? Number(b.ordenPublicacion) : 9999;
@@ -664,7 +674,7 @@ async function cargarAlbumes() {
             imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
           }
           return `
-       <a class="tarjeta" href="evento.html?album=${a.id}">
+       <a class="tarjeta" href="${a.publico ? `evento.html?album=${encodeURIComponent(a.id)}` : `#albumes`}" ${!a.publico ? 'aria-label="Álbum privado: acceso mediante enlace autorizado" onclick="alert(\'Este álbum es privado. Solicitá a Rinascere el enlace de acceso autorizado.\');return false;"' : ''}>
           <div class="t-img">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
