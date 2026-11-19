@@ -1447,12 +1447,12 @@
             // Mostramos las opciones de método de cobro disponibles
             const metodoTexto = prompt(
                 'Elegí el método de cobro escribiendo el número:\n\n' +
-                '1 = 🎁 Gratis (sin costo)\n' +
-                '2 = ☕ Cafecito (el cliente eligen cuánto aportar, con un mínimo)\n' +
+                '1 = 🎁 Gratis + Cafecito solidario opcional\n' +
+                '2 = ☕ Cafecito (modalidad anterior, para álbumes existentes)\n' +
                 '3 = 💰 Precio Fijo (un precio único por el álbum)\n' +
                 '4 = 🛒 Por unidad (cada foto tiene su precio y se agrega al carrito)\n\n' +
                 'Método actual: ' + (metodoActual || 'no definido'),
-                metodoActual === 'gratis' ? '1' : metodoActual === 'cafecito' ? '2' : metodoActual === 'por_unidad' ? '4' : '3'
+                ['gratis','gratis_o_cafecito'].includes(metodoActual) ? '1' : metodoActual === 'cafecito' ? '2' : metodoActual === 'por_unidad' ? '4' : '3'
             );
 
             // Si tocó "Cancelar", no hacemos nada
@@ -1460,7 +1460,7 @@
 
             let nuevoMetodo;
             if (metodoTexto.trim() === '1') {
-                nuevoMetodo = 'gratis';
+                nuevoMetodo = 'gratis_o_cafecito';
             } else if (metodoTexto.trim() === '2') {
                 nuevoMetodo = 'cafecito';
             } else if (metodoTexto.trim() === '3') {
@@ -1480,7 +1480,9 @@
             } else {
                 // Si eligió Cafecito o Precio Fijo, pedimos el monto
                 const nuevoPrecioTexto = prompt(
-                    nuevoMetodo === 'precio_fijo'
+                    nuevoMetodo === 'gratis_o_cafecito'
+                        ? 'Valor sugerido del cafecito solidario (la descarga sigue siendo gratuita):'
+                        : nuevoMetodo === 'precio_fijo'
                         ? 'Precio fijo del álbum:'
                         : nuevoMetodo === 'por_unidad'
                         ? 'Precio por cada fotografía (ARS):'
