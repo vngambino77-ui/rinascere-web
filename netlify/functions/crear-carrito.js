@@ -28,7 +28,7 @@ exports.handler=async event=>{
  // Exigir un inventario privado de archivos originales con identificadores únicos de Drive.
  const originales=Array.isArray(data.fotosOriginales)?data.fotosOriginales:[];
  if(!originales.length)return send(409,{error:'Falta configurar el inventario privado de fotos originales de Drive para este álbum'});
- const previews=[privateAlbum.exists?privateAlbum.data().fotosPreview:null,legacyAlbum.exists?legacyAlbum.data().fotosPreview:null,(await db.collection('albumesPublicos').doc(albumId).get()).data()?.fotosPreview].find(v=>Array.isArray(v)&&v.length>0)||[];
+ const previews=[...(data.metodo==='por_unidad'?[(await db.collection('albumesPublicos').doc(albumId).get()).data()?.fotosPreview]:[]),privateAlbum.exists?privateAlbum.data().fotosPreview:null,legacyAlbum.exists?legacyAlbum.data().fotosPreview:null].find(v=>Array.isArray(v)&&v.length>0)||[];
  const fotos=body.fotos;
  if(!Array.isArray(fotos)||fotos.length>500||fotos.length===0)return send(400,{error:'Seleccioná fotos del álbum'});
  const indices=fotos.map(Number);
