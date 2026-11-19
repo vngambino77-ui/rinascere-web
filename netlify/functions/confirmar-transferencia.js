@@ -14,6 +14,8 @@ exports.handler = async (event) => {
     const code = crypto.randomBytes(16).toString('hex').toUpperCase();
     const codeRef = db.collection('codigosAcceso').doc(code);
     const eventRef = db.collection('eventos').doc();
+    const fotoToken = crypto.randomBytes(32).toString('hex');
+    const fotoTokenRef = db.collection('descargasFotos').doc(crypto.createHash('sha256').update(fotoToken).digest('hex'));
     const counterRef = db.collection('contadores').doc('general');
 
     const result = await db.runTransaction(async (tx) => {
@@ -23,11 +25,18 @@ exports.handler = async (event) => {
       if (t.estado !== 'pendiente') throw new Error('NOT_PENDING');
       // Un carrito de fotos individuales nunca puede generar acceso al álbum completo.
       // Requiere primero un mecanismo de entrega limitada a las fotos adquiridas.
-      if (t.tipo === 'carrito_fotos') throw new Error('PHOTO_DELIVERY_PENDING');
+      if (t.tipo === 'carrito_fotos') {
+        if(!Array.isArray(t.fotosDriveIds)||!t.fotosDriveIds.length||t.fotosDriveIds.length>500)throw new Error('PHOTO_DELIVERY_PENDING');
+        const albumRef=db.collection('albumesPrivados').doc(t.albumId);
+        const albumSnap=await tx.get(albumRef);
+        const album=albumSnap.exists?albumSnap.data():null;
+        if(!album||album.entregaIndividualActiva!==true||!album.driveFolderId||!process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON)throw new Error('PHOTO_DELIVERY_PENDING');
+        tx.create(fotoTokenRef,{albumId:t.albumId,fotosDriveIds:t.fotosDriveIds,transferenciaId:id,vence:admin.firestore.Timestamp.fromMillis(Date.now()+24*60*60*1000)});
+      }
       if (!t.albumId || !Number.isFinite(Number(t.monto)) || Number(t.monto) <= 0) throw new Error('INVALID_TRANSFER');
 
       const counterSnap = await tx.get(counterRef);
-      tx.create(codeRef, {
+      if(t.tipo!=='carrito_fotos')tx.create(codeRef, {
         albumId: t.albumId,
         pack: t.pack || null,
         usado: false,
@@ -35,7 +44,7 @@ exports.handler = async (event) => {
       });
       tx.update(transferRef, {
         estado: 'confirmada',
-        codigoAcceso: code,
+        ...(t.tipo==='carrito_fotos'?{}:{codigoAcceso:code}),
         confirmadoEn: admin.firestore.FieldValue.serverTimestamp()
       });
       tx.create(eventRef, {
@@ -56,18 +65,21 @@ exports.handler = async (event) => {
         actualizado: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       return {
+        carrito: t.tipo==='carrito_fotos',cantidadFotos:t.cantidadFotos||0,
         albumId: t.albumId,
         pack: t.pack || null,
+        carrito: t.tipo==='carrito_fotos',
+        cantidadFotos: t.cantidadFotos || 0,
         comprador: t.comprador || '',
         contacto: t.contacto || ''
       };
     });
 
     const baseUrl = process.env.DEPLOY_PRIME_URL || process.env.URL || 'https://rinascere-web.netlify.app';
-    let link = `${baseUrl}/evento.html?album=${encodeURIComponent(result.albumId)}&codigo=${code}`;
+    let link = result.carrito ? `${baseUrl}/mis-fotos.html?token=${fotoToken}&cantidad=${result.cantidadFotos}` : `${baseUrl}/evento.html?album=${encodeURIComponent(result.albumId)}&codigo=${code}`;
     if (result.pack) link += `&pack=${encodeURIComponent(result.pack)}`;
     const message = `¡Hola ${result.comprador}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-    return send(200, { ok: true, codigo, link, mensaje: message, contacto: result.contacto });
+    return send(200, { ok: true, ...(result.carrito?{}:{codigo:code}), link, mensaje: message, contacto: result.contacto });
   } catch (error) {
     if (error.message === 'UNAUTHORIZED') return send(401, { error: 'Sesión no autorizada' });
     if (error.message === 'FORBIDDEN') return send(403, { error: 'No tenés permisos para confirmar pagos' });
