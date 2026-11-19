@@ -10,6 +10,18 @@ async function accessToken(){
  if(!response.ok)throw Error('DRIVE_AUTH_FAILED');return (await response.json()).access_token;
 }
 async function fileMetadata(id,token){const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,size,parents,trashed&supportsAllDrives=true',{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw Error('DRIVE_FILE_UNAVAILABLE');return r.json();}
+async function streamFile(id,folderId){
+ if(!/^[\\w-]{10,200}$/.test(id)||!/^[\\w-]{10,200}$/.test(folderId))throw Error('DRIVE_INVALID_ID');
+ const token=await accessToken(),meta=await fileMetadata(id,token);
+ if(meta.trashed||!Array.isArray(meta.parents)||!meta.parents.includes(folderId)||meta.mimeType?.startsWith('application/vnd.google-apps.'))throw Error('DRIVE_FILE_UNAVAILABLE');
+ const size=Number(meta.size);
+ // Netlify streamed functions are limited to 20 MB. Leave a margin for provider overhead.
+ if(!Number.isSafeInteger(size)||size<1||size>19000000)throw Error('DRIVE_FILE_TOO_LARGE');
+ const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media&supportsAllDrives=true',{headers:{Authorization:'Bearer '+token}});
+ if(!response.ok||!response.body)throw Error('DRIVE_FILE_UNAVAILABLE');
+ const filename=String(meta.name||'fotografia.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120);
+ return {body:response.body,name:filename,mime:meta.mimeType||'application/octet-stream',size};
+}
 async function downloadFile(id,folderId){
  if(!/^[\w-]{10,200}$/.test(id)||!/^[\w-]{10,200}$/.test(folderId))throw Error('DRIVE_INVALID_ID');
  const token=await accessToken(),meta=await fileMetadata(id,token);
@@ -22,4 +34,4 @@ async function downloadFile(id,folderId){
  if(bytes.length!==size)throw Error('DRIVE_FILE_UNAVAILABLE');
  return {bytes,name:String(meta.name||'fotografia.jpg').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120),mime:meta.mimeType||'application/octet-stream'};
 }
-module.exports={downloadFile};
+module.exports={downloadFile,streamFile};
