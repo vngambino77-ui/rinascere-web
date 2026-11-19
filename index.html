@@ -370,7 +370,7 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     <button type="button" data-categoria="eventos">🎉 Eventos</button>
     <button type="button" data-categoria="deportes">🏃 Deportes</button>
     <button type="button" data-categoria="retratos">📸 Retratos personalizados</button>
-    <select id="filtro-disciplina" aria-label="Disciplina deportiva" style="display:none;padding:10px;border-radius:8px"><option value="todos">Todos los deportes</option><option value="running">Running</option><option value="trail">Trail</option><option value="otros">Otros deportes</option></select>
+    <select id="filtro-disciplina" aria-label="Disciplina deportiva" style="display:none;padding:10px;border-radius:8px"><option value="todos">Todos los deportes</option><option value="running">Running</option><option value="trail">Trail</option><option value="otros">Ciclismo, triatlón y otros deportes</option></select>
   </div>
   <style>#filtros-rinascere button{border:1px solid #b9913a;background:#191919;color:#e9c66a;border-radius:9px;padding:11px 13px;cursor:pointer}#filtros-rinascere button[aria-pressed=true]{background:#d4af37;color:#141414;font-weight:bold}#filtro-disciplina{background:#191919;color:#f5e7c8;border:1px solid #b9913a}</style>
   <div class="grilla-albumes" id="grilla"></div>
@@ -656,9 +656,14 @@ async function cargarAlbumes() {
     const filtrados=albumesDisponibles.filter(a=>{
       if(categoriaActiva!=='todos'&&categoriaDe(a)!==categoriaActiva)return false;
       if(categoriaActiva==='deportes'&&disciplinaActiva!=='todos'){
-        const d=String(a.disciplina||a.nombre||'').toLowerCase();
-        if(disciplinaActiva==='otros')return !/running|trail/.test(d);
-        return d.includes(disciplinaActiva);
+        const d=[a.disciplina,a.nombre,a.tipoCategoria].filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+        const esRunning=/running|maraton|media maraton|carrera|atletismo|pedestre|10k|5k|21k|42k/.test(d);
+        const esTrail=/trail|montana|trekking|senderismo/.test(d);
+        const esOtros=/biciclet|ciclismo|cicloturismo|bici|triatlon|duatlon|natacion|futbol|basquet|voley|rugby|hockey|patin|gimnasia|tenis/.test(d);
+        if(disciplinaActiva==='running')return esRunning&&!esTrail&&!esOtros;
+        if(disciplinaActiva==='trail')return esTrail;
+        if(disciplinaActiva==='otros')return esOtros||(!esRunning&&!esTrail);
+        return true;
       }
       return true;
     });
