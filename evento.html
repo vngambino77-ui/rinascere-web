@@ -766,7 +766,11 @@
             const precio = Number(albumData.precioFoto);
             const subtotal = cantidad * precio;
             document.getElementById('carritoResumen').textContent = cantidad
-                ? '🛒 ' + cantidad + ' fotografía(s) · Precio unitario: 
+                ? '🛒 ' + cantidad + ' fotografía(s) · Precio unitario: $' + precio.toLocaleString('es-AR') +
+                  ' · Subtotal: $' + subtotal.toLocaleString('es-AR') +
+                  (cantidad >= 15 ? ' · Las promociones disponibles se calculan al confirmar el pedido.' : '')
+                : 'Seleccioná las fotografías que quieras comprar tocando sus casillas.';
+        }
 
         function mostrarMuestra() {
             if (!Array.isArray(albumData.fotosPreview) || albumData.fotosPreview.length === 0) {
