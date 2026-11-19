@@ -366,7 +366,6 @@ firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     <p>Hacé clic en el evento para ver y comprar tus fotos</p>
   </div>
   <div id="filtros-rinascere" style="display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:20px auto 26px;max-width:1000px">
-    <button type="button" data-categoria="todos">Todas las fotografías</button>
     <button type="button" data-categoria="espectaculos">🎤 Festivales y espectáculos</button>
     <button type="button" data-categoria="eventos">🎉 Eventos</button>
     <button type="button" data-categoria="deportes">🏃 Deportes</button>
@@ -619,7 +618,7 @@ async function cargarAlbumes() {
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
 
-  let albumesDisponibles=[],categoriaActiva='todos',disciplinaActiva='todos';
+  let albumesDisponibles=[],categoriaActiva='espectaculos',disciplinaActiva='todos';
   const categoriaDe=a=>{
     const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -651,7 +650,7 @@ async function cargarAlbumes() {
     filtrarAlbumes();
   }));
   document.getElementById('filtro-disciplina').addEventListener('change',e=>{disciplinaActiva=e.target.value;filtrarAlbumes()});
-  document.querySelector('#filtros-rinascere [data-categoria=todos]').setAttribute('aria-pressed','true');
+  document.querySelector('#filtros-rinascere [data-categoria=espectaculos]').setAttribute('aria-pressed','true');
 
   function renderAlbumes(lista) {
     const g = document.getElementById('grilla');
