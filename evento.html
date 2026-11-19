@@ -786,7 +786,7 @@
                 item.style.cssText = 'display:block;position:relative;cursor:pointer';
                 item.setAttribute('title','Seleccionar fotografía '+(index+1));
                 const img = document.createElement('img');
-                img.src = conMarcaDeAgua(url);
+                img.src = url.startsWith('/.netlify/functions/preview-foto?') ? url : conMarcaDeAgua(url);
                 img.loading = 'lazy';
                 img.alt = 'Fotografía ' + (index + 1);
                 img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #d4af37';
