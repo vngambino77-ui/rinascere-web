@@ -770,7 +770,7 @@
             const galeria = document.getElementById('galeriaMuestra');
             galeria.innerHTML = '';
             fotosCarrito.clear();
-            const habilitado = Number.isSafeInteger(Number(albumData.precioFoto)) && Number(albumData.precioFoto) > 0;
+            const habilitado = Number.isSafeInteger(Number(albumData.precioFoto)) && Number(albumData.precioFoto) > 0 && albumData.entregaIndividualActiva === true;
             albumData.fotosPreview.forEach((url, index) => {
                 const item = document.createElement('label');
                 item.style.cssText = 'display:block;position:relative;cursor:pointer';
