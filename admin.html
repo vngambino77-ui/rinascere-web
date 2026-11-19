@@ -1088,6 +1088,27 @@
             alert('Sección actualizada: '+nombres[numero-1]);await cargarAlbumes();
           }catch(e){alert('Error: '+e.message)}
         };
+        window.editarNombreAlbum = async function(id, nombreCodificado) {
+            const actual = decodeURIComponent(nombreCodificado);
+            const nuevo = prompt('Nuevo nombre visible del álbum:', actual);
+            if (nuevo === null) return;
+            const nombre = nuevo.trim().replace(/\\s+/g, ' ');
+            if (nombre === actual) return;
+            if (nombre.length < 2 || nombre.length > 120) { alert('El nombre debe tener entre 2 y 120 caracteres.'); return; }
+            if (!confirm('¿Guardar el nuevo nombre «' + nombre + '»? No se cambiarán las fotos ni la carpeta de Drive.')) return;
+            try {
+                const token = await tokenAdmin();
+                const res = await fetch('/.netlify/functions/renombrar-album', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+                    body: JSON.stringify({albumId:id,nombre})
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw Error(data.error || 'No se pudo guardar');
+                alert('Nombre actualizado correctamente.');
+                await cargarAlbumes();
+            } catch (error) { alert('Error al renombrar: ' + error.message); }
+        };
         async function cargarAlbumes() {
             const tbody = document.getElementById('albumesTableBody');
             
@@ -1125,6 +1146,7 @@
                         </td>
                         <td>
                             <button onclick="configurarPublicacionAlbum('${id}', ${Number.isFinite(Number(album.ordenPublicacion)) ? Number(album.ordenPublicacion) : 9999}, ${album.esPublico === true})" style="background:#065f46;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📌 ${album.esPublico === true ? 'Publicado' : 'Oculto'} · Orden ${album.ordenPublicacion ?? '—'}</button>
+                            <button onclick="editarNombreAlbum('${id}', '${encodeURIComponent(album.nombre || '')}')" style="background:#0e7490;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">✏️ Nombre</button>
                             <button onclick="cambiarCategoriaAlbum('${id}', '${album.categoria || ''}')" style="background:#6d28d9;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📂 Sección</button>
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
