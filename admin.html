@@ -246,6 +246,24 @@
             <p id="estadoSolicitudesEspeciales" role="status" aria-live="polite" style="margin:10px 0;color:#e4c775"></p>
             <div id="listaSolicitudesEspeciales" style="display:grid;gap:12px"></div>
         </section>
+        <section id="configCarritoIndividual" style="margin:30px 0;padding:22px;background:#202020;border:1px solid #d4af37;border-radius:12px">
+          <h2 style="color:#d4af37">Carrito individual · Configuración de álbum</h2>
+          <p style="color:#ddd;margin:10px 0">Configurá el precio JPG, la carpeta privada de originales y su correspondencia con las vistas previas. El carrito permanece desactivado hasta que lo habilites.</p>
+          <form id="formConfigCarrito" style="display:grid;gap:12px;max-width:750px">
+            <label>ID del álbum (copialo desde la tabla de álbumes)</label>
+            <input id="configAlbumId" required placeholder="ID de álbum" style="padding:12px">
+            <button type="button" class="btn btn-secondary" id="cargarConfigCarrito">Cargar configuración</button>
+            <label>Precio por fotografía JPG (ARS)</label>
+            <input id="configPrecioFoto" type="number" min="0" max="100000000" step="1" value="0" required style="padding:12px">
+            <label>ID de carpeta privada de Google Drive (no el enlace completo)</label>
+            <input id="configDriveFolder" placeholder="ID de carpeta de originales" style="padding:12px">
+            <label>Vinculación de originales: una línea por foto, en orden de la galería. Pegá solo el ID del archivo de Drive por línea.</label>
+            <textarea id="configOriginales" rows="7" placeholder="ID de original 1&#10;ID de original 2&#10;ID de original 3" style="padding:12px"></textarea>
+            <label style="display:flex;align-items:center;gap:10px"><input id="configActivarCarrito" type="checkbox"> Habilitar carrito JPG individual en este álbum</label>
+            <button class="btn btn-secondary" type="submit" id="guardarConfigCarrito">Guardar configuración</button>
+            <p id="estadoConfigCarrito" role="status" aria-live="polite" style="color:#e4c775"></p>
+          </form>
+        </section>
         <!-- Estadísticas -->
         <div class="stats">
             <div class="stat-card">
@@ -514,6 +532,34 @@
             }catch(e){estado.textContent='No se pudieron cargar las solicitudes: '+e.message}
         }
         document.getElementById('actualizarSolicitudesEspeciales').addEventListener('click',cargarSolicitudesEspeciales);
+        let configCantidadPreviews=0;
+        document.getElementById('cargarConfigCarrito').addEventListener('click',async()=>{
+          const estado=document.getElementById('estadoConfigCarrito'),id=document.getElementById('configAlbumId').value.trim();
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/configurar-carrito-album?albumId='+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token}});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo cargar');
+            configCantidadPreviews=d.cantidadPreviews;
+            document.getElementById('configPrecioFoto').value=d.precioFoto;
+            document.getElementById('configDriveFolder').value=d.driveFolderId;
+            document.getElementById('configOriginales').value=(d.fotosOriginales||[]).sort((a,b)=>a.previewIndex-b.previewIndex).map(x=>x.driveFileId).join('\n');
+            document.getElementById('configActivarCarrito').checked=d.entregaIndividualActiva;
+            estado.textContent='Álbum: '+d.nombre+' · '+d.cantidadPreviews+' fotos de muestra · '+(d.fotosOriginales||[]).length+' originales vinculados.';
+          }catch(e){estado.textContent=e.message}
+        });
+        document.getElementById('formConfigCarrito').addEventListener('submit',async e=>{
+          e.preventDefault();
+          const estado=document.getElementById('estadoConfigCarrito'),btn=document.getElementById('guardarConfigCarrito');
+          if(!configCantidadPreviews){estado.textContent='Primero cargá el álbum para verificar la cantidad de fotografías.';return}
+          const ids=document.getElementById('configOriginales').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+          if(ids.length>configCantidadPreviews){estado.textContent='Hay más originales que fotografías en la galería.';return}
+          const payload={albumId:document.getElementById('configAlbumId').value.trim(),precioFoto:Number(document.getElementById('configPrecioFoto').value),driveFolderId:document.getElementById('configDriveFolder').value.trim(),entregaIndividualActiva:document.getElementById('configActivarCarrito').checked,fotosOriginales:ids.map((driveFileId,previewIndex)=>({previewIndex,driveFileId}))};
+          btn.disabled=true;
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/configurar-carrito-album',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo guardar');
+            estado.textContent='Configuración guardada: '+d.cantidadVinculada+' originales · Carrito '+(d.entregaIndividualActiva?'habilitado':'desactivado')+'.';
+          }catch(error){estado.textContent=error.message}finally{btn.disabled=false}
+        });
         // Comprobar también la autorización en el servidor antes de mostrar el panel.
         let panelInicializado = false;
         onAuthStateChanged(auth, async (user) => {
