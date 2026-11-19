@@ -24,7 +24,7 @@ exports.handler=async event=>{
  const data=album.data();
  // No aceptar pagos de fotos individuales hasta disponer de entrega segura por archivo.
  if(data.entregaIndividualActiva!==true)return send(409,{error:'La compra individual aún no está habilitada para este álbum. Podés comprar los packs disponibles o solicitar información.'});
- if(!data.driveLink)return send(409,{error:'Este álbum no tiene entrega configurada'});
+ if(!data.driveFolderId)return send(409,{error:'Este álbum no tiene carpeta privada de originales configurada'});
  // Una carpeta compartida no sirve para entregar compras individuales: expone fotos no compradas.
  // Exigir un inventario privado de archivos originales con identificadores únicos de Drive.
  const originales=Array.isArray(data.fotosOriginales)?data.fotosOriginales:[];
