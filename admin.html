@@ -260,7 +260,8 @@
             <label>Vinculación de originales: una línea por foto, en orden de la galería. Pegá solo el ID del archivo de Drive por línea.</label>
             <textarea id="configOriginales" rows="7" placeholder="ID de original 1&#10;ID de original 2&#10;ID de original 3" style="padding:12px"></textarea>
             <label style="display:flex;align-items:center;gap:10px"><input id="configActivarCarrito" type="checkbox"> Habilitar carrito JPG individual en este álbum</label>
-            <button class="btn btn-secondary" type="submit" id="guardarConfigCarrito">Guardar configuración</button>
+            <button class="btn btn-secondary" type="button" id="sincronizarDriveCarrito">🔄 Importar fotos de Drive y activar carrito</button>
+            <button class="btn btn-secondary" type="submit" id="guardarConfigCarrito">Guardar configuración manual</button>
             <p id="estadoConfigCarrito" role="status" aria-live="polite" style="color:#e4c775"></p>
           </form>
         </section>
@@ -561,6 +562,21 @@
             document.getElementById('configActivarCarrito').checked=d.entregaIndividualActiva;
             estado.textContent='Álbum: '+d.nombre+' · '+d.cantidadPreviews+' fotos de muestra · '+(d.fotosOriginales||[]).length+' originales vinculados.';
           }catch(e){estado.textContent=e.message}
+        });
+        document.getElementById('sincronizarDriveCarrito').addEventListener('click',async()=>{
+          const estado=document.getElementById('estadoConfigCarrito'),btn=document.getElementById('sincronizarDriveCarrito');
+          const albumId=document.getElementById('configAlbumId').value.trim(),driveFolderId=document.getElementById('configDriveFolder').value.trim();
+          if(!albumId||!driveFolderId){estado.textContent='Indicá el ID del álbum y de la carpeta de Google Drive.';return}
+          if(!confirm('¿Sincronizar la carpeta de Drive y activar la venta por unidad? Comprobá que la carpeta tenga únicamente las fotos que querés vender.'))return;
+          btn.disabled=true;estado.textContent='Importando inventario privado de Drive…';
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/sincronizar-galeria-drive',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId,driveFolderId})});
+            const data=await res.json();if(!res.ok)throw Error(data.error||'Error de sincronización');
+            configCantidadPreviews=data.cantidadFotos;
+            document.getElementById('configActivarCarrito').checked=true;
+            estado.textContent='✓ '+data.cantidadFotos+' fotos vinculadas. Abrí el álbum y comprobá que todas las muestras tengan marca de agua.';
+          }catch(e){estado.textContent='No se activó el carrito: '+e.message}
+          finally{btn.disabled=false}
         });
         document.getElementById('formConfigCarrito').addEventListener('submit',async e=>{
           e.preventDefault();
