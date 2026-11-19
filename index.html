@@ -733,23 +733,60 @@ async function cargarAlbumes() {
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
     try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(30).get();
-      const fotos = snap.docs.map(d => d.data()).filter(f => typeof f.url === 'string' && f.url.trim());
-      if (!fotos.length) {
+      // El administrador actual guarda fotos en /portfolio; el anterior en config/portfolio.
+      // Consultar ambos evita perder fotografías durante la transición.
+      const [actuales, anterior] = await Promise.allSettled([
+        db.collection('portfolio').get(),
+        db.collection('config').doc('portfolio').get()
+      ]);
+      const fotos = [];
+      if (actuales.status === 'fulfilled') {
+        actuales.value.docs.forEach(doc => {
+          const f = doc.data();
+          if (typeof f.url === 'string' && f.url.trim()) fotos.push({
+            url:f.url.trim(), titulo:f.titulo || '', orden:Number(f.orden) || 9999,
+            id:doc.id
+          });
+        });
+      }
+      fotos.sort((a,b)=>a.orden-b.orden || a.id.localeCompare(b.id));
+      if (anterior.status === 'fulfilled' && anterior.value.exists) {
+        const urls = anterior.value.data().portfolioUrls || [];
+        if (Array.isArray(urls)) urls.forEach((url,i)=>{
+          if (typeof url === 'string' && url.trim()) fotos.push({
+            url:url.trim(), titulo:'', orden:10000+i, id:'anterior-'+i
+          });
+        });
+      }
+      const vistas = new Set();
+      const unicas = fotos.filter(f => {
+        const clave = f.url.split('?')[0];
+        if (vistas.has(clave)) return false;
+        vistas.add(clave); return true;
+      });
+      if (!unicas.length) {
         grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777">Próximamente, una selección de mis trabajos.</p>';
         return;
       }
       grilla.replaceChildren();
-      fotos.forEach(f => {
-        const url = /^https?:\\/\\//i.test(f.url) ? f.url
+      unicas.forEach((f,i) => {
+        const url = /^https?:\/\//i.test(f.url) ? f.url
           : 'https://res.cloudinary.com/' + CLOUD + '/image/upload/w_900,q_85,f_auto/' + encodeURI(f.url);
         const figura = document.createElement('figure');
         figura.className = 'portfolio-foto';
         const img = document.createElement('img');
         img.src = url;
-        img.alt = String(f.titulo || 'Fotografía del portfolio');
+        img.alt = String(f.titulo || 'Fotografía del portfolio ' + (i+1));
         img.loading = 'lazy';
         img.decoding = 'async';
+        img.onerror = () => {
+          figura.style.background = '#f1eee9';
+          img.style.display = 'none';
+          const aviso = document.createElement('span');
+          aviso.textContent = 'Fotografía ' + (i+1) + ' no disponible';
+          aviso.style.cssText = 'font-size:.8rem;color:#777;text-align:center;padding:15px';
+          figura.appendChild(aviso);
+        };
         figura.appendChild(img);
         if (f.titulo) {
           const pie = document.createElement('figcaption');
