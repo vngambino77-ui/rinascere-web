@@ -206,6 +206,15 @@
             </div>
 
             <div class="form-group">
+                <label for="albumCategoria">Sección donde aparecerá el álbum *</label>
+                <select id="albumCategoria" required>
+                    <option value="espectaculos">🎤 Festivales y espectáculos</option>
+                    <option value="eventos">🎉 Eventos</option>
+                    <option value="deportes">🏃 Deportes</option>
+                    <option value="retratos">📸 Retratos personalizados</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="albumNombre">Nombre del Álbum *</label>
                 <input type="text" id="albumNombre" required placeholder="Ej: Maratón Nocturna 2024">
             </div>
@@ -305,6 +314,8 @@
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
+        const categoriaInicial=new URLSearchParams(window.location.search).get('categoria');
+        if(['espectaculos','eventos','deportes','retratos'].includes(categoriaInicial))document.getElementById('albumCategoria').value=categoriaInicial;
         const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
@@ -450,6 +461,7 @@
                 mostrarMensaje('success', 'Creando álbum...');
 
                 const albumData = {
+                    categoria: document.getElementById('albumCategoria').value,
                     nombre,
                     fecha,
                     descripcion: descripcion || '',
