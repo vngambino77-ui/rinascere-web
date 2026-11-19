@@ -278,6 +278,26 @@
                     Estas son algunas fotos del álbum, con marca de agua. Al comprar accedés a todas, sin marca de agua.
                 </p>
                 <div id="galeriaMuestra" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 35px;"></div>
+                <!-- Solicitud especial separada del carrito: JPG sigue siendo la compra predeterminada -->
+                <details id="solicitudEspecial" style="border:1px solid #695b37;border-radius:12px;padding:16px;margin:0 0 28px;background:#211f1b">
+                    <summary style="cursor:pointer;color:#e2c478;font-weight:650;line-height:1.7">¿Necesitás esta fotografía en alta resolución especial?<span style="display:block;color:#ccc;font-size:.88rem;font-weight:400">Banners · Gigantografías · Impresión profesional</span></summary>
+                    <div style="padding-top:15px">
+                        <p style="color:#ddd;line-height:1.6;margin-bottom:15px">La compra habitual entrega fotografías JPG. Si necesitás un archivo especial para impresión, solicitá una cotización aparte. No se agrega al carrito ni se cobra automáticamente; Rinascere confirmará precio, formato y entrega privada.</p>
+                        <form id="formSolicitudEspecial" style="display:grid;gap:12px">
+                            <label for="especialFoto">Fotografía del álbum</label>
+                            <select id="especialFoto" required style="padding:12px;border-radius:6px"><option value="">Elegí una fotografía</option></select>
+                            <label for="especialUso">Destino de impresión</label>
+                            <select id="especialUso" required style="padding:12px;border-radius:6px"><option value="Banner">Banner</option><option value="Gigantografía">Gigantografía</option><option value="Impresión profesional">Impresión profesional</option><option value="Otro">Otro</option></select>
+                            <input id="especialMedidas" placeholder="Medidas aproximadas (ej.: 2 × 1 m)" maxlength="80" style="padding:12px;border-radius:6px">
+                            <select id="especialFormato" style="padding:12px;border-radius:6px"><option value="A definir">Formato a definir</option><option value="TIFF">TIFF</option><option value="JPG alta calidad">JPG de máxima calidad</option><option value="Otro">Otro formato</option></select>
+                            <input id="especialNombre" placeholder="Nombre y apellido" required minlength="2" maxlength="120" style="padding:12px;border-radius:6px">
+                            <input id="especialContacto" placeholder="WhatsApp o correo" required minlength="5" maxlength="160" style="padding:12px;border-radius:6px">
+                            <textarea id="especialObservaciones" placeholder="Observaciones para la imprenta (opcional)" maxlength="700" rows="3" style="padding:12px;border-radius:6px"></textarea>
+                            <button type="submit" class="btn-pay" id="especialEnviar" style="margin:0">Solicitar cotización privada</button>
+                            <p id="especialEstado" role="status" aria-live="polite" style="color:#e2c478"></p>
+                        </form>
+                    </div>
+                </details>
                 <div id="carritoFotos" style="display:none;background:#222;border:1px solid #d4af37;border-radius:12px;padding:18px;margin:20px 0 35px">
                     <h3 style="color:#d4af37;margin:0 0 8px">🛒 Tu carrito de fotografías</h3>
                     <p id="carritoResumen" style="color:#ddd"></p>
@@ -774,6 +794,9 @@
                 galeria.appendChild(item);
             });
             actualizarCarritoFotos();
+            const selector=document.getElementById('especialFoto');
+            selector.replaceChildren(new Option('Elegí una fotografía',''));
+            albumData.fotosPreview.forEach((_,i)=>selector.add(new Option('Fotografía '+String(i+1).padStart(3,'0'),String(i))));
         }
 
         document.getElementById('formCarritoFotos').addEventListener('submit', async (event) => {
@@ -1038,6 +1061,21 @@
             const mensaje = `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
+
+        document.getElementById('formSolicitudEspecial').addEventListener('submit',async event=>{
+            event.preventDefault();
+            const btn=document.getElementById('especialEnviar'),estado=document.getElementById('especialEstado');
+            btn.disabled=true;estado.textContent='Registrando solicitud...';
+            try{
+                const payload={albumId,foto:Number(document.getElementById('especialFoto').value),uso:document.getElementById('especialUso').value,medidas:document.getElementById('especialMedidas').value,formato:document.getElementById('especialFormato').value,nombre:document.getElementById('especialNombre').value,contacto:document.getElementById('especialContacto').value,observaciones:document.getElementById('especialObservaciones').value};
+                if(document.getElementById('especialFoto').value==='')throw Error('Elegí la fotografía a solicitar.');
+                const res=await fetch('/.netlify/functions/solicitar-archivo-especial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+                const data=await res.json();if(!res.ok)throw Error(data.error||'No se pudo registrar');
+                estado.textContent='Solicitud '+data.solicitudId+' registrada. Te confirmaremos presupuesto y entrega por privado. No realices pagos todavía.';
+                document.getElementById('formSolicitudEspecial').reset();
+            }catch(error){estado.textContent=error.message||'No se pudo registrar la solicitud.'}
+            finally{btn.disabled=false}
+        });
 
         function showError(message) {
             document.getElementById('loading').style.display = 'none';
