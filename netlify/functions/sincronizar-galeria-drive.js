@@ -15,14 +15,15 @@ exports.handler=async event=>{
   const precio=Number(snap.data().precioFoto);
   if(!Number.isSafeInteger(precio)||precio<1)return send(409,{error:'Primero configurá el precio por unidad en el administrador'});
   const fotosOriginales=files.map((f,previewIndex)=>({previewIndex,driveFileId:f.id}));
-  const fotosPreview=files.map((_,i)=>'/.netlify/functions/preview-foto?albumId='+encodeURIComponent(albumId)+'&foto='+i);
+  // Nunca publicar originales de Drive como vistas previas sin marca de agua.
+  // Vincular el inventario ahora y dejar la activación pendiente hasta disponer de muestras protegidas.
   const stamp=admin.firestore.FieldValue.serverTimestamp();
   const batch=db.batch();
-  batch.set(base,{metodo:'por_unidad',precioFoto:precio,cantidadFotos:files.length,entregaIndividualActiva:true,actualizadoEn:stamp},{merge:true});
+  batch.set(base,{metodo:'por_unidad',precioFoto:precio,cantidadFotos:files.length,entregaIndividualActiva:false,actualizadoEn:stamp},{merge:true});
   batch.set(db.collection('albumesPrivados').doc(albumId),{driveFolderId:folderId,precioFoto:precio,fotosOriginales,entregaIndividualActiva:true,actualizadoEn:stamp},{merge:true});
   batch.set(db.collection('albumesPublicos').doc(albumId),{metodo:'por_unidad',precioFoto:precio,fotosPreview,cantidadFotos:files.length,entregaIndividualActiva:true,actualizadoEn:stamp},{merge:true});
   await batch.commit();
-  return send(200,{ok:true,cantidadFotos:files.length,mensaje:'Galería vinculada automáticamente. Comprobá las muestras antes de publicar.'});
+  return send(200,{ok:true,cantidadFotos:files.length,mensaje:'Originales vinculados automáticamente. La venta permanece desactivada hasta generar muestras protegidas.'});
  }catch(e){
   if(e.message==='UNAUTHORIZED')return send(401,{error:'Iniciá sesión'});
   if(e.message==='FORBIDDEN')return send(403,{error:'No autorizado'});
