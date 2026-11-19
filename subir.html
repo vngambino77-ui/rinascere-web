@@ -316,6 +316,13 @@
 
         const categoriaInicial=new URLSearchParams(window.location.search).get('categoria');
         if(['espectaculos','eventos','deportes','retratos'].includes(categoriaInicial))document.getElementById('albumCategoria').value=categoriaInicial;
+        fetch('/.netlify/functions/secciones-galeria').then(r=>r.ok?r.json():{secciones:[]}).then(data=>{
+          const selector=document.getElementById('albumCategoria');
+          for(const sec of (data.secciones||[])){
+            const opt=document.createElement('option');opt.value=sec.slug;opt.textContent=sec.nombre;selector.appendChild(opt);
+          }
+          if(categoriaInicial&&Array.from(selector.options).some(o=>o.value===categoriaInicial))selector.value=categoriaInicial;
+        }).catch(e=>console.warn('No se pudieron cargar las secciones adicionales',e));
         const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
