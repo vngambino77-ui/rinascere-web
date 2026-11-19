@@ -23,9 +23,10 @@ exports.handler = async (event) => {
       ...(publicSnap.exists ? publicSnap.data() : {})
     };
     const previews = [
-      publicSnap.exists ? publicSnap.data().fotosPreview : null,
+      ...(data.metodo === 'por_unidad' ? [publicSnap.exists ? publicSnap.data().fotosPreview : null] : []),
       privateSnap.exists ? privateSnap.data().fotosPreview : null,
-      legacySnap.exists ? legacySnap.data().fotosPreview : null
+      legacySnap.exists ? legacySnap.data().fotosPreview : null,
+      publicSnap.exists ? publicSnap.data().fotosPreview : null
     ].find(v => Array.isArray(v) && v.length > 0);
     data.fotosPreview = Array.isArray(previews) ? previews.filter(url => typeof url === 'string' && (/^https:\/\//i.test(url) || url.startsWith('/.netlify/functions/preview-foto?'))) : [];
     if (privateSnap.exists) {
