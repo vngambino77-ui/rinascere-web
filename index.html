@@ -618,6 +618,26 @@ async function cargarAlbumes() {
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
 
+  async function cargarSeccionesExtra(){
+    try{
+      const r=await fetch('/.netlify/functions/secciones-galeria');
+      if(!r.ok)return;
+      const data=await r.json(),barra=document.getElementById('filtros-rinascere');
+      const selector=barra.querySelector('#filtro-disciplina');
+      for(const sec of (data.secciones||[])){
+        if(!/^[a-z0-9-]{2,50}$/.test(sec.slug))continue;
+        const boton=document.createElement('button');
+        boton.type='button';boton.dataset.categoria=sec.slug;boton.textContent=sec.nombre;
+        boton.addEventListener('click',()=>{
+          categoriaActiva=sec.slug;
+          barra.querySelectorAll('[data-categoria]').forEach(x=>x.setAttribute('aria-pressed',String(x===boton)));
+          selector.style.display='none';filtrarAlbumes();
+        });
+        barra.insertBefore(boton,selector);
+      }
+    }catch(e){console.warn('Secciones adicionales no disponibles',e)}
+  }
+  cargarSeccionesExtra();
   let albumesDisponibles=[],categoriaActiva='espectaculos',disciplinaActiva='todos';
   const categoriaDe=a=>{
     const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -629,6 +649,7 @@ async function cargarAlbumes() {
     if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
     if(/deport|running|trail|carrera|maraton|ciclismo/.test(explicit)||(!explicit&&/running|trail|carrera|maraton|ciclismo/.test(texto)))return 'deportes';
     if(/retrato|sesion|session|book|personalizad/.test(explicit)||(!explicit&&/retrato|sesion|session|book|personalizad/.test(texto)))return 'retratos';
+    if(explicit)return explicit;
     return 'eventos';
   };
   function filtrarAlbumes(){
