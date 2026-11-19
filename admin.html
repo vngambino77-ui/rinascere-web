@@ -1503,8 +1503,7 @@
                     if (!Number.isSafeInteger(nuevoPrecio) || nuevoPrecio > 100000000) { alert('Ingresá un precio entero válido en pesos.'); return; }
                     datosActualizados.precioFoto = nuevoPrecio;
                     datosActualizados.precio = 0;
-                    // La habilitación de venta requiere verificar originales privados desde el formulario de carrito.
-                    datosActualizados.entregaIndividualActiva = false;
+                    // Conservar el estado de habilitación ya validado; no desactivar ventas al editar el precio.
                 } else {
                     datosActualizados.precio = nuevoPrecio;
                 }
