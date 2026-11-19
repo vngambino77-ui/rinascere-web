@@ -615,7 +615,7 @@ async function cargarAlbumes() {
     const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
     if(/deport|running|trail|carrera|maraton|ciclismo/.test(explicit)||(!explicit&&/running|trail|carrera|maraton|ciclismo/.test(texto)))return 'deportes';
-    if(/retrato|sesion|book|personalizad/.test(explicit)||(!explicit&&/retrato|sesion|book/.test(texto)))return 'retratos';
+    if(/retrato|sesion|session|book|personalizad/.test(explicit)||/luciernaga\\s+de\\s+charly/.test(texto)||(!explicit&&/retrato|sesion|session|book|personalizad/.test(texto)))return 'retratos';
     return 'eventos';
   };
   function filtrarAlbumes(){
