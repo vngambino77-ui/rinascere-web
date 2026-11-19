@@ -239,6 +239,13 @@
     </div>
 
     <div class="container">
+        <section id="panelSolicitudesEspeciales" style="margin:30px 0;padding:22px;background:#202020;border:1px solid #d4af37;border-radius:12px">
+            <h2 style="color:#d4af37">Solicitudes especiales <span id="cantidadSolicitudesEspeciales" style="font-size:.8em"></span></h2>
+            <p style="color:#ccc;margin:10px 0">Banners · Gigantografías · Impresión profesional. Son cotizaciones privadas, no compras del carrito.</p>
+            <button class="btn btn-secondary" type="button" id="actualizarSolicitudesEspeciales">Actualizar solicitudes</button>
+            <p id="estadoSolicitudesEspeciales" role="status" aria-live="polite" style="margin:10px 0;color:#e4c775"></p>
+            <div id="listaSolicitudesEspeciales" style="display:grid;gap:12px"></div>
+        </section>
         <!-- Estadísticas -->
         <div class="stats">
             <div class="stat-card">
@@ -480,6 +487,33 @@
             return result;
         }
 
+        async function cargarSolicitudesEspeciales(){
+            const estado=document.getElementById('estadoSolicitudesEspeciales'),lista=document.getElementById('listaSolicitudesEspeciales');
+            try{
+                const token=await tokenAdmin();
+                const res=await fetch('/.netlify/functions/admin-solicitudes-especiales',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+                const data=await res.json();if(!res.ok)throw Error(data.error||'No se pudieron cargar');
+                lista.replaceChildren();
+                const solicitudes=data.solicitudes||[],pendientes=solicitudes.filter(s=>s.estado==='pendiente_cotizacion');
+                document.getElementById('cantidadSolicitudesEspeciales').textContent='('+pendientes.length+' nuevas)';
+                estado.textContent=pendientes.length?'Tenés '+pendientes.length+' solicitud(es) pendientes de cotización.':'No hay solicitudes nuevas.';
+                for(const s of solicitudes){
+                    const card=document.createElement('article');card.style.cssText='border:1px solid #65572c;padding:14px;border-radius:8px;background:#292929;color:#eee';
+                    const title=document.createElement('strong');title.textContent=(s.uso||'Solicitud')+' · Foto '+(Number(s.foto)+1)+' · '+(s.nombre||'Cliente');card.append(title);
+                    const info=document.createElement('p');info.style.margin='9px 0';info.textContent='Contacto: '+(s.contacto||'—')+' | Medidas: '+(s.medidas||'a definir')+' | Formato: '+(s.formato||'a definir')+' | Álbum: '+(s.albumId||'—')+' | Fecha: '+(s.fecha?new Date(s.fecha).toLocaleString('es-AR'):'sin fecha');card.append(info);
+                    if(s.observaciones){const obs=document.createElement('p');obs.textContent='Observaciones: '+s.observaciones;card.append(obs)}
+                    const controls=document.createElement('div');controls.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center';
+                    const select=document.createElement('select');select.setAttribute('aria-label','Estado de solicitud');select.style.cssText='padding:8px;border-radius:5px';
+                    for(const [value,label] of [['pendiente_cotizacion','Pendiente'],['contactado','Contactado'],['presupuestado','Presupuestado'],['finalizado','Finalizado'],['cancelado','Cancelado']]){const opt=new Option(label,value);select.add(opt)}
+                    select.value=s.estado||'pendiente_cotizacion';
+                    const save=document.createElement('button');save.type='button';save.className='btn btn-secondary';save.textContent='Guardar estado';
+                    save.addEventListener('click',async()=>{save.disabled=true;try{const token=await tokenAdmin(),res=await fetch('/.netlify/functions/admin-solicitudes-especiales',{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({id:s.id,estado:select.value})});if(!res.ok)throw Error((await res.json()).error||'Error al guardar');await cargarSolicitudesEspeciales()}catch(e){alert(e.message)}finally{save.disabled=false}});
+                    const copy=document.createElement('button');copy.type='button';copy.className='btn btn-secondary';copy.textContent='Copiar contacto';copy.addEventListener('click',()=>navigator.clipboard.writeText(s.contacto||''));
+                    controls.append(select,save,copy);card.append(controls);lista.append(card);
+                }
+            }catch(e){estado.textContent='No se pudieron cargar las solicitudes: '+e.message}
+        }
+        document.getElementById('actualizarSolicitudesEspeciales').addEventListener('click',cargarSolicitudesEspeciales);
         // Comprobar también la autorización en el servidor antes de mostrar el panel.
         let panelInicializado = false;
         onAuthStateChanged(auth, async (user) => {
@@ -498,6 +532,7 @@
                 document.body.style.visibility = 'visible';
                 if (panelInicializado) return;
                 panelInicializado = true;
+                await cargarSolicitudesEspeciales();
                 await cargarEstadisticas();
                 await cargarAlbumes();
                 escucharContadores();
