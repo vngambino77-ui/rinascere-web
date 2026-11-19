@@ -611,14 +611,15 @@ async function cargarAlbumes() {
 
   let albumesDisponibles=[],categoriaActiva='todos',disciplinaActiva='todos';
   const categoriaDe=a=>{
-    if(String(a.id||'')==='exACC5umMzj4SnaG7Vsr')return 'eventos';
-    if(String(a.id||'')==='XGWGo4VIq50iZSr5EzLt')return 'deportes';
-    if(/luciernaga\s+de\s+charly/.test(texto))return 'retratos'; // Prioridad sobre 'show' o 'festival' en nombre // Escuela de cadetes Duatrol 90 años // SARABI FEST 2026: clasificación solicitada
     const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    // Excepciones solicitadas: no modificar los demás álbumes.
+    if(String(a.id||'')==='exACC5umMzj4SnaG7Vsr')return 'eventos';
+    if(String(a.id||'')==='XGWGo4VIq50iZSr5EzLt')return 'deportes';
+    if(/luciernaga\s+de\s+charly/.test(texto))return 'retratos';
     if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
     if(/deport|running|trail|carrera|maraton|ciclismo/.test(explicit)||(!explicit&&/running|trail|carrera|maraton|ciclismo/.test(texto)))return 'deportes';
-    if(/retrato|sesion|session|book|personalizad/.test(explicit)||/luciernaga\\s+de\\s+charly/.test(texto)||(!explicit&&/retrato|sesion|session|book|personalizad/.test(texto)))return 'retratos';
+    if(/retrato|sesion|session|book|personalizad/.test(explicit)||(!explicit&&/retrato|sesion|session|book|personalizad/.test(texto)))return 'retratos';
     return 'eventos';
   };
   function filtrarAlbumes(){
