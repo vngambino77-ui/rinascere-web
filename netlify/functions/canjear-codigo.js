@@ -25,6 +25,8 @@ exports.handler = async (event) => {
       if (!albumSnap.exists) albumSnap = await tx.get(db.collection('albumes').doc(albumId));
       if (!albumSnap.exists) throw new Error('ALBUM_NOT_FOUND');
       const album = albumSnap.data();
+      // Los códigos de packs limitados nunca pueden entregar la carpeta completa.
+      if (data.pack && album.metodo === 'pack_fotos') throw new Error('PACK_DELIVERY_PENDING');
       if (!album.driveLink) throw new Error('NO_DRIVE_LINK');
       const vence = admin.firestore.Timestamp.fromMillis(Date.now() + 30 * 60 * 1000);
       tx.create(downloadRef, {
@@ -45,6 +47,7 @@ exports.handler = async (event) => {
       downloadUrl: `/.netlify/functions/descargar-album?token=${downloadToken}`
     });
   } catch (error) {
+    if (error.message === 'PACK_DELIVERY_PENDING') return send(409, { error: 'Este pack requiere una entrega individual segura. Contactá a Rinascere.' });
     if (error.message === 'INVALID_CODE') return send(403, { error: 'Este enlace ya fue usado o no es válido' });
     if (error.message === 'ALBUM_NOT_FOUND' || error.message === 'NO_DRIVE_LINK') return send(404, { error: 'No se pudo encontrar el acceso al álbum' });
     console.error('canjear-codigo:', error);
