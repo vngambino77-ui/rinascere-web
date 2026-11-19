@@ -58,4 +58,16 @@ async function thumbnailFile(id,folderId){
  for await(const chunk of r.body){total+=chunk.length;if(total>4000000)throw Error('DRIVE_PREVIEW_TOO_LARGE');chunks.push(chunk);}
  return {bytes:Buffer.concat(chunks),mime:meta.mimeType};
 }
-module.exports={downloadFile,streamFile,listFolderImages,thumbnailFile};
+async function previewSource(id,folderId){
+ const token=await accessToken();
+ const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,mimeType,parents,trashed,thumbnailLink&supportsAllDrives=true',{headers:{Authorization:'Bearer '+token}});
+ if(!r.ok)throw Error('DRIVE_FILE_UNAVAILABLE');
+ const meta=await r.json();
+ if(meta.trashed||!meta.parents?.includes(folderId)||!meta.mimeType?.startsWith('image/')||!meta.thumbnailLink)throw Error('DRIVE_PREVIEW_UNAVAILABLE');
+ const thumb=await fetch(meta.thumbnailLink,{headers:{Authorization:'Bearer '+token}});
+ if(!thumb.ok||!thumb.body)throw Error('DRIVE_PREVIEW_UNAVAILABLE');
+ const chunks=[];let size=0;
+ for await(const chunk of thumb.body){size+=chunk.length;if(size>3000000)throw Error('DRIVE_PREVIEW_TOO_LARGE');chunks.push(chunk);}
+ return Buffer.concat(chunks);
+}
+module.exports={downloadFile,streamFile,listFolderImages,thumbnailFile,previewSource};
