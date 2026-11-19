@@ -11,7 +11,7 @@ async function accessToken(){
 }
 async function fileMetadata(id,token){const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,size,parents,trashed&supportsAllDrives=true',{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw Error('DRIVE_FILE_UNAVAILABLE');return r.json();}
 async function streamFile(id,folderId){
- if(!/^[\\w-]{10,200}$/.test(id)||!/^[\\w-]{10,200}$/.test(folderId))throw Error('DRIVE_INVALID_ID');
+ if(!/^[\w-]{10,200}$/.test(id)||!/^[\w-]{10,200}$/.test(folderId))throw Error('DRIVE_INVALID_ID');
  const token=await accessToken(),meta=await fileMetadata(id,token);
  if(meta.trashed||!Array.isArray(meta.parents)||!meta.parents.includes(folderId)||meta.mimeType?.startsWith('application/vnd.google-apps.'))throw Error('DRIVE_FILE_UNAVAILABLE');
  const size=Number(meta.size);
