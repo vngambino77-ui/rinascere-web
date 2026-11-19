@@ -1053,6 +1053,21 @@
             }
         }
 
+        window.cambiarCategoriaAlbum=async function(id,actual){
+          const opciones=['espectaculos','eventos','deportes','retratos'];
+          const nombres=['Festivales y espectáculos','Eventos','Deportes','Retratos personalizados'];
+          const elegido=prompt('Elegí la sección del álbum:\\n1 - Festivales y espectáculos\\n2 - Eventos\\n3 - Deportes\\n4 - Retratos personalizados',String(Math.max(0,opciones.indexOf(actual))+1));
+          if(elegido===null)return;
+          const numero=Number(elegido);
+          if(!Number.isInteger(numero)||numero<1||numero>4){alert('Ingresá un número entre 1 y 4');return}
+          if(!confirm('¿Cambiar este álbum a '+nombres[numero-1]+'? Las fotografías de Drive no se moverán.'))return;
+          try{
+            const token=await tokenAdmin();
+            const res=await fetch('/.netlify/functions/cambiar-categoria-album',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId:id,categoria:opciones[numero-1]})});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo guardar');
+            alert('Sección actualizada: '+nombres[numero-1]);await cargarAlbumes();
+          }catch(e){alert('Error: '+e.message)}
+        };
         async function cargarAlbumes() {
             const tbody = document.getElementById('albumesTableBody');
             
@@ -1090,6 +1105,7 @@
                         </td>
                         <td>
                             <button onclick="configurarPublicacionAlbum('${id}', ${Number.isFinite(Number(album.ordenPublicacion)) ? Number(album.ordenPublicacion) : 9999}, ${album.esPublico === true})" style="background:#065f46;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📌 ${album.esPublico === true ? 'Publicado' : 'Oculto'} · Orden ${album.ordenPublicacion ?? '—'}</button>
+                            <button onclick="cambiarCategoriaAlbum('${id}', '${album.categoria || ''}')" style="background:#6d28d9;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📂 Sección</button>
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
                             </button>
