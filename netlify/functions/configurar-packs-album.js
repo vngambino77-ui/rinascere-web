@@ -29,13 +29,16 @@ exports.handler=async event=>{
    ids.add(packId);packs.push({id:packId,nombre,cantidad,precio,tipo:p.tipo,activo:p.activo});
   }
   const cambio={precioFoto,modalidadPacks:modalidad,packsCarrito:packs,actualizadoEn:admin.firestore.FieldValue.serverTimestamp()};
-  await ref.update(cambio);
-  // La API de compra lee la colección privada; sincronizar catálogo sin exponer originales.
+  // Guardar los precios de todas las colecciones de forma atómica.
+  // Si una escritura falla, no queda un precio distinto entre admin y carrito.
   const privado=db.collection('albumesPrivados').doc(id);
-  await privado.set(cambio,{merge:true});
   const publico=db.collection('albumesPublicos').doc(id);
   const pub=await publico.get();
-  if(pub.exists)await publico.set({precioFoto,modalidadPacks:modalidad,packsCarrito:packs},{merge:true});
+  const batch=db.batch();
+  batch.update(ref,cambio);
+  batch.set(privado,cambio,{merge:true});
+  if(pub.exists)batch.set(publico,{precioFoto,modalidadPacks:modalidad,packsCarrito:packs},{merge:true});
+  await batch.commit();
   return send(200,{ok:true,albumId:id,precioFoto,modalidad,packs});
  }catch(e){
   if(e.message==='UNAUTHORIZED')return send(401,{error:'Iniciá sesión'});
