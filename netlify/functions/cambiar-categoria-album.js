@@ -6,7 +6,11 @@ exports.handler=async event=>{
  try{
   await requireAdmin(event);
   const body=readBody(event)||{},id=String(body.albumId||''),categoria=String(body.categoria||'');
-  if(!/^[A-Za-z0-9_-]{5,150}$/.test(id)||!categories.includes(categoria))return send(400,{error:'Álbum o categoría inválidos'});
+  if(!/^[A-Za-z0-9_-]{5,150}$/.test(id))return send(400,{error:'Álbum inválido'});
+  if(!categories.includes(categoria)){
+    const extra=await getFirebaseAdmin().db.collection('configuracion').doc('seccionesGaleria').get();
+    if(!extra.exists||!(extra.data().secciones||[]).some(s=>s.slug===categoria))return send(400,{error:'Categoría inválida'});
+  }
   const {db,admin}=getFirebaseAdmin(),base=db.collection('albumes').doc(id),snap=await base.get();
   if(!snap.exists)return send(404,{error:'Álbum no encontrado'});
   const batch=db.batch(),change={categoria,actualizadoEn:admin.firestore.FieldValue.serverTimestamp()};
