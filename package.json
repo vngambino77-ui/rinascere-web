@@ -12,6 +12,6 @@
   },
   "scripts": {
     "build": "node scripts/generate-firebase-config.js",
-    "test": "node tests/precios-rinascere.test.js"
+    "test": "node tests/precios-rinascere.test.js && node tests/circuito-aislado.test.js"
   }
 }

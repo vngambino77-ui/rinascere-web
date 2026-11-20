@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Carrito de fotografías | Rinascere</title>
+<style>body{margin:0;background:#171717;color:#f4efe7;font:16px system-ui}main{max-width:1100px;margin:auto;padding:24px}h1,h2{color:#d4af37}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}.tile{background:#272727;border:2px solid #555;border-radius:12px;padding:8px;cursor:pointer}.tile[aria-pressed=true]{border-color:#d4af37}.tile img{width:100%;aspect-ratio:1;object-fit:contain}.panel{margin-top:25px;border:1px solid #666;border-radius:12px;padding:20px}label{display:block;margin:12px 0}input{display:block;padding:12px;width:min(100%,450px);box-sizing:border-box}button{background:#d4af37;color:#171717;border:0;padding:12px 20px;border-radius:8px;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}#mensaje{white-space:pre-wrap}small{color:#bbb}</style></head>
+<body><main><h1>Rinascere Fotografías</h1><h2 id="titulo">Seleccioná tus fotografías</h2><p>Elegí las fotos que querés comprar. Las imágenes son muestras con marca de agua.</p><div id="galeria" class="grid"></div><section class="panel"><h2>Tu carrito</h2><p id="resumen">Cargando catálogo…</p><p id="promociones"></p><small>El total definitivo se calcula en el servidor antes de registrar el pedido. Ninguna descarga se habilita antes de la confirmación administrativa del pago.</small><form id="form"><label>Nombre y apellido<input id="comprador" minlength="2" maxlength="120" autocomplete="name" required></label><label>Correo o WhatsApp<input id="contacto" minlength="5" maxlength="160" required></label><button id="enviar" disabled>Registrar pedido por transferencia</button></form><p id="mensaje" role="status" aria-live="polite"></p></section></main>
+<script>
+'use strict';
+const albumId=new URLSearchParams(location.search).get('album')||'';
+const galeria=document.getElementById('galeria'),resumen=document.getElementById('resumen'),mensaje=document.getElementById('mensaje'),enviar=document.getElementById('enviar'),seleccion=new Set();
+let catalogo;
+function actualizar(){const n=seleccion.size;resumen.textContent=n+' fotografía(s) seleccionada(s). Subtotal sin promociones: $'+(n*catalogo.precioUnitario).toLocaleString('es-AR')+' ARS';enviar.disabled=!n;}
+async function iniciar(){
+ if(!/^[A-Za-z0-9_-]{5,150}$/.test(albumId))throw Error('Enlace de álbum inválido');
+ const response=await fetch('/.netlify/functions/catalogo-carrito?albumId='+encodeURIComponent(albumId),{cache:'no-store'});
+ const data=await response.json();if(!response.ok)throw Error(data.error||'Catálogo no disponible');
+ catalogo=data;document.getElementById('titulo').textContent=data.nombre;
+ document.getElementById('promociones').textContent=data.packs.length?'Promociones disponibles: '+data.packs.map(p=>p.nombre+' ('+p.cantidad+' fotos, $'+p.precio.toLocaleString('es-AR')+')').join(' · '):'Precio por foto: $'+data.precioUnitario.toLocaleString('es-AR');
+ for(const i of data.fotos){const b=document.createElement('button');b.type='button';b.className='tile';b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Seleccionar fotografía '+(i+1));const img=document.createElement('img');img.loading='lazy';img.alt='Muestra '+(i+1);img.src='/.netlify/functions/preview-foto?albumId='+encodeURIComponent(albumId)+'&foto='+i;const t=document.createElement('span');t.textContent='Foto '+(i+1);b.append(img,t);b.onclick=()=>{if(seleccion.has(i))seleccion.delete(i);else seleccion.add(i);b.setAttribute('aria-pressed',String(seleccion.has(i)));actualizar()};galeria.append(b)}
+ actualizar();
+}
+document.getElementById('form').addEventListener('submit',async e=>{
+ e.preventDefault();if(!catalogo||!seleccion.size)return;enviar.disabled=true;mensaje.textContent='Registrando pedido…';
+ try{const r=await fetch('/.netlify/functions/crear-carrito',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({albumId,comprador:document.getElementById('comprador').value,contacto:document.getElementById('contacto').value,fotos:[...seleccion].sort((a,b)=>a-b)})});const d=await r.json();if(!r.ok)throw Error(d.error||'No se pudo registrar el pedido');mensaje.textContent='Pedido '+d.transferenciaId+' registrado como PENDIENTE. Importe definitivo: $'+d.monto.toLocaleString('es-AR')+' ARS. Alias informado: '+d.alias+'. Transferí únicamente después de comprobar los datos de la cuenta receptora. La entrega se habilita cuando la administradora verifica la acreditación.';document.getElementById('form').hidden=true;
+ }catch(err){mensaje.textContent=err.message;enviar.disabled=false;}
+});
+iniciar().catch(err=>{resumen.textContent=err.message;mensaje.textContent='Este álbum todavía no está listo para ventas individuales.'});
+</script></body></html>

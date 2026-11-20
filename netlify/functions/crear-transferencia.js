@@ -75,7 +75,7 @@ exports.handler = async (event) => {
       fecha: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return send(201, { ok: true, transferenciaId: ref.id, estado: 'pendiente', monto, alias: 'verogfotos.nx.arg' });
+    return send(201, { ok: true, transferenciaId: ref.id, estado: 'pendiente', monto, alias: 'verogam.fotos.mp' });
   } catch (error) {
     console.error('crear-transferencia:', error);
     return send(500, { error: 'No se pudo registrar la solicitud de transferencia' });
