@@ -42,6 +42,6 @@ exports.handler=async event=>{
  const modalidad=data.modalidadPacks||'automatico';
  const calculo=calcularCarrito({fotos:indices.map(i=>'foto_'+i),precioUnitario:unitario,packs,modalidad});
  const pedido=await db.collection('transferencias').add({albumId,albumNombre:clean(data.nombre,180),comprador,contacto,metodo:'transferencia',tipo:'carrito_fotos',fotosIndices:indices, fotosDriveIds:originalesSeleccionados.map(f=>f.driveFileId), cantidadFotos:indices.length,monto:calculo.total,desglose:calculo.desglose,estado:'pendiente',fecha:admin.firestore.FieldValue.serverTimestamp()});
- return send(201,{ok:true,transferenciaId:pedido.id,estado:'pendiente',monto:calculo.total,alias:'verogfotos.nx.arg',cantidadFotos:indices.length});
+ return send(201,{ok:true,transferenciaId:pedido.id,estado:'pendiente',monto:calculo.total,alias:'verogam.fotos.mp',cantidadFotos:indices.length});
  }catch(error){console.error('crear-carrito:',error);return send(500,{error:'No se pudo registrar el carrito'});}
 };
