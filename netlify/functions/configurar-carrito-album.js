@@ -14,7 +14,10 @@ exports.handler=async event=>{
   const previews=Array.isArray(data.fotosPreview)?data.fotosPreview:[];
   const originales=Array.isArray(data.fotosOriginales)?data.fotosOriginales:[];
   if(event.httpMethod==='GET')return send(200,{ok:true,albumId:id,nombre:data.nombre||'',precioFoto:Number(data.precioFoto)||0,entregaIndividualActiva:data.entregaIndividualActiva===true,driveFolderId:data.driveFolderId||'',cantidadPreviews:previews.length,fotosOriginales:originales,configurado:originales.length===previews.length&&previews.length>0});
-  const precio=Number(body.precioFoto),folder=String(body.driveFolderId||'').trim(),active=body.entregaIndividualActiva===true,items=body.fotosOriginales;
+  const precio=body.precioFoto===undefined?Number(data.precioFoto||0):Number(body.precioFoto);
+  const folder=body.driveFolderId===undefined?String(data.driveFolderId||'').trim():String(body.driveFolderId||'').trim();
+  const active=body.entregaIndividualActiva===undefined?data.entregaIndividualActiva===true:body.entregaIndividualActiva===true;
+  const items=body.fotosOriginales===undefined?originales:body.fotosOriginales;
   if(!Number.isSafeInteger(precio)||precio<0||precio>100000000)return send(400,{error:'Precio inválido'});
   if(folder&&!validDrive(folder))return send(400,{error:'ID de carpeta Drive inválido'});
   if(!Array.isArray(items)||items.length>500)return send(400,{error:'Inventario inválido'});
