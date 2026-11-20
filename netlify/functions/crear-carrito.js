@@ -31,7 +31,7 @@ exports.handler=async event=>{
  const previews=[...(data.metodo==='por_unidad'?[(await db.collection('albumesPublicos').doc(albumId).get()).data()?.fotosPreview]:[]),privateAlbum.exists?privateAlbum.data().fotosPreview:null,legacyAlbum.exists?legacyAlbum.data().fotosPreview:null].find(v=>Array.isArray(v)&&v.length>0)||[];
  const fotos=body.fotos;
  if(!Array.isArray(fotos)||fotos.length>500||fotos.length===0)return send(400,{error:'Seleccioná fotos del álbum'});
- const indices=fotos.map(Number);
+ const indices=fotos.map(v=>typeof v==='number'?v:NaN);
  if(indices.some(i=>!Number.isSafeInteger(i)||i<0||i>=previews.length)||new Set(indices).size!==indices.length)return send(400,{error:'Selección inválida'});
  const originalesSeleccionados=indices.map(i=>originales.find(f=>f&&f.previewIndex===i));
  if(originalesSeleccionados.some(f=>!f||typeof f.driveFileId!=='string'||!/^[A-Za-z0-9_-]{10,200}$/.test(f.driveFileId)))return send(409,{error:'No están vinculados los originales de Drive para todas las fotos seleccionadas'});
