@@ -22,7 +22,7 @@ exports.handler=async event=>{
    const packId=String(p.id||'').trim(),nombre=String(p.nombre||'').trim();
    const cantidad=Number(p.cantidad),precio=Number(p.precio);
    if(!/^[A-Za-z0-9_-]{5,80}$/.test(packId)||ids.has(packId)||nombre.length<1||nombre.length>80||
-      !Number.isSafeInteger(cantidad)||cantidad<2||cantidad>500||
+      !Number.isSafeInteger(cantidad)||cantidad<5||cantidad>500||
       !Number.isSafeInteger(precio)||precio<1||precio>100000000||
       !['exacto','hasta'].includes(p.tipo)||typeof p.activo!=='boolean')
     return send(400,{error:'Datos de pack inválidos o duplicados'});
