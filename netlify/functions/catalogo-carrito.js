@@ -7,10 +7,10 @@ exports.handler=async event=>{
  try{
   const {db}=getFirebaseAdmin();
   const [privateSnap,publicSnap]=await Promise.all([db.collection('albumesPrivados').doc(id).get(),db.collection('albumesPublicos').doc(id).get()]);
-  if(!privateSnap.exists||!publicSnap.exists)return send(404,{error:'Catálogo no disponible'});
-  const d=privateSnap.data(),p=publicSnap.data();
+  if(!privateSnap.exists)return send(404,{error:'Catálogo no disponible'});
+  const d=privateSnap.data(),p=publicSnap.exists?publicSnap.data():{};
   if(d.entregaIndividualActiva!==true||!d.driveFolderId||!Number.isSafeInteger(Number(d.precioFoto))||Number(d.precioFoto)<=0)return send(409,{error:'La venta individual aún no está habilitada'});
-  const previews=Array.isArray(p.fotosPreview)?p.fotosPreview:[];
+  const previews=Array.isArray(p.fotosPreview)?p.fotosPreview:(Array.isArray(d.fotosPreview)?d.fotosPreview:[]);
   const inventory=Array.isArray(d.fotosOriginales)?d.fotosOriginales:[];
   const linked=new Set(inventory.filter(f=>Number.isSafeInteger(f?.previewIndex)&&/^[A-Za-z0-9_-]{10,200}$/.test(f?.driveFileId||'')).map(f=>f.previewIndex));
   const fotos=previews.map((_,i)=>i).filter(i=>linked.has(i)).slice(0,500);
