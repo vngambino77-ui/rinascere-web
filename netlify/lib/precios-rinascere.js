@@ -16,10 +16,10 @@ function calcularCarrito({ fotos, precioUnitario, packs = [], cupon = null, moda
   const n = ids.length;
   const modo = modalidad;
   if (!['exacto','hasta','automatico'].includes(modo)) throw new TypeError('Modalidad inválida');
-  // Las promociones son opcionales y solo se habilitan a partir de 15 fotos seleccionadas.
-  const activos = (n >= 15 ? packs : []).filter(p => p.activo !== false).map(p => {
+  // Las promociones son opcionales y solo se habilitan a partir de 5 fotos seleccionadas.
+  const activos = (n >= 5 ? packs : []).filter(p => p.activo !== false).map(p => {
     const cantidad = Number(p.cantidad), precio = pesos(p.precio);
-    if (!Number.isSafeInteger(cantidad) || cantidad < 15 || cantidad > 500 || precio <= 0)
+    if (!Number.isSafeInteger(cantidad) || cantidad < 5 || cantidad > 500 || precio <= 0)
       throw new TypeError('Pack inválido');
     const tipo = p.tipo || 'exacto';
     if (!['exacto','hasta'].includes(tipo)) throw new TypeError('Tipo de pack inválido');
@@ -35,7 +35,7 @@ function calcularCarrito({ fotos, precioUnitario, packs = [], cupon = null, moda
         : modo === 'hasta' ? (i === n && n <= p.cantidad ? [n] : [])
         : p.tipo === 'hasta' ? Array.from({length:Math.min(i,p.cantidad)},(_,k)=>k+1) : [p.cantidad];
       for(const cantidad of tamaños) {
-        if(i<cantidad || i<15) continue;
+        if(i<cantidad || i<5) continue;
         const prev=dp[i-cantidad],total=prev.total+p.precio;
         if(total<dp[i].total) dp[i]={total,desglose:[...prev.desglose,{nombre:p.nombre,cantidad,precio:p.precio}]};
       }
