@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid == 'wuvIwxJyUcYvtgxRDZkYw7qo97v2';
+    }
+
+    // Colección histórica: solo el administrador puede leerla.
+    // El backend migra sus datos y conserva aquí compatibilidad administrativa.
+    match /albumes/{albumId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Solo metadatos sin enlaces de Drive; el sitio público consulta únicamente
+    // álbumes visibles. Firestore evalúa la regla por documento.
+    match /albumesPublicos/{albumId} {
+      allow read: if resource.data.esPublico == true;
+      allow write: if isAdmin();
+    }
+
+    // Enlaces de Drive y datos privados: solo accesibles mediante Netlify Functions.
+    match /albumesPrivados/{albumId} {
+      allow read, write: if false;
+    }
+
+    match /limitesTransferencias/{id} {
+      allow read, write: if false;
+    }
+
+    match /descargasAutorizadas/{token} {
+      allow read, write: if false;
+    }
+
+    // Las solicitudes se crean exclusivamente desde crear-transferencia.js.
+    // Firebase Admin SDK del servidor no está sujeto a estas reglas.
+    match /transferencias/{transferenciaId} {
+      allow read: if isAdmin();
+      allow create: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    // Los códigos nunca se leen ni se consumen desde el navegador.
+    match /codigosAcceso/{codigo} {
+      allow read, write: if false;
+    }
+
+    match /eventos/{eventoId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'tipo', 'albumId', 'albumNombre', 'fecha', 'origen',
+          'estado', 'nombre', 'instagram', 'dondeMeViste'
+        ]) &&
+        request.resource.data.tipo in ['visita', 'click_drive', 'registro_gratis']
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    match /contadores/{contadorId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || (
+        contadorId == 'general' &&
+        request.resource.data.keys().hasOnly(['visitas', 'actualizado']) &&
+        request.resource.data.visitas == 1
+      );
+      allow update: if isAdmin() || (
+        contadorId == 'general' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visitas', 'actualizado']) &&
+        request.resource.data.visitas == resource.data.visitas + 1
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /configuracion/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /config/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /portfolio/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /testimonios/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Cualquier colección no contemplada queda cerrada por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

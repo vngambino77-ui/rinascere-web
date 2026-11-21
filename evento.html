@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evento - Ph. Rinascere</title>
@@ -274,9 +275,40 @@
                     📸 Muestra de Fotos
                 </h2>
                 <p style="color: #ccc; text-align: center; margin-bottom: 20px;">
-                    Estas son algunas fotos del álbum, con marca de agua. Al comprar accedés a todas, sin marca de agua.
+                    Seleccioná las fotografías que quieras comprar. Las muestras llevan marca de agua; después de confirmar el pago recibirás solamente las fotografías adquiridas, sin marca.
                 </p>
                 <div id="galeriaMuestra" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 35px;"></div>
+                <!-- Solicitud especial separada del carrito: JPG sigue siendo la compra predeterminada -->
+                <details id="solicitudEspecial" style="border:1px solid #695b37;border-radius:12px;padding:16px;margin:0 0 28px;background:#211f1b">
+                    <summary style="cursor:pointer;color:#e2c478;font-weight:650;line-height:1.7">¿Necesitás esta fotografía en alta resolución especial?<span style="display:block;color:#ccc;font-size:.88rem;font-weight:400">Banners · Gigantografías · Impresión profesional</span></summary>
+                    <div style="padding-top:15px">
+                        <p style="color:#ddd;line-height:1.6;margin-bottom:15px">La compra habitual entrega fotografías JPG. Si necesitás un archivo especial para impresión, solicitá una cotización aparte. No se agrega al carrito ni se cobra automáticamente; Rinascere confirmará precio, formato y entrega privada.</p>
+                        <form id="formSolicitudEspecial" style="display:grid;gap:12px">
+                            <label for="especialFoto">Fotografía del álbum</label>
+                            <select id="especialFoto" required style="padding:12px;border-radius:6px"><option value="">Elegí una fotografía</option></select>
+                            <label for="especialUso">Destino de impresión</label>
+                            <select id="especialUso" required style="padding:12px;border-radius:6px"><option value="Banner">Banner</option><option value="Gigantografía">Gigantografía</option><option value="Impresión profesional">Impresión profesional</option><option value="Otro">Otro</option></select>
+                            <input id="especialMedidas" placeholder="Medidas aproximadas (ej.: 2 × 1 m)" maxlength="80" style="padding:12px;border-radius:6px">
+                            <select id="especialFormato" style="padding:12px;border-radius:6px"><option value="A definir">Formato a definir</option><option value="TIFF">TIFF</option><option value="JPG alta calidad">JPG de máxima calidad</option><option value="Otro">Otro formato</option></select>
+                            <input id="especialNombre" placeholder="Nombre y apellido" required minlength="2" maxlength="120" style="padding:12px;border-radius:6px">
+                            <input id="especialContacto" placeholder="WhatsApp o correo" required minlength="5" maxlength="160" style="padding:12px;border-radius:6px">
+                            <textarea id="especialObservaciones" placeholder="Observaciones para la imprenta (opcional)" maxlength="700" rows="3" style="padding:12px;border-radius:6px"></textarea>
+                            <button type="submit" class="btn-pay" id="especialEnviar" style="margin:0">Solicitar cotización privada</button>
+                            <p id="especialEstado" role="status" aria-live="polite" style="color:#e2c478"></p>
+                        </form>
+                    </div>
+                </details>
+                <div id="carritoFotos" style="display:none;background:#222;border:1px solid #d4af37;border-radius:12px;padding:18px;margin:20px 0 35px">
+                    <h3 style="color:#d4af37;margin:0 0 8px">🛒 Tu carrito de fotografías</h3>
+                    <p id="carritoResumen" style="color:#ddd"></p>
+                    <p style="color:#aaa;font-size:.9rem">El total y los descuentos por cantidad se calculan en el servidor. La transferencia se verifica antes de habilitar la entrega.</p>
+                    <form id="formCarritoFotos" style="display:grid;gap:10px">
+                        <input id="carritoNombre" aria-label="Nombre y apellido" placeholder="Nombre y apellido" required maxlength="120" style="padding:12px;border-radius:6px">
+                        <input id="carritoContacto" aria-label="WhatsApp o correo" placeholder="WhatsApp o correo" required maxlength="160" style="padding:12px;border-radius:6px">
+                        <button class="btn-pay" type="submit" id="btnCarritoFotos">Solicitar compra por transferencia</button>
+                    </form>
+                    <p id="carritoEstado" role="status" aria-live="polite" style="color:#d4af37;margin-top:12px"></p>
+                </div>
             </div>
 
             <!-- ELEGIR Y PAGAR PACK (ANTES DE PAGAR) -->
@@ -284,7 +316,7 @@
                 <div class="info-box">
                     <h3>📦 ¿Cómo funciona?</h3>
                     <p>1. Elegí el pack que mejor se adapte a vos</p>
-                    <p>2. Pagá de forma segura con Mercado Pago</p>
+                    <p>2. Transferí a Naranja X, alias verogfotos.nx.arg</p>
                     <p>3. Accedé a todas las fotos del álbum en Google Drive</p>
                     <p>4. Descargá las fotos que más te gusten (según tu pack)</p>
                 </div>
@@ -296,13 +328,13 @@
                 
                 <div style="text-align: center;">
                     <button class="btn-pay" id="btnPagar" onclick="pagarPack()" disabled>
-                        💳 Pagar Pack Seleccionado
+                        💵 Pagar por transferencia
                     </button>
                     <button class="btn-pay" id="btnTransferenciaPack" onclick="iniciarTransferencia()" disabled style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                         💵 Pagar por Transferencia
                     </button>
                 </div>
-                <p class="confianza">🔒 Pago por transferencia a Naranja X · Alias: verogfotos.nx.arg · La descarga se habilita después de confirmar la acreditación</p>
+                <p class="confianza">💵 Transferencia directa a Naranja X · Alias: verogfotos.nx.arg · Sin pasarelas de pago</p>
             </div>
 
             <!-- ACCESO DESPUÉS DE PAGAR -->
@@ -341,10 +373,11 @@
             <!-- TRANSFERENCIA BANCARIA (COMPARTIDA ENTRE PACK Y PRECIO FIJO) -->
             <div id="seccionTransferencia" style="display: none;">
                 <div class="info-box" style="text-align: center;">
-                    <h3>💵 Pagar por Transferencia</h3>
+                    <h3>💵 Transferencia directa a Naranja X</h3>
                     <p style="margin: 15px 0;">Transferí <strong id="transferenciaMonto" style="color: #d4af37; font-size: 1.3em;"></strong> a:</p>
+                    <p style="color:#fff; margin:10px 0;">Pedido: <strong id="transferenciaPedidoId" style="color:#d4af37"></strong></p>
                     <p style="font-size: 1.2em; color: #fff; margin: 10px 0;">
-                        Alias: <strong style="color: #d4af37;">verogam.fotos.mp</strong>
+                        Alias: <strong id="aliasTransferencia" style="color: #d4af37;">verogfotos.nx.arg</strong>
                     </p>
                     <p style="color: #ccc;">Titular: Verónica Gambino Rinascere Fotografías</p>
                     <p style="color: #ccc; margin-top: 20px;">
@@ -378,16 +411,16 @@
                 <!-- PRECIO FIJO -->
                 <div id="boxPrecioFijo" style="display: none;">
                     <p style="color: #d4af37; font-size: 1.8em; font-weight: bold; text-align: center; margin: 20px 0 5px;" id="precioFijo"></p>
-                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Pagás y descargás al instante, todas las fotos en alta resolución.</p>
+                    <p class="confianza" style="font-size: 1em; color: #ddd; margin-bottom: 10px;">Transferís al alias indicado. La descarga se habilita cuando confirmemos el ingreso.</p>
                     <div style="text-align: center;">
                         <button class="btn-pay" onclick="pagarPrecioFijo()">
-                            💳 Pagar y Acceder
+                            💵 Pagar por transferencia
                         </button>
                         <button class="btn-pay" onclick="iniciarTransferencia()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago por transferencia a Naranja X · Alias: verogfotos.nx.arg · La descarga se habilita después de confirmar la acreditación</p>
+                    <p class="confianza">💵 Transferencia directa a Naranja X · Alias: verogfotos.nx.arg · Sin pasarelas de pago</p>
                 </div>
 
                 <!-- CAFECITO -->
@@ -406,13 +439,13 @@
                     </div>
                     <div style="text-align: center;">
                         <button class="btn-pay" onclick="pagarCafecito()">
-                            💳 Contribuir
+                            💵 Aportar por transferencia
                         </button>
                         <button class="btn-pay" onclick="iniciarTransferenciaCafecito()" style="background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 10px;">
                             💵 Pagar por Transferencia
                         </button>
                     </div>
-                    <p class="confianza">🔒 Pago por transferencia a Naranja X · Alias: verogfotos.nx.arg · La descarga se habilita después de confirmar la acreditación</p>
+                    <p class="confianza">💵 Transferencia directa a Naranja X · Alias: verogfotos.nx.arg · Sin pasarelas de pago</p>
                 </div>
 
                 <!-- ACCESO PAGADO (PRECIO FIJO / CAFECITO) -->
@@ -429,6 +462,22 @@
         </div>
     </div>
 
+    <div class="modal-fondo" id="modalCompraTransferencia" role="dialog" aria-modal="true" aria-labelledby="tituloCompraTransferencia">
+      <div class="modal-caja">
+        <h3 id="tituloCompraTransferencia">Datos para registrar tu pedido</h3>
+        <p>Antes de transferir, registramos tu pedido para poder identificarlo y enviarte las fotos.</p>
+        <form id="formCompraTransferencia">
+          <label for="compraNombre">Nombre y apellido *</label>
+          <input id="compraNombre" name="nombre" autocomplete="name" maxlength="120" required>
+          <label for="compraContacto">WhatsApp o correo electrónico *</label>
+          <input id="compraContacto" name="contacto" maxlength="160" required>
+          <div class="modal-botones">
+            <button type="button" class="modal-cancelar" id="cancelarCompraTransferencia">Cancelar</button>
+            <button type="submit" class="modal-ok">Registrar pedido</button>
+          </div>
+        </form>
+      </div>
+    </div>
     <!-- FORMULARIO ANTES DE LA DESCARGA GRATIS -->
     <div class="modal-fondo" id="modalGratis">
         <div class="modal-caja">
@@ -475,24 +524,37 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, setDoc, updateDoc, runTransaction, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
+        let esAdminAutenticada = false;
+        let resolverAuthInicial;
+        const adminAuthReady = new Promise((resolve) => { resolverAuthInicial = resolve; });
+        onAuthStateChanged(auth, (user) => {
+            esAdminAutenticada = !!user && user.uid === ADMIN_UID;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
+        }, () => {
+            esAdminAutenticada = false;
+            if (resolverAuthInicial) {
+                resolverAuthInicial();
+                resolverAuthInicial = null;
+            }
+        });
+        await adminAuthReady;
 
         // Registra en Firestore cada vez que alguien entra a ver un álbum
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarVisita(albumId, albumNombre) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia) {
                 console.log('Visita no contada (modo admin/vista previa)');
@@ -518,7 +580,7 @@
         // origen: 'gratis' (descarga gratuita) o 'pagado' (después de pagar)
         // (no cuenta si sos vos misma logueada en el panel de admin, ni con ?preview=1)
         async function registrarClickDrive(origen) {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
+            const esAdmin = esAdminAutenticada;
             const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
             if (esAdmin || esVistaPrevia || !albumData) return;
             try {
@@ -539,10 +601,13 @@
         // Botón verde de descarga gratis: primero pide los datos, después abre Drive
         // (si sos vos en modo admin o con ?preview=1, abre directo sin pedir nada)
         document.getElementById('linkDriveGratis').addEventListener('click', (e) => {
-            const esAdmin = localStorage.getItem('adminLoggedIn') === 'true';
-            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
-            if (esAdmin || esVistaPrevia) return;
             e.preventDefault();
+            const esAdmin = esAdminAutenticada;
+            const esVistaPrevia = new URLSearchParams(window.location.search).get('preview') === '1';
+            if (esAdmin || esVistaPrevia) {
+                window.open(document.getElementById('linkDriveGratis').href, '_blank', 'noopener');
+                return;
+            }
             document.getElementById('gratisPaso1').style.display = 'block';
             document.getElementById('gratisPaso2').style.display = 'none';
             document.getElementById('modalGratis').style.display = 'flex';
@@ -591,14 +656,14 @@
         // Valida un código de acceso de un solo uso y lo marca como usado
         async function validarCodigoAcceso(codigo, albumIdEsperado) {
             try {
-                const ref = doc(db, 'codigosAcceso', codigo);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) return null;
-                const data = snap.data();
-                if (data.usado) return null;
-                if (data.albumId !== albumIdEsperado) return null;
-                await updateDoc(ref, { usado: true, usadoEn: serverTimestamp() });
-                return data;
+                const response = await fetch('/.netlify/functions/canjear-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo, albumId: albumIdEsperado })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) return null;
+                return result;
             } catch (error) {
                 console.error('Error validando código de acceso:', error);
                 return null;
@@ -610,7 +675,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const albumId = urlParams.get('album');
-        let pagado = urlParams.get('pagado');
+        let pagado = null; // No se acepta pagado=true desde la URL como comprobante de pago.
         let packPagado = urlParams.get('pack');
         const codigoAcceso = urlParams.get('codigo');
 
@@ -622,22 +687,25 @@
 
         async function loadAlbum(albumId) {
             try {
-                const albumDoc = await getDoc(doc(db, 'albumes', albumId));
-                
-                if (!albumDoc.exists()) {
-                    showError('El álbum no existe');
+                await adminAuthReady;
+                const headers = { 'Accept': 'application/json' };
+                if (auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
+                    headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+                }
+                const response = await fetch(`/.netlify/functions/obtener-album?albumId=${encodeURIComponent(albumId)}`, { headers });
+                const result = await response.json();
+                if (!response.ok || !result.ok || !result.album) {
+                    showError(result.error || 'El álbum no existe o no está disponible');
                     return;
                 }
 
-                albumData = { id: albumId, ...albumDoc.data() };
-
+                albumData = result.album;
                 // Registrar la visita (no bloquea la carga de la página)
                 registrarVisita(albumId, albumData.nombre);
 
-                document.getElementById('albumName').textContent = albumData.nombre;
-                document.getElementById('albumDate').textContent = albumData.fecha;
+                document.getElementById('albumName').textContent = albumData.nombre || 'Álbum';
+                document.getElementById('albumDate').textContent = albumData.fecha || '';
 
-                // Si viene con un código de acceso (compra por transferencia), validarlo
                 if (codigoAcceso) {
                     const dataCodigo = await validarCodigoAcceso(codigoAcceso, albumId);
                     if (!dataCodigo) {
@@ -652,33 +720,30 @@
                     }
                     pagado = 'true';
                     packPagado = dataCodigo.pack || packPagado;
+                    albumData.driveLink = dataCodigo.downloadUrl;
+                }
+
+                if (!albumData.driveLink && ['gratis', 'gratis_o_cafecito'].includes(albumData.metodo)) {
+                    albumData.driveLink = `/.netlify/functions/descargar-album?albumId=${encodeURIComponent(albumId)}`;
                 }
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
-                // Mostrar la galería de muestra, solo si todavía no pagó
-                if (pagado !== 'true') {
-                    mostrarMuestra();
-                }
+                if (pagado !== 'true') mostrarMuestra();
 
-                // DETERMINAR QUÉ MOSTRAR
                 if (albumData.metodo === 'pack_fotos') {
                     if (pagado === 'true' && packPagado) {
-                        // YA PAGÓ → Mostrar acceso a Drive
                         mostrarAccesoPagado(packPagado);
                     } else {
-                        // NO PAGÓ → Mostrar packs
                         mostrarPacks();
                     }
                 } else {
-                    // GRATIS / PRECIO FIJO / CAFECITO
                     mostrarMetodoNormal();
                 }
-
             } catch (error) {
                 console.error('Error:', error);
-                showError('Error al cargar el álbum');
+                showError('No se pudo cargar el álbum. Intentá nuevamente.');
             }
         }
 
@@ -687,21 +752,101 @@
             return url.replace('/upload/', '/upload/l_y9ukn66j0hvwsauv4efg,w_1.0,o_35,g_center/fl_layer_apply/');
         }
 
-        function mostrarMuestra() {
-            if (!albumData.fotosPreview || albumData.fotosPreview.length === 0) return;
+        // Carrito por selección de muestras. Los precios se recalculan en Netlify.
+        const fotosCarrito = new Set();
+        function actualizarCarritoFotos() {
+            const panel = document.getElementById('carritoFotos');
+            const habilitado = Number.isSafeInteger(Number(albumData?.precioFoto)) && Number(albumData?.precioFoto) > 0;
+            panel.style.display = habilitado && albumData.entregaIndividualActiva === true ? 'block' : 'none';
+            if (habilitado && albumData.entregaIndividualActiva !== true) {
+                console.info('Compra individual deshabilitada: falta configurar el inventario privado de originales en el administrador.');
+            }
+            if (!habilitado) return;
+            const cantidad = fotosCarrito.size;
+            const precio = Number(albumData.precioFoto);
+            const subtotal = cantidad * precio;
+            document.getElementById('carritoResumen').textContent = cantidad
+                ? '🛒 ' + cantidad + ' fotografía(s) · Precio unitario: $' + precio.toLocaleString('es-AR') +
+                  ' · Subtotal: $' + subtotal.toLocaleString('es-AR') +
+                  (cantidad >= 15 ? ' · Las promociones disponibles se calculan al confirmar el pedido.' : '')
+                : 'Seleccioná las fotografías que quieras comprar tocando sus casillas.';
+        }
 
+        function mostrarMuestra() {
+            if (!Array.isArray(albumData.fotosPreview) || albumData.fotosPreview.length === 0) {
+                document.getElementById('seccionMuestra').style.display = 'block';
+                document.getElementById('galeriaMuestra').textContent = 'Este álbum todavía no tiene fotografías de muestra configuradas para seleccionar. No se puede armar un carrito hasta que la fotógrafa vincule las imágenes de muestra con los originales privados de Drive.';
+                document.getElementById('carritoFotos').style.display = 'none';
+                return;
+            }
             document.getElementById('seccionMuestra').style.display = 'block';
             const galeria = document.getElementById('galeriaMuestra');
             galeria.innerHTML = '';
-
-            albumData.fotosPreview.forEach((url) => {
+            fotosCarrito.clear();
+            const habilitado = Number.isSafeInteger(Number(albumData.precioFoto)) && Number(albumData.precioFoto) > 0 && albumData.entregaIndividualActiva === true;
+            albumData.fotosPreview.forEach((url, index) => {
+                const item = document.createElement('label');
+                item.style.cssText = 'display:block;position:relative;cursor:pointer';
+                item.setAttribute('title','Seleccionar fotografía '+(index+1));
                 const img = document.createElement('img');
-                img.src = conMarcaDeAgua(url);
+                img.src = url.startsWith('/.netlify/functions/preview-foto?') ? url : conMarcaDeAgua(url);
                 img.loading = 'lazy';
-                img.style.cssText = 'width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #d4af37;';
-                galeria.appendChild(img);
+                img.alt = 'Fotografía ' + (index + 1);
+                img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #d4af37';
+                item.appendChild(img);
+                if (habilitado) {
+                    const check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.setAttribute('aria-label','Agregar fotografía '+(index+1)+' al carrito');
+                    check.style.cssText='position:absolute;top:10px;left:10px;width:23px;height:23px;accent-color:#d4af37';
+                    check.addEventListener('change', () => {
+                        if (check.checked) fotosCarrito.add(index); else fotosCarrito.delete(index);
+                        item.style.outline = check.checked ? '3px solid #d4af37' : 'none';
+                        actualizarCarritoFotos();
+                    });
+                    item.appendChild(check);
+                }
+                galeria.appendChild(item);
             });
+            actualizarCarritoFotos();
+            const selector=document.getElementById('especialFoto');
+            selector.replaceChildren(new Option('Elegí una fotografía',''));
+            albumData.fotosPreview.forEach((_,i)=>selector.add(new Option('Fotografía '+String(i+1).padStart(3,'0'),String(i))));
         }
+
+        document.getElementById('formCarritoFotos').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const estado = document.getElementById('carritoEstado');
+            const boton = document.getElementById('btnCarritoFotos');
+            if (!fotosCarrito.size) { estado.textContent = 'Seleccioná al menos una fotografía.'; return; }
+            boton.disabled = true;
+            estado.textContent = 'Registrando carrito…';
+            try {
+                const response = await fetch('/.netlify/functions/crear-carrito', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        albumId,
+                        fotos: Array.from(fotosCarrito).sort((a,b)=>a-b),
+                        comprador: document.getElementById('carritoNombre').value.trim(),
+                        contacto: document.getElementById('carritoContacto').value.trim()
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar el carrito');
+                estado.textContent = 'Pedido '+result.transferenciaId+' registrado. Total: $'+Number(result.monto).toLocaleString('es-AR')+'. Transferí al alias '+result.alias+' y enviá el comprobante por WhatsApp. Las fotos se entregan después de confirmar el pago.';
+                const aviso = 'Hola Rinascere, registré el carrito '+result.transferenciaId+' del álbum '+(albumData.nombre||albumId)+'. Importe: $'+result.monto+'. Envío mi comprobante.';
+                const enlace = document.createElement('a');
+                enlace.href = 'https://wa.me/542966346212?text='+encodeURIComponent(aviso);
+                enlace.target = '_blank'; enlace.rel = 'noopener noreferrer';
+                enlace.textContent = '💬 Enviar comprobante por WhatsApp';
+                enlace.style.cssText = 'display:inline-block;color:#d4af37;margin-top:10px';
+                estado.appendChild(document.createElement('br'));
+                estado.appendChild(enlace);
+            } catch (error) {
+                estado.textContent = 'No se registró el pedido: '+error.message;
+            } finally { boton.disabled = false; }
+        });
 
         function mostrarPacks() {
             document.getElementById('seccionPacks').style.display = 'block';
@@ -741,15 +886,31 @@
             });
         }
 
-        // Pide nombre y contacto antes de pagar. Devuelve null si cancela.
+        // El formulario se completa antes de registrar el pedido; no se usan prompts.
         function pedirDatosComprador() {
-            const nombre = prompt('Para identificar tu compra, decinos tu nombre y apellido:');
-            if (nombre === null || nombre.trim() === '') {
-                alert('Necesitamos tu nombre para continuar con el pago.');
-                return null;
-            }
-            const contacto = prompt('Dejanos un WhatsApp o email de contacto (opcional):') || '';
-            return { nombre: nombre.trim(), contacto: contacto.trim() };
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modalCompraTransferencia');
+                const form = document.getElementById('formCompraTransferencia');
+                const cancelar = document.getElementById('cancelarCompraTransferencia');
+                modal.style.display = 'flex';
+                const cerrar = (datos) => {
+                    modal.style.display = 'none';
+                    form.removeEventListener('submit', enviar);
+                    cancelar.removeEventListener('click', cancelarFormulario);
+                    resolve(datos);
+                };
+                const cancelarFormulario = () => cerrar(null);
+                const enviar = (event) => {
+                    event.preventDefault();
+                    if (!form.reportValidity()) return;
+                    const nombre = document.getElementById('compraNombre').value.trim();
+                    const contacto = document.getElementById('compraContacto').value.trim();
+                    if (!nombre || !contacto) return;
+                    cerrar({ nombre, contacto });
+                };
+                form.addEventListener('submit', enviar);
+                cancelar.addEventListener('click', cancelarFormulario);
+            });
         }
 
         window.pagarPack = async function() {
@@ -757,35 +918,7 @@
                 alert('Seleccioná un pack primero');
                 return;
             }
-
-            const datosComprador = pedirDatosComprador();
-            if (!datosComprador) return;
-            
-            try {
-                const response = await fetch('/.netlify/functions/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        titulo: `${albumData.nombre} - Pack ${packSeleccionado.nombre}`,
-                        precio: packSeleccionado.precio,
-                        albumId: albumData.id,
-                        metodoPago: 'pack_fotos',
-                        nombrePack: packSeleccionado.nombre,
-                        comprador: datosComprador.nombre,
-                        contacto: datosComprador.contacto
-                    })
-                });
-
-                const data = await response.json();
-                if (data.init_point) {
-                    window.location.href = data.init_point;
-                } else {
-                    alert('Error al crear el pago');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar el pago');
-            }
+            await procesarTransferencia(packSeleccionado.precio, packSeleccionado.nombre);
         };
 
         function mostrarAccesoPagado(nombrePack) {
@@ -809,6 +942,16 @@
                 document.getElementById('descripcionInfo').textContent = 'Las fotos son de descarga gratuita.';
                 document.getElementById('boxGratis').style.display = 'block';
                 document.getElementById('linkDriveGratis').href = albumData.driveLink;
+
+            } else if (albumData.metodo === 'por_unidad') {
+                if (albumData.entregaIndividualActiva !== true || !Array.isArray(albumData.fotosPreview) || !albumData.fotosPreview.length) {
+                    // Mantener la funcionalidad en el administrador sin mostrar avisos de configuración a clientes.
+                    document.getElementById('seccionNormal').style.display = 'none';
+                    document.getElementById('carritoFotos').style.display = 'none';
+                } else {
+                    document.getElementById('tituloInfo').textContent = '🛒 Elegí tus fotografías';
+                    document.getElementById('descripcionInfo').textContent = 'Seleccioná las fotos de la galería y consultá el subtotal en tu carrito. La descarga se habilita después de confirmar la transferencia.';
+                }
 
             } else if (albumData.metodo === 'precio_fijo') {
                 if (pagado === 'true') {
@@ -852,19 +995,19 @@
         }
 
         window.pagarPrecioFijo = async function() {
-            procesarPago(albumData.precio, 'precio_fijo');
+            await procesarTransferencia(albumData.precio, null);
         };
 
         window.pagarCafecito = async function() {
-            const precio = parseInt(document.getElementById('inputCafecito').value);
-            const montoMinimo = albumData.precio || 3000;
-            
-            if (!precio || precio < montoMinimo) {
+            const precio = parseInt(document.getElementById('inputCafecito').value, 10);
+            const montoMinimo = Number(albumData.precio) || 3000;
+
+            if (!Number.isFinite(precio) || precio < montoMinimo) {
                 alert(`El monto mínimo es $${montoMinimo.toLocaleString('es-AR')}`);
                 return;
             }
 
-            procesarPago(precio, 'cafecito');
+            await procesarTransferencia(precio, null);
         };
 
         window.iniciarTransferencia = async function() {
@@ -897,63 +1040,67 @@
         };
 
         async function procesarTransferencia(precio, packNombre) {
-            const datosComprador = pedirDatosComprador();
+            const monto = Number(precio);
+            if (!Number.isFinite(monto) || monto <= 0) {
+                alert('El importe de la transferencia no es válido. Contactanos para continuar.');
+                return;
+            }
+
+            const datosComprador = await pedirDatosComprador();
             if (!datosComprador) return;
 
+            let montoConfirmado = monto;
+            let pedidoId = '';
             try {
-                await addDoc(collection(db, 'transferencias'), {
-                    albumId: albumData.id,
-                    albumNombre: albumData.nombre,
-                    pack: packNombre,
-                    monto: precio,
-                    comprador: datosComprador.nombre,
-                    contacto: datosComprador.contacto,
-                    estado: 'pendiente',
-                    fecha: serverTimestamp()
+                const response = await fetch('/.netlify/functions/crear-transferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        albumId: albumData.id,
+                        pack: packNombre,
+                        monto,
+                        comprador: datosComprador.nombre,
+                        contacto: datosComprador.contacto
+                    })
                 });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo registrar la solicitud');
+                montoConfirmado = Number(result.monto);
+                pedidoId = String(result.transferenciaId || '');
+                if (!pedidoId) throw new Error('No se recibió el identificador del pedido');
+                const aliasRecibido = String(result.alias || '').trim();
+                if (aliasRecibido !== 'verogfotos.nx.arg') throw new Error('Los datos bancarios no coinciden. No transfieras todavía; contactanos para verificar el alias.');
+                document.getElementById('aliasTransferencia').textContent = aliasRecibido;
             } catch (error) {
                 console.error('No se pudo registrar la transferencia:', error);
+                alert(error.message || 'No pudimos registrar tu solicitud. No realices el pago todavía; intentá nuevamente o contactanos por WhatsApp.');
+                return;
             }
 
             document.getElementById('seccionPacks').style.display = 'none';
             document.getElementById('seccionNormal').style.display = 'none';
             document.getElementById('seccionTransferencia').style.display = 'block';
 
-            document.getElementById('transferenciaMonto').textContent = '$' + Number(precio).toLocaleString('es-AR');
-
-            const mensaje = `Hola! Soy ${datosComprador.nombre}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${Number(precio).toLocaleString('es-AR')}. Te mando el comprobante.`;
+            document.getElementById('transferenciaMonto').textContent = '$' + montoConfirmado.toLocaleString('es-AR');
+            document.getElementById('transferenciaPedidoId').textContent = pedidoId;
+            const mensaje = `Hola! Soy ${datosComprador.nombre}. Mi pedido es ${pedidoId}. Ya hice la transferencia por el álbum "${albumData.nombre}"${packNombre ? ' (Pack ' + packNombre + ')' : ''} por $${montoConfirmado.toLocaleString('es-AR')}. Te mando el comprobante.`;
             document.getElementById('linkWhatsappTransferencia').href = `https://wa.me/542966346212?text=${encodeURIComponent(mensaje)}`;
         }
 
-        async function procesarPago(precio, metodoPago) {
-            const datosComprador = pedirDatosComprador();
-            if (!datosComprador) return;
-
-            try {
-                const response = await fetch('/.netlify/functions/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        titulo: `${albumData.nombre} - Fotos`,
-                        precio: precio,
-                        albumId: albumData.id,
-                        metodoPago: metodoPago,
-                        comprador: datosComprador.nombre,
-                        contacto: datosComprador.contacto
-                    })
-                });
-
-                const data = await response.json();
-                if (data.init_point) {
-                    window.location.href = data.init_point;
-                } else {
-                    alert('Error al crear el pago');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar el pago');
-            }
-        }
+        document.getElementById('formSolicitudEspecial').addEventListener('submit',async event=>{
+            event.preventDefault();
+            const btn=document.getElementById('especialEnviar'),estado=document.getElementById('especialEstado');
+            btn.disabled=true;estado.textContent='Registrando solicitud...';
+            try{
+                const payload={albumId,foto:Number(document.getElementById('especialFoto').value),uso:document.getElementById('especialUso').value,medidas:document.getElementById('especialMedidas').value,formato:document.getElementById('especialFormato').value,nombre:document.getElementById('especialNombre').value,contacto:document.getElementById('especialContacto').value,observaciones:document.getElementById('especialObservaciones').value};
+                if(document.getElementById('especialFoto').value==='')throw Error('Elegí la fotografía a solicitar.');
+                const res=await fetch('/.netlify/functions/solicitar-archivo-especial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+                const data=await res.json();if(!res.ok)throw Error(data.error||'No se pudo registrar');
+                estado.textContent='Solicitud '+data.solicitudId+' registrada. Te confirmaremos presupuesto y entrega por privado. No realices pagos todavía.';
+                document.getElementById('formSolicitudEspecial').reset();
+            }catch(error){estado.textContent=error.message||'No se pudo registrar la solicitud.'}
+            finally{btn.disabled=false}
+        });
 
         function showError(message) {
             document.getElementById('loading').style.display = 'none';

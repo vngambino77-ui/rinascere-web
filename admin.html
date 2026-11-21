@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <style>body{visibility:hidden}</style>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Ph. Rinascere</title>
@@ -222,6 +223,8 @@
     </style>
 </head>
 <body>
+<div style="position:fixed;right:18px;bottom:140px;z-index:1000"><a href="admin-packs-fotos.html" style="display:inline-block;background:#d4af37;color:#161616;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;box-shadow:0 3px 16px #0006">🛒 Packs de fotos</a></div>
+<div style="position:fixed;right:18px;bottom:78px;z-index:1000"><a href="admin-paquetes.html" style="display:inline-block;background:#d4af37;color:#161616;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;box-shadow:0 3px 16px #0006">💼 Precios y contrataciones</a></div>
     <div class="header">
         <img src="https://res.cloudinary.com/dwqvqpkbe/image/upload/rinascere" alt="Logo" class="logo">
         <h1>Panel de Administración</h1>
@@ -236,6 +239,32 @@
     </div>
 
     <div class="container">
+        <section id="panelSolicitudesEspeciales" style="margin:30px 0;padding:22px;background:#202020;border:1px solid #d4af37;border-radius:12px">
+            <h2 style="color:#d4af37">Solicitudes especiales <span id="cantidadSolicitudesEspeciales" style="font-size:.8em"></span></h2>
+            <p style="color:#ccc;margin:10px 0">Banners · Gigantografías · Impresión profesional. Son cotizaciones privadas, no compras del carrito.</p>
+            <button class="btn btn-secondary" type="button" id="actualizarSolicitudesEspeciales">Actualizar solicitudes</button>
+            <p id="estadoSolicitudesEspeciales" role="status" aria-live="polite" style="margin:10px 0;color:#e4c775"></p>
+            <div id="listaSolicitudesEspeciales" style="display:grid;gap:12px"></div>
+        </section>
+        <section id="configCarritoIndividual" style="margin:30px 0;padding:22px;background:#202020;border:1px solid #d4af37;border-radius:12px">
+          <h2 style="color:#d4af37">Carrito individual · Configuración de álbum</h2>
+          <p style="color:#ddd;margin:10px 0">Configurá el precio JPG, la carpeta privada de originales y su correspondencia con las vistas previas. El carrito permanece desactivado hasta que lo habilites.</p>
+          <form id="formConfigCarrito" style="display:grid;gap:12px;max-width:750px">
+            <label>ID del álbum (copialo desde la tabla de álbumes)</label>
+            <input id="configAlbumId" required placeholder="ID de álbum" style="padding:12px">
+            <button type="button" class="btn btn-secondary" id="cargarConfigCarrito">Cargar configuración</button>
+            <label>Precio por fotografía JPG (ARS)</label>
+            <input id="configPrecioFoto" type="number" min="0" max="100000000" step="1" value="0" required style="padding:12px">
+            <label>ID de carpeta privada de Google Drive (no el enlace completo)</label>
+            <input id="configDriveFolder" placeholder="ID de carpeta de originales" style="padding:12px">
+            <label>Vinculación de originales: una línea por foto, en orden de la galería. Pegá solo el ID del archivo de Drive por línea.</label>
+            <textarea id="configOriginales" rows="7" placeholder="ID de original 1&#10;ID de original 2&#10;ID de original 3" style="padding:12px"></textarea>
+            <label style="display:flex;align-items:center;gap:10px"><input id="configActivarCarrito" type="checkbox"> Habilitar carrito JPG individual en este álbum</label>
+            <button class="btn btn-secondary" type="button" id="sincronizarDriveCarrito">🔄 Importar fotos de Drive y activar carrito</button>
+            <button class="btn btn-secondary" type="submit" id="guardarConfigCarrito">Guardar configuración manual</button>
+            <p id="estadoConfigCarrito" role="status" aria-live="polite" style="color:#e4c775"></p>
+          </form>
+        </section>
         <!-- Estadísticas -->
         <div class="stats">
             <div class="stat-card">
@@ -325,8 +354,8 @@
             <span>🎁 Pedidos Gratis <span id="contadorPedidosGratis" style="font-size: 0.6em; color: #f59e0b;"></span></span>
             <span id="flechaPedidosGratis" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
-        <div style="text-align:right;margin:0 0 12px">
-            <button id="btnReiniciarPedidosGratis" type="button" onclick="reiniciarPedidosGratis()" style="background:#a32020;color:white;border:0;border-radius:6px;padding:10px 15px;cursor:pointer">🗑️ Reiniciar Pedidos Gratis</button>
+        <div style="text-align:right;margin:0 0 12px;">
+            <button id="btnReiniciarPedidosGratis" class="btn btn-eliminar" onclick="reiniciarPedidosGratis()">🗑️ Reiniciar Pedidos Gratis</button>
         </div>
         <div class="table-container" id="pedidosGratisWrapper" style="display: none;">
             <table>
@@ -348,14 +377,14 @@
         </div>
 
         <h2 class="section-title" onclick="toggleTransferenciasPendientes()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
-            <span>💵 Transferencias Pendientes</span>
+            <span>💵 Transferencias Pendientes <span id="contadorTransferenciasPendientes" style="font-size:.7em;color:#f59e0b"></span></span>
             <span id="flechaTransferenciasPendientes" style="font-size: 0.7em; transition: transform 0.2s ease;">▶</span>
         </h2>
         <div class="table-container" id="transferenciasPendientesWrapper" style="display: none;">
             <table>
                 <thead>
                     <tr>
-                        <th>Cliente</th>
+                        <th>Pedido / Cliente</th>
                         <th>Álbum</th>
                         <th>Pack</th>
                         <th>Monto</th>
@@ -421,8 +450,24 @@
             </table>
         </div>
 
+        <section style="margin:25px 0;padding:20px;border:1px solid #d4af37;border-radius:12px;background:#202020">
+            <h2 style="color:#d4af37;margin-bottom:14px">Crear álbum por sección</h2>
+            <p style="margin-bottom:15px;color:#ddd">Elegí dónde aparecerá la nueva carpeta de fotografías.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <a class="btn btn-secondary" href="subir.html?categoria=espectaculos">🎤 + Espectáculos</a>
+                <a class="btn btn-secondary" href="subir.html?categoria=eventos">🎉 + Eventos</a>
+                <a class="btn btn-secondary" href="subir.html?categoria=deportes">🏃 + Deportes</a>
+                <a class="btn btn-secondary" href="subir.html?categoria=retratos">📸 + Retratos personalizados</a>
+            </div>
+        </section>
+        <section style="margin:20px 0;padding:20px;border:1px solid #d4af37;border-radius:12px;background:#202020">
+          <h2 style="color:#d4af37">Organizar secciones</h2>
+          <p style="margin:10px 0">Agregá nuevas categorías para organizar tus próximos álbumes. Las cuatro secciones originales se mantienen.</p>
+          <button class="btn btn-secondary" onclick="agregarSeccionGaleria()">＋ Agregar sección</button>
+          <div id="seccionesExtraAdmin" style="margin-top:12px"></div>
+        </section>
         <!-- Lista de álbumes -->
-        <h2 class="section-title">Álbumes</h2>
+        <h2 class="section-title">Álbumes</h2><p style="color:#d4af37">📁 Publicación: cada álbum puede estar visible u oculto. Orden 1 aparece primero; los álbumes sin orden van al final. El diseño público se conserva.</p>
         <div class="table-container">
             <table>
                 <thead>
@@ -451,78 +496,177 @@
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, serverTimestamp, increment, query, where, orderBy, limit, doc, deleteDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
-        window.reiniciarPedidosGratis = async function() {
-            const boton = document.getElementById('btnReiniciarPedidosGratis');
-            if (boton.disabled) return;
-            if (!confirm('¿Eliminar DEFINITIVAMENTE todos los pedidos gratis, incluidos pendientes y enviados? Esta acción no se puede deshacer.')) return;
-            const confirmacion = prompt('Escribí BORRAR PEDIDOS GRATIS para confirmar:');
-            if (confirmacion !== 'BORRAR PEDIDOS GRATIS') return;
-            boton.disabled = true;
-            boton.textContent = 'Eliminando pedidos…';
-            try {
-                await auth.authStateReady();
-                const usuario = auth.currentUser;
-                if (!usuario) {
-                    throw new Error('La sesión administrativa no está activa. Volvé a ingresar desde login.html.');
-                }
-                const token = await usuario.getIdToken(true);
-                const respuesta = await fetch('/.netlify/functions/borrar-pedidos-gratis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ confirmacion })
-                });
-                const tipo = respuesta.headers.get('content-type') || '';
-                if (!tipo.includes('application/json')) throw new Error('Netlify no devolvió una respuesta válida. Revisá el despliegue de la función borrar-pedidos-gratis.');
-                const resultado = await respuesta.json();
-                if (!respuesta.ok || !resultado.ok) throw new Error(resultado.error || 'No se pudo borrar el historial');
-                alert('Se eliminaron ' + resultado.eliminados + ' pedidos gratis. Los álbumes y las ventas permanecen intactos.');
-            } catch (error) {
-                alert('No se borraron los pedidos: ' + error.message);
-            } finally {
-                boton.disabled = false;
-                boton.textContent = '🗑️ Reiniciar Pedidos Gratis';
-            }
-        };
+        const db = getFirestore(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
 
-        async function verificarAcceso() {
+        async function tokenAdmin() {
             await auth.authStateReady();
             const user = auth.currentUser;
-            if (!user) { window.location.replace('login.html'); return false; }
+            if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+            return user.getIdToken();
+        }
+
+        async function sincronizarAlbum(id, eliminar = false) {
+            const token = await tokenAdmin();
+            const response = await fetch('/.netlify/functions/sincronizar-album', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ albumId: id, eliminar })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo sincronizar el álbum');
+            return result;
+        }
+
+        async function cargarSolicitudesEspeciales(){
+            const estado=document.getElementById('estadoSolicitudesEspeciales'),lista=document.getElementById('listaSolicitudesEspeciales');
+            try{
+                const token=await tokenAdmin();
+                const res=await fetch('/.netlify/functions/admin-solicitudes-especiales',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+                const data=await res.json();if(!res.ok)throw Error(data.error||'No se pudieron cargar');
+                lista.replaceChildren();
+                const solicitudes=data.solicitudes||[],pendientes=solicitudes.filter(s=>s.estado==='pendiente_cotizacion');
+                document.getElementById('cantidadSolicitudesEspeciales').textContent='('+pendientes.length+' nuevas)';
+                estado.textContent=pendientes.length?'Tenés '+pendientes.length+' solicitud(es) pendientes de cotización.':'No hay solicitudes nuevas.';
+                for(const s of solicitudes){
+                    const card=document.createElement('article');card.style.cssText='border:1px solid #65572c;padding:14px;border-radius:8px;background:#292929;color:#eee';
+                    const title=document.createElement('strong');title.textContent=(s.uso||'Solicitud')+' · Foto '+(Number(s.foto)+1)+' · '+(s.nombre||'Cliente');card.append(title);
+                    const info=document.createElement('p');info.style.margin='9px 0';info.textContent='Contacto: '+(s.contacto||'—')+' | Medidas: '+(s.medidas||'a definir')+' | Formato: '+(s.formato||'a definir')+' | Álbum: '+(s.albumId||'—')+' | Fecha: '+(s.fecha?new Date(s.fecha).toLocaleString('es-AR'):'sin fecha');card.append(info);
+                    if(s.observaciones){const obs=document.createElement('p');obs.textContent='Observaciones: '+s.observaciones;card.append(obs)}
+                    const controls=document.createElement('div');controls.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center';
+                    const select=document.createElement('select');select.setAttribute('aria-label','Estado de solicitud');select.style.cssText='padding:8px;border-radius:5px';
+                    for(const [value,label] of [['pendiente_cotizacion','Pendiente'],['contactado','Contactado'],['presupuestado','Presupuestado'],['finalizado','Finalizado'],['cancelado','Cancelado']]){const opt=new Option(label,value);select.add(opt)}
+                    select.value=s.estado||'pendiente_cotizacion';
+                    const save=document.createElement('button');save.type='button';save.className='btn btn-secondary';save.textContent='Guardar estado';
+                    save.addEventListener('click',async()=>{save.disabled=true;try{const token=await tokenAdmin(),res=await fetch('/.netlify/functions/admin-solicitudes-especiales',{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({id:s.id,estado:select.value})});if(!res.ok)throw Error((await res.json()).error||'Error al guardar');await cargarSolicitudesEspeciales()}catch(e){alert(e.message)}finally{save.disabled=false}});
+                    const copy=document.createElement('button');copy.type='button';copy.className='btn btn-secondary';copy.textContent='Copiar contacto';copy.addEventListener('click',()=>navigator.clipboard.writeText(s.contacto||''));
+                    controls.append(select,save,copy);card.append(controls);lista.append(card);
+                }
+            }catch(e){estado.textContent='No se pudieron cargar las solicitudes: '+e.message}
+        }
+        document.getElementById('actualizarSolicitudesEspeciales').addEventListener('click',cargarSolicitudesEspeciales);
+        let configCantidadPreviews=0;
+        document.getElementById('cargarConfigCarrito').addEventListener('click',async()=>{
+          const estado=document.getElementById('estadoConfigCarrito'),id=document.getElementById('configAlbumId').value.trim();
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/configurar-carrito-album?albumId='+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token}});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo cargar');
+            configCantidadPreviews=d.cantidadPreviews;
+            document.getElementById('configPrecioFoto').value=d.precioFoto;
+            document.getElementById('configDriveFolder').value=d.driveFolderId;
+            document.getElementById('configOriginales').value=(d.fotosOriginales||[]).sort((a,b)=>a.previewIndex-b.previewIndex).map(x=>x.driveFileId).join('\n');
+            document.getElementById('configActivarCarrito').checked=d.entregaIndividualActiva;
+            estado.textContent='Álbum: '+d.nombre+' · '+d.cantidadPreviews+' fotos de muestra · '+(d.fotosOriginales||[]).length+' originales vinculados.';
+          }catch(e){estado.textContent=e.message}
+        });
+        document.getElementById('sincronizarDriveCarrito').addEventListener('click',async()=>{
+          const estado=document.getElementById('estadoConfigCarrito'),btn=document.getElementById('sincronizarDriveCarrito');
+          const albumId=document.getElementById('configAlbumId').value.trim(),driveFolderId=document.getElementById('configDriveFolder').value.trim();
+          if(!albumId||!driveFolderId){estado.textContent='Indicá el ID del álbum y de la carpeta de Google Drive.';return}
+          if(!Number.isSafeInteger(Number(document.getElementById('configPrecioFoto').value))||Number(document.getElementById('configPrecioFoto').value)<1){estado.textContent='Ingresá el precio por fotografía antes de importar.';return}
+          if(!confirm('¿Sincronizar la carpeta de Drive y activar la venta por unidad? Comprobá que la carpeta tenga únicamente las fotos que querés vender.'))return;
+          btn.disabled=true;estado.textContent='Importando inventario privado de Drive…';
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/sincronizar-galeria-drive',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId,driveFolderId,precioFoto:Number(document.getElementById('configPrecioFoto').value)})});
+            const data=await res.json();if(!res.ok)throw Error(data.error||'Error de sincronización');
+            configCantidadPreviews=data.cantidadFotos;
+            document.getElementById('configActivarCarrito').checked=true;
+            estado.textContent='✓ '+data.cantidadFotos+' fotos vinculadas. Abrí el álbum y comprobá que todas las muestras tengan marca de agua.';
+          }catch(e){estado.textContent='No se activó el carrito: '+e.message}
+          finally{btn.disabled=false}
+        });
+        document.getElementById('formConfigCarrito').addEventListener('submit',async e=>{
+          e.preventDefault();
+          const estado=document.getElementById('estadoConfigCarrito'),btn=document.getElementById('guardarConfigCarrito');
+          if(!configCantidadPreviews){estado.textContent='Primero cargá el álbum para verificar la cantidad de fotografías.';return}
+          const ids=document.getElementById('configOriginales').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+          if(ids.length>configCantidadPreviews){estado.textContent='Hay más originales que fotografías en la galería.';return}
+          const payload={albumId:document.getElementById('configAlbumId').value.trim(),precioFoto:Number(document.getElementById('configPrecioFoto').value),driveFolderId:document.getElementById('configDriveFolder').value.trim(),entregaIndividualActiva:document.getElementById('configActivarCarrito').checked,fotosOriginales:ids.map((driveFileId,previewIndex)=>({previewIndex,driveFileId}))};
+          btn.disabled=true;
+          try{
+            const token=await tokenAdmin(),res=await fetch('/.netlify/functions/configurar-carrito-album',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo guardar');
+            estado.textContent='Configuración guardada: '+d.cantidadVinculada+' originales · Carrito '+(d.entregaIndividualActiva?'habilitado':'desactivado')+'.';
+          }catch(error){estado.textContent=error.message}finally{btn.disabled=false}
+        });
+        // Comprobar también la autorización en el servidor antes de mostrar el panel.
+        let panelInicializado = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (!user || user.uid !== ADMIN_UID) {
+                if (user) await signOut(auth);
+                window.location.replace('login.html');
+                return;
+            }
             try {
                 const token = await user.getIdToken();
-                const respuesta = await fetch('/.netlify/functions/verificar-admin', { headers: { Authorization: 'Bearer ' + token } });
-                if (!respuesta.ok) throw new Error('Acceso no autorizado');
+                const respuesta = await fetch('/.netlify/functions/verificar-admin', {
+                    headers: { Authorization: 'Bearer ' + token },
+                    cache: 'no-store'
+                });
+                if (!respuesta.ok) throw new Error('Acceso administrativo no autorizado o servidor sin configurar');
                 document.body.style.visibility = 'visible';
-                return true;
+                if (panelInicializado) return;
+                panelInicializado = true;
+                await cargarSolicitudesEspeciales();
+                window.setInterval(()=>{if(document.visibilityState==='visible' && auth.currentUser?.uid===ADMIN_UID)cargarSolicitudesEspeciales()},60000);
+                await cargarEstadisticas();
+                await cargarAlbumes();
+                escucharContadores();
+                escucharActividadReciente();
+                escucharPedidosGratis();
+                escucharTransferenciasPendientes();
+                escucharTransferenciasConfirmadas();
+                escucharPortfolio();
+                instalarBotonMigracionAlbumes();
             } catch (error) {
-                alert('No se pudo validar el acceso administrativo. Revisá la configuración Firebase en Netlify.');
+                console.error('Error de acceso o carga del panel:', error);
+                alert('No se pudo validar o cargar el panel. Revisá la configuración Firebase en Netlify.');
                 window.location.replace('login.html');
-                return false;
             }
-        }
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await verificarAcceso()) return;
-            await cargarEstadisticas();
-            await cargarAlbumes();
-            escucharContadores();
-            escucharActividadReciente();
-            escucharPedidosGratis();
-            escucharTransferenciasPendientes();
-            escucharTransferenciasConfirmadas();
-            escucharPortfolio();
         });
+
+        function instalarBotonMigracionAlbumes() {
+            if (document.getElementById('btnMigrarAlbumesSeguros')) return;
+            const button = document.createElement('button');
+            button.id = 'btnMigrarAlbumesSeguros';
+            button.textContent = '🔐 Proteger enlaces de Drive';
+            button.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;background:#c9a84c;color:#161616;border:0;border-radius:10px;padding:12px 16px;font-weight:700;box-shadow:0 4px 18px #0005;cursor:pointer;';
+            button.addEventListener('click', async () => {
+                if (!confirm('Se copiarán los álbumes actuales a colecciones separadas. La página pública pasará a leer solo metadatos sin enlaces de Drive. No se borrarán los documentos originales. ¿Continuar?')) return;
+                button.disabled = true;
+                button.textContent = 'Migrando álbumes…';
+                try {
+                    const token = await tokenAdmin();
+                    let cursor = null, total = 0, publicos = 0, privados = 0, sinDrive = 0;
+                    do {
+                        const response = await fetch('/.netlify/functions/migrar-albumes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ cursor })
+                        });
+                        const result = await response.json();
+                        if (!response.ok || !result.ok) throw new Error(result.error || 'Falló la migración');
+                        total += result.migrated || 0;
+                        sinDrive += result.withoutDrive || 0;
+                        publicos += result.public || 0;
+                        privados += result.private || 0;
+                        cursor = result.nextCursor || null;
+                        button.textContent = `Migrando… ${total} álbumes`;
+                    } while (cursor);
+                    alert(`Migración finalizada. Migrados: ${total}. Públicos: ${publicos}. Privados: ${privados}. Sin carpeta Drive: ${sinDrive}. Los originales siguen guardados como respaldo.`);
+                } catch (error) {
+                    alert('No se pudo completar la migración: ' + error.message + '. Podés volver a ejecutar el proceso; no borra los originales.');
+                } finally {
+                    button.disabled = false;
+                    button.textContent = '🔐 Proteger enlaces de Drive';
+                }
+            });
+            document.body.appendChild(button);
+        }
 
         window.toggleTransferenciasPendientes = function() {
             const wrapper = document.getElementById('transferenciasPendientesWrapper');
@@ -530,6 +674,35 @@
             const abierto = wrapper.style.display !== 'none';
             wrapper.style.display = abierto ? 'none' : 'block';
             flecha.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+        };
+
+        window.reiniciarPedidosGratis = async function() {
+            const boton = document.getElementById('btnReiniciarPedidosGratis');
+            if (boton.disabled) return;
+            if (!confirm('¿Eliminar DEFINITIVAMENTE todos los pedidos gratis, incluidos pendientes y enviados? Los álbumes, compras y transferencias no se modificarán. Esta acción no se puede deshacer.')) return;
+            const confirmacion = prompt('Escribí BORRAR PEDIDOS GRATIS para confirmar:');
+            if (confirmacion !== 'BORRAR PEDIDOS GRATIS') return;
+            boton.disabled = true;
+            boton.textContent = 'Eliminando pedidos gratis…';
+            try {
+                const token = await tokenAdmin();
+                const response = await fetch('/.netlify/functions/borrar-pedidos-gratis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ confirmacion })
+                });
+                const tipo = response.headers.get('content-type') || '';
+                if (!tipo.includes('application/json')) throw new Error('Netlify no devolvió JSON válido para la limpieza de pedidos.');
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo reiniciar');
+                Object.keys(pedidosGratisCache).forEach(id => delete pedidosGratisCache[id]);
+                alert(`Se eliminaron ${result.eliminados} pedidos gratis. La tabla se actualizará automáticamente.`);
+            } catch (error) {
+                alert('No se pudieron reiniciar los pedidos gratis: ' + error.message);
+            } finally {
+                boton.disabled = false;
+                boton.textContent = '🗑️ Reiniciar Pedidos Gratis';
+            }
         };
 
         window.togglePedidosGratis = function() {
@@ -656,11 +829,11 @@
             }
             try {
                 const albumSnap = await getDoc(doc(db, 'albumes', p.albumId));
-                const driveLink = albumSnap.exists() ? albumSnap.data().driveLink : '';
-                if (!driveLink) {
-                    alert('Este álbum no tiene link de Drive cargado, o el álbum ya no existe.');
+                if (!albumSnap.exists()) {
+                    alert('Este álbum ya no existe.');
                     return;
                 }
+                const driveLink = `${window.location.origin}/.netlify/functions/descargar-album?albumId=${encodeURIComponent(p.albumId)}`;
 
                 const mensaje = `¡Hola ${p.nombre || ''}! Acá tenés tus fotos de ${p.albumNombre || 'tu álbum'} 📸\n${driveLink}\nQue las disfrutes ✨`;
 
@@ -688,6 +861,8 @@
             const q = query(collection(db, 'transferencias'), where('estado', '==', 'pendiente'));
             onSnapshot(q, (snapshot) => {
                 const tbody = document.getElementById('transferenciasTableBody');
+                const contador = document.getElementById('contadorTransferenciasPendientes');
+                if (contador) contador.textContent = snapshot.empty ? '' : '(' + snapshot.size + ' sin verificar)';
                 if (snapshot.empty) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay transferencias pendientes</td></tr>';
                     return;
@@ -701,9 +876,9 @@
                     const fechaTexto = (t.fecha && t.fecha.toDate) ? t.fecha.toDate().toLocaleString('es-AR') : '—';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${t.comprador || '—'}${t.contacto ? ' (' + t.contacto + ')' : ''}</td>
-                        <td>${t.albumNombre || t.albumId || '—'}</td>
-                        <td>${t.pack || '—'}</td>
+                        <td><small style="color:#d4af37">${escaparHtml(t.id)}</small><br>${escaparHtml(t.comprador || '—')}${t.contacto ? ' (' + escaparHtml(t.contacto) + ')' : ''}</td>
+                        <td>${escaparHtml(t.albumNombre || t.albumId || '—')}</td>
+                        <td>${escaparHtml(t.pack || '—')}</td>
                         <td>$${Number(t.monto || 0).toLocaleString('es-AR')}</td>
                         <td>${fechaTexto}</td>
                         <td>
@@ -735,56 +910,20 @@
             if (!confirm('¿Confirmás que la plata YA llegó a tu cuenta? Esto genera el link de acceso para el cliente.')) return;
 
             try {
-                const snap = await getDoc(doc(db, 'transferencias', id));
-                if (!snap.exists()) {
-                    alert('Esta transferencia ya no existe.');
-                    return;
-                }
-                const t = snap.data();
-
-                // Generar un código de acceso único y de un solo uso
-                const codigo = Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
-
-                await setDoc(doc(db, 'codigosAcceso', codigo), {
-                    albumId: t.albumId,
-                    pack: t.pack || null,
-                    usado: false,
-                    creadoEn: serverTimestamp()
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/confirmar-transferencia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id })
                 });
-
-                await updateDoc(doc(db, 'transferencias', id), { estado: 'confirmada', codigoAcceso: codigo });
-
-                // Registrar como compra, igual que los pagos con Mercado Pago
-                await addDoc(collection(db, 'eventos'), {
-                    tipo: 'compra',
-                    albumId: t.albumId,
-                    albumNombre: t.albumNombre || '',
-                    pack: t.pack || null,
-                    monto: Number(t.monto) || 0,
-                    comprador: t.comprador || '',
-                    contacto: t.contacto || '',
-                    metodo: 'transferencia',
-                    fecha: serverTimestamp()
-                });
-                await setDoc(doc(db, 'contadores', 'general'), {
-                    compras: increment(1),
-                    ingresos: increment(Number(t.monto) || 0),
-                    actualizado: serverTimestamp()
-                }, { merge: true });
-
-                // Armar el link de acceso
-                let link = `${window.location.origin}/evento.html?album=${t.albumId}&codigo=${codigo}`;
-                if (t.pack) link += `&pack=${encodeURIComponent(t.pack)}`;
-
-                const mensaje = `¡Hola ${t.comprador || ''}! Ya confirmamos tu pago 🎉 Acá tenés el acceso a tus fotos:\n${link}`;
-
-                // Intentamos copiar solos, pero SIEMPRE mostramos el mensaje para copiar a mano también
-                // (en el celu, muchos navegadores bloquean copiar/abrir apps automáticamente)
-                try {
-                    await navigator.clipboard.writeText(mensaje);
-                } catch (e) { /* seguimos igual, el prompt de abajo sirve como respaldo */ }
-
-                mostrarMensajeParaCopiar(mensaje);
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo confirmar el pago');
+                mostrarMensajeParaCopiar(result.mensaje, result.contacto);
             } catch (error) {
                 alert('Error al confirmar: ' + error.message);
             }
@@ -862,7 +1001,16 @@
             if (!confirm(`¿Revivir el código ${codigo}? Esto lo vuelve a habilitar para un solo uso más (útil si el cliente lo perdió sin haberlo compartido con nadie).`)) return;
 
             try {
-                await updateDoc(doc(db, 'codigosAcceso', codigo), { usado: false });
+                const user = auth.currentUser;
+                if (!user || user.uid !== ADMIN_UID) throw new Error('La sesión administrativa venció. Volvé a iniciar sesión.');
+                const token = await user.getIdToken();
+                const response = await fetch('/.netlify/functions/revivir-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ codigo })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo reactivar el código');
 
                 let link = `${window.location.origin}/evento.html?album=${albumId}&codigo=${codigo}`;
                 if (pack) link += `&pack=${encodeURIComponent(pack)}`;
@@ -938,6 +1086,46 @@
             }
         }
 
+        window.cambiarCategoriaAlbum=async function(id,actual){
+          const opciones=['espectaculos','eventos','deportes','retratos'];
+          const nombres=['Festivales y espectáculos','Eventos','Deportes','Retratos personalizados'];
+          try{
+            const respuesta=await fetch('/.netlify/functions/secciones-galeria');
+            if(respuesta.ok){const datos=await respuesta.json();for(const item of (datos.secciones||[])){opciones.push(item.slug);nombres.push(item.nombre)}}
+          }catch(e){console.warn('Sin secciones adicionales',e)}
+          const elegido=prompt('Elegí la sección del álbum:\\n'+nombres.map((n,i)=>(i+1)+' - '+n).join('\\n'),String(Math.max(0,opciones.indexOf(actual))+1));
+          if(elegido===null)return;
+          const numero=Number(elegido);
+          if(!Number.isInteger(numero)||numero<1||numero>opciones.length){alert('Elegí un número de la lista');return}
+          if(!confirm('¿Cambiar este álbum a '+nombres[numero-1]+'? Las fotografías de Drive no se moverán.'))return;
+          try{
+            const token=await tokenAdmin();
+            const res=await fetch('/.netlify/functions/cambiar-categoria-album',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({albumId:id,categoria:opciones[numero-1]})});
+            const d=await res.json();if(!res.ok)throw Error(d.error||'No se pudo guardar');
+            alert('Sección actualizada: '+nombres[numero-1]);await cargarAlbumes();
+          }catch(e){alert('Error: '+e.message)}
+        };
+        window.editarNombreAlbum = async function(id, nombreCodificado) {
+            const actual = decodeURIComponent(nombreCodificado);
+            const nuevo = prompt('Nuevo nombre visible del álbum:', actual);
+            if (nuevo === null) return;
+            const nombre = nuevo.trim().replace(/\\s+/g, ' ');
+            if (nombre === actual) return;
+            if (nombre.length < 2 || nombre.length > 120) { alert('El nombre debe tener entre 2 y 120 caracteres.'); return; }
+            if (!confirm('¿Guardar el nuevo nombre «' + nombre + '»? No se cambiarán las fotos ni la carpeta de Drive.')) return;
+            try {
+                const token = await tokenAdmin();
+                const res = await fetch('/.netlify/functions/renombrar-album', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+                    body: JSON.stringify({albumId:id,nombre})
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw Error(data.error || 'No se pudo guardar');
+                alert('Nombre actualizado correctamente.');
+                await cargarAlbumes();
+            } catch (error) { alert('Error al renombrar: ' + error.message); }
+        };
         async function cargarAlbumes() {
             const tbody = document.getElementById('albumesTableBody');
             
@@ -974,6 +1162,9 @@
                             <span style="color: #f59e0b;">⏳ Pendiente</span>
                         </td>
                         <td>
+                            <button onclick="configurarPublicacionAlbum('${id}', ${Number.isFinite(Number(album.ordenPublicacion)) ? Number(album.ordenPublicacion) : 9999}, ${album.esPublico === true})" style="background:#065f46;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📌 ${album.esPublico === true ? 'Publicado' : 'Oculto'} · Orden ${album.ordenPublicacion ?? '—'}</button>
+                            <button onclick="editarNombreAlbum('${id}', '${encodeURIComponent(album.nombre || '')}')" style="background:#0e7490;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">✏️ Nombre</button>
+                            <button onclick="cambiarCategoriaAlbum('${id}', '${album.categoria || ''}')" style="background:#6d28d9;color:white;border:0;padding:8px 12px;border-radius:5px;cursor:pointer;margin:2px;">📂 Sección</button>
                             <button onclick="verAlbum('${id}')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px;">
                                 👁️ Ver
                             </button>
@@ -1008,6 +1199,28 @@
             }
         }
 
+        window.configurarPublicacionAlbum = async function(id, ordenActual, publicado) {
+            const respuesta = prompt('Orden de aparición del álbum (1 = primero, 2 = segundo; 9999 = al final):', ordenActual === 9999 ? '9999' : String(ordenActual));
+            if (respuesta === null) return;
+            const orden = Number(respuesta);
+            if (!Number.isSafeInteger(orden) || orden < 0 || orden > 9999) { alert('Ingresá un número entero entre 0 y 9999.'); return; }
+            const publicar = confirm(publicado
+                ? 'El álbum está PUBLICADO. Aceptar = mantener publicado; Cancelar = ocultarlo.'
+                : 'El álbum está OCULTO. Aceptar = publicarlo; Cancelar = mantenerlo oculto.');
+            if (publicar !== publicado && !confirm(publicar ? '¿Confirmás PUBLICAR este álbum en tu página?' : '¿Confirmás OCULTAR este álbum de la página?')) return;
+            try {
+                const token = await tokenAdmin();
+                const res = await fetch('/.netlify/functions/configurar-publicacion-album', {
+                    method:'POST', headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+                    body:JSON.stringify({albumId:id,orden,publicar})
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw Error(data.error || 'No se guardó');
+                alert('Guardado: '+(publicar?'Publicado':'Oculto')+' · Orden '+orden);
+                await cargarAlbumes();
+            } catch (error) { alert('Error al guardar: '+error.message); }
+        };
+
         window.verAlbum = function(id) {
             window.location.href = `evento.html?album=${id}`;
         };
@@ -1017,6 +1230,7 @@
             
             try {
                 await deleteDoc(doc(db, 'albumes', id));
+                await sincronizarAlbum(id, true);
                 alert('Álbum eliminado');
                 location.reload();
             } catch (error) {
@@ -1046,34 +1260,42 @@
 
         // Le agrega el código de país de Argentina (54 9) si el número no lo tiene
         function normalizarNumeroAr(numero) {
-            let n = String(numero || '').replace(/\D/g, '');
+            const original = String(numero || '').trim();
+            // El campo también admite email: nunca convertir una dirección en un teléfono.
+            if (!original || /[A-Za-z@]/.test(original)) return '';
+            let n = original.replace(/\D/g, '');
             if (!n) return '';
             if (n.startsWith('54')) {
                 if (!n.startsWith('549')) n = '549' + n.slice(2);
             } else {
-                n = '549' + n;
+                n = '549' + n.replace(/^0+/, '').replace(/^15/, '');
             }
-            return n;
+            return n.length >= 12 ? n : '';
         }
 
         // Muestra una ventanita con el mensaje en un cuadro de texto, con botón real de Copiar
         // (mucho más confiable en celulares que el copiado automático o los prompt() nativos)
-        function mostrarMensajeParaCopiar(mensaje) {
+        function mostrarMensajeParaCopiar(mensaje, contacto = '') {
+            const telefono = normalizarNumeroAr(contacto);
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
             overlay.innerHTML = `
-                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%;">
-                    <p style="color:#d4af37; margin-bottom:10px; font-weight:bold;">✅ Copiá este mensaje y pegalo en WhatsApp:</p>
+                <div style="background:#1a1a1a; border:2px solid #d4af37; border-radius:10px; padding:20px; max-width:500px; width:100%; max-height:90vh; overflow:auto;">
+                    <p style="color:#10b981; margin-bottom:8px; font-weight:bold;">✅ Pago confirmado y acceso generado</p>
+                    <p style="color:#ddd; margin-bottom:10px;">${telefono ? 'Abrí WhatsApp con el mensaje listo para el comprador. Revisalo y presioná Enviar.' : 'No hay un WhatsApp válido cargado. Podés copiar el mensaje y enviarlo manualmente.'}</p>
                     <textarea readonly style="width:100%; height:150px; background:#111; color:#fff; border:1px solid #555; border-radius:5px; padding:10px; font-size:0.95em; box-sizing:border-box;"></textarea>
-                    <div style="text-align:right; margin-top:15px;">
-                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold; margin-right:8px;">📋 Copiar</button>
-                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cerrar</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; margin-top:15px;">
+                        ${telefono ? '<a id="btnEnviarWhatsAppOverlay" target="_blank" rel="noopener" style="background:#25D366; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold; text-decoration:none;">📲 Abrir WhatsApp</a>' : ''}
+                        <button id="btnCopiarMensajeOverlay" style="background:#d4af37; color:#1a1a1a; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;">📋 Copiar</button>
+                        <button id="btnCerrarMensajeOverlay" style="background:#555; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer;">Cerrar</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(overlay);
 
             const textarea = overlay.querySelector('textarea');
+            const botonWhatsApp = overlay.querySelector('#btnEnviarWhatsAppOverlay');
+            if (botonWhatsApp) botonWhatsApp.href = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
             textarea.value = mensaje;
 
             overlay.querySelector('#btnCopiarMensajeOverlay').onclick = async () => {
@@ -1167,6 +1389,7 @@
             if (!confirm('¿Borrar TODAS las fotos de muestra de este álbum? Después vas a poder subir hasta 6 nuevas.')) return;
             try {
                 await updateDoc(doc(db, 'albumes', albumId), { fotosPreview: [] });
+                await sincronizarAlbum(albumId);
                 alert('✅ Muestras borradas');
                 cargarAlbumes();
             } catch (error) {
@@ -1206,6 +1429,7 @@
                 await updateDoc(doc(db, 'albumes', albumId), {
                     fotosPreview: [...fotosActuales, ...urlsNuevas]
                 });
+                await sincronizarAlbum(albumId);
 
                 alert('✅ Fotos de muestra guardadas correctamente');
                 cargarAlbumes();
@@ -1228,6 +1452,7 @@
 
             try {
                 await updateDoc(doc(db, 'albumes', id), { cantidadFotos: numero });
+                await sincronizarAlbum(id);
                 alert('✅ Cantidad de fotos actualizada');
                 cargarAlbumes();
             } catch (error) {
@@ -1239,11 +1464,12 @@
             // Mostramos las opciones de método de cobro disponibles
             const metodoTexto = prompt(
                 'Elegí el método de cobro escribiendo el número:\n\n' +
-                '1 = 🎁 Gratis (sin costo)\n' +
-                '2 = ☕ Cafecito (el cliente eligen cuánto aportar, con un mínimo)\n' +
-                '3 = 💰 Precio Fijo (un precio único por el álbum)\n\n' +
+                '1 = 🎁 Gratis + Cafecito solidario opcional\n' +
+                '2 = ☕ Cafecito (modalidad anterior, para álbumes existentes)\n' +
+                '3 = 💰 Precio Fijo (un precio único por el álbum)\n' +
+                '4 = 🛒 Por unidad (cada foto tiene su precio y se agrega al carrito)\n\n' +
                 'Método actual: ' + (metodoActual || 'no definido'),
-                metodoActual === 'gratis' ? '1' : metodoActual === 'cafecito' ? '2' : '3'
+                ['gratis','gratis_o_cafecito'].includes(metodoActual) ? '1' : metodoActual === 'cafecito' ? '2' : metodoActual === 'por_unidad' ? '4' : '3'
             );
 
             // Si tocó "Cancelar", no hacemos nada
@@ -1251,13 +1477,15 @@
 
             let nuevoMetodo;
             if (metodoTexto.trim() === '1') {
-                nuevoMetodo = 'gratis';
+                nuevoMetodo = 'gratis_o_cafecito';
             } else if (metodoTexto.trim() === '2') {
                 nuevoMetodo = 'cafecito';
             } else if (metodoTexto.trim() === '3') {
                 nuevoMetodo = 'precio_fijo';
+            } else if (metodoTexto.trim() === '4') {
+                nuevoMetodo = 'por_unidad';
             } else {
-                alert('Opción no válida. Escribí 1, 2 o 3.');
+                alert('Opción no válida. Escribí 1, 2, 3 o 4.');
                 return;
             }
 
@@ -1269,8 +1497,12 @@
             } else {
                 // Si eligió Cafecito o Precio Fijo, pedimos el monto
                 const nuevoPrecioTexto = prompt(
-                    nuevoMetodo === 'precio_fijo'
+                    nuevoMetodo === 'gratis_o_cafecito'
+                        ? 'Valor sugerido del cafecito solidario (la descarga sigue siendo gratuita):'
+                        : nuevoMetodo === 'precio_fijo'
                         ? 'Precio fijo del álbum:'
+                        : nuevoMetodo === 'por_unidad'
+                        ? 'Precio por cada fotografía (ARS):'
                         : 'Monto mínimo sugerido (Cafecito):',
                     precioActual || ''
                 );
@@ -1284,12 +1516,20 @@
                     return;
                 }
 
-                datosActualizados.precio = nuevoPrecio;
+                if (nuevoMetodo === 'por_unidad') {
+                    if (!Number.isSafeInteger(nuevoPrecio) || nuevoPrecio > 100000000) { alert('Ingresá un precio entero válido en pesos.'); return; }
+                    datosActualizados.precioFoto = nuevoPrecio;
+                    datosActualizados.precio = 0;
+                    // Conservar el estado de habilitación ya validado; no desactivar ventas al editar el precio.
+                } else {
+                    datosActualizados.precio = nuevoPrecio;
+                }
             }
 
             try {
                 await updateDoc(doc(db, 'albumes', id), datosActualizados);
-                alert('✅ Cambios guardados correctamente');
+                await sincronizarAlbum(id);
+                alert(nuevoMetodo === 'por_unidad' ? '✅ Precio por foto guardado. Ahora completá la sección Carrito individual: cargá el álbum, vinculá los originales privados y activá el carrito para vender.' : '✅ Cambios guardados correctamente');
                 location.reload();
             } catch (error) {
                 alert('Error al actualizar: ' + error.message);
@@ -1316,6 +1556,7 @@
                     metodo: 'gratis_o_cafecito',
                     precio: nuevoPrecio
                 });
+                await sincronizarAlbum(id);
                 alert('✅ Listo: ahora el cliente puede elegir entre Gratis o Cafecito en este álbum');
                 location.reload();
             } catch (error) {
@@ -1462,13 +1703,34 @@
             }
         };
 
-        window.cerrarSesion = function() {
-            signOut(auth).finally(() => {
-                localStorage.removeItem('adminLoggedIn');
-                window.location.href = 'login.html';
-            });
+        window.cerrarSesion = async function() {
+            try {
+                await signOut(auth);
+            } finally {
+                window.location.replace('login.html');
+            }
         };
 
+        window.agregarSeccionGaleria=async function(){
+          const nombre=prompt('Nombre de la nueva sección (por ejemplo: Institucionales)');
+          if(nombre===null)return;
+          if(nombre.trim().length<2){alert('Ingresá un nombre de al menos 2 caracteres');return}
+          try{
+            const token=await tokenAdmin();
+            const r=await fetch('/.netlify/functions/secciones-galeria',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre.trim()})});
+            const data=await r.json();if(!r.ok)throw Error(data.error||'No se pudo guardar');
+            alert('Sección creada. Para asignarle álbumes, usá el botón Sección de cada álbum.');
+            await cargarSeccionesGaleriaAdmin();
+          }catch(e){alert(e.message)}
+        };
+        async function cargarSeccionesGaleriaAdmin(){
+          try{
+            const r=await fetch('/.netlify/functions/secciones-galeria');if(!r.ok)return;
+            const data=await r.json(),el=document.getElementById('seccionesExtraAdmin');
+            if(el)el.textContent=(data.secciones||[]).map(s=>s.nombre).join(' · ')||'Sin secciones adicionales';
+          }catch(e){console.warn(e)}
+        }
+        cargarSeccionesGaleriaAdmin();
         window.nuevoAlbum = function() {
             window.location.href = 'subir.html';
         }

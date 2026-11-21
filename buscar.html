@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscar Fotos - Ph. Rinascere</title>
@@ -202,14 +203,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -223,21 +217,24 @@
 
         async function cargarAlbumes() {
             try {
-                const q = query(
-                    collection(db, 'albumes'),
-                    where('esPublico', '==', true)
-                );
-                
+                const q = query(collection(db, 'albumesPublicos'), where('esPublico', '==', true));
                 const snapshot = await getDocs(q);
+                const porId = new Map();
+                try {
+                    const legacyQuery = query(collection(db, 'albumes'), where('esPublico', '==', true));
+                    const legacySnapshot = await getDocs(legacyQuery);
+                    legacySnapshot.forEach(d => porId.set(d.id, { id: d.id, ...d.data() }));
+                } catch (legacyError) {
+                    console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
+                }
+                snapshot.forEach(d => porId.set(d.id, { id: d.id, ...d.data() }));
+                const albumsDisponibles = Array.from(porId.values());
                 const select = document.getElementById('albumSelect');
                 
-                albumes = [];
+                albumes = albumsDisponibles;
                 select.innerHTML = '<option value="">Seleccioná un evento</option>';
 
-                snapshot.forEach(doc => {
-                    const album = { id: doc.id, ...doc.data() };
-                    albumes.push(album);
-                    
+                albumes.forEach(album => {
                     const option = document.createElement('option');
                     option.value = album.id;
                     option.textContent = `${album.nombre} - ${album.fecha}`;

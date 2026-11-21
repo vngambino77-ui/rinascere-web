@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Ph. Rinascere</title>
@@ -62,7 +63,7 @@
             font-weight: bold;
         }
 
-        input[type="password"] {
+        input[type="email"], input[type="password"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #d4af37;
@@ -72,7 +73,7 @@
             font-size: 1.1em;
         }
 
-        input[type="password"]:focus {
+        input[type="email"]:focus, input[type="password"]:focus {
             outline: none;
             border-color: #f0c14b;
             background: rgba(255,255,255,0.15);
@@ -134,12 +135,21 @@
         <p class="subtitle">Panel de administración</p>
 
         <form id="loginForm">
-            <div class="form-group"><label for="email">Correo de administradora</label><input type="email" id="email" required autocomplete="username" style="width:100%;padding:15px;border:2px solid #d4af37;border-radius:10px;background:#333;color:white"></div>
             <div class="form-group">
-                <label for="password">Contraseña de Firebase</label>
-                <input 
-                    type="password" 
-                    id="password" 
+                <label for="email">Correo electrónico</label>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Ingresá tu correo"
+                    required
+                    autocomplete="username"
+                >
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input
+                    type="password"
+                    id="password"
                     placeholder="Ingresá tu contraseña"
                     required
                     autocomplete="current-password"
@@ -160,41 +170,71 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-            authDomain: "rinascere-web-2025.firebaseapp.com",
-            projectId: "rinascere-web-2025",
-            storageBucket: "rinascere-web-2025.firebasestorage.app",
-            messagingSenderId: "781300280640",
-            appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-        };
-        const auth = getAuth(initializeApp(firebaseConfig));
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            signOut
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const ADMIN_UID = window.RINASCERE_ADMIN_UID;
         const form = document.getElementById('loginForm');
-        const errorBox = document.getElementById('errorMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        // El UID del navegador no basta: la función de Netlify valida la sesión.
         async function comprobarAdmin(user) {
+            if (!user || user.uid !== ADMIN_UID) {
+                throw new Error('Esta cuenta no está autorizada para administrar el sitio.');
+            }
             const token = await user.getIdToken();
-            const res = await fetch('/.netlify/functions/verificar-admin', { headers: { Authorization: 'Bearer ' + token } });
-            if (!res.ok) throw new Error('Cuenta sin autorización administrativa o servidor sin configurar');
-            localStorage.removeItem('adminLoggedIn');
+            const response = await fetch('/.netlify/functions/verificar-admin', {
+                headers: { Authorization: 'Bearer ' + token },
+                cache: 'no-store'
+            });
+            if (!response.ok) throw new Error('No se pudo verificar el acceso administrativo en Netlify.');
             window.location.replace('admin.html');
         }
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            errorBox.style.display = 'none';
-            const button = form.querySelector('button');
-            button.disabled = true;
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return;
             try {
-                const result = await signInWithEmailAndPassword(auth, document.getElementById('email').value.trim(), document.getElementById('password').value);
-                await comprobarAdmin(result.user);
+                await comprobarAdmin(user);
             } catch (error) {
                 await signOut(auth).catch(() => {});
-                errorBox.textContent = 'No se pudo acceder: ' + error.message;
-                errorBox.style.display = 'block';
-            } finally { button.disabled = false; }
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            }
         });
-        onAuthStateChanged(auth, async (user) => {
-            if (user) { try { await comprobarAdmin(user); } catch (_) { /* permanece en login */ } }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorMessage.style.display = 'none';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Verificando...';
+
+            try {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const credential = await signInWithEmailAndPassword(auth, email, password);
+
+                await comprobarAdmin(credential.user);
+            } catch (error) {
+                await signOut(auth).catch(() => {});
+                console.error('Error de autenticación:', error);
+                errorMessage.textContent = (error.message.includes('no está autorizada') || error.message.includes('Netlify'))
+                    ? error.message
+                    : 'No se pudo iniciar sesión. Revisá el correo y la contraseña.';
+                errorMessage.style.display = 'block';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Ingresar →';
+            }
         });
     </script>
 </body>

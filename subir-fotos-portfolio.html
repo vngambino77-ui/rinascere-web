@@ -1,7 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
     <meta charset="UTF-8">
+    <style>html { visibility: hidden; }</style>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        const firebaseConfig = window.RINASCERE_FIREBASE_CONFIG;
+        const auth = getAuth(initializeApp(firebaseConfig));
+        const autorizado = await new Promise((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(!!user && user.uid === window.RINASCERE_ADMIN_UID), () => resolve(false));
+        });
+        if (autorizado) {
+            document.documentElement.style.visibility = 'visible';
+        } else {
+            window.location.replace('login.html');
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subir Fotos Portfolio - Rinascere</title>
     <style>

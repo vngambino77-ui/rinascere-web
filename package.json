@@ -1,8 +1,17 @@
 {
   "name": "rinascere-web",
   "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "node-fetch": "^2.6.1",
-    "firebase-admin": "^13.0.2"
+    "firebase-admin": "^13.0.2",
+    "sharp": "^0.33.5"
+  },
+  "scripts": {
+    "build": "node scripts/generate-firebase-config.js",
+    "test": "node tests/precios-rinascere.test.js"
   }
 }

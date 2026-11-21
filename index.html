@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="/firebase-config.js"></script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ph. Rinascere Fotografías — by Verónica Gambino</title>
@@ -20,14 +21,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
     // ✅ FIREBASE UNIFICADO — CORREGIDO
-firebase.initializeApp({
-  apiKey: "AIzaSyC-8dbhyKVKDlEndWJ3UfEEu3EiAnZI-XU",
-  authDomain: "rinascere-web-2025.firebaseapp.com",
-  projectId: "rinascere-web-2025",
-  storageBucket: "rinascere-web-2025.firebasestorage.app",
-  messagingSenderId: "781300280640",
-  appId: "1:781300280640:web:34c98efa7780a8218cdea5"
-    });
+firebase.initializeApp(window.RINASCERE_FIREBASE_CONFIG);
     const db = firebase.firestore();
     const CLOUD = "dwqvqpkbe";
     const UPLOAD_PRESET = "rinascere_upload";
@@ -223,14 +217,16 @@ firebase.initializeApp({
     .portfolio-box { max-width:1100px; margin:0 auto; }
     .portfolio-intro { text-align:center; margin-bottom:32px; }
     .portfolio-intro p { color:#555; line-height:1.8; max-width:440px; margin:0 auto 20px; font-size:0.92rem; }
-    .portfolio-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
-    .portfolio-foto { border-radius:12px; overflow:hidden; aspect-ratio:4/3; background:var(--crema); cursor:pointer; }
-    .portfolio-foto img { width:100%; height:100%; object-fit:contain; display:block; transition:transform 0.3s; }
-    .portfolio-foto:hover img { transform:scale(1.04); }
-    .portfolio-foto-vacia { border-radius:12px; aspect-ratio:4/3; background:var(--crema); border:2px dashed #ddd; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:#bbb; font-size:0.78rem; cursor:pointer; transition:border-color 0.2s; }
-    .portfolio-foto-vacia:hover { border-color:var(--dorado); color:var(--dorado-oscuro); }
+    /* Portfolio editorial: ritmo visual consistente sin recortar originales */
+    .portfolio-grilla { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-bottom:32px; }
+    .portfolio-foto { margin:0; border-radius:4px; overflow:hidden; aspect-ratio:4/5; background:#f1eee9; display:flex; align-items:center; justify-content:center; position:relative; }
+    .portfolio-foto img { width:100%; height:100%; object-fit:contain; display:block; transition:transform .35s ease; }
+    .portfolio-foto:hover img { transform:scale(1.025); }
+    .portfolio-foto figcaption { position:absolute; bottom:0; left:0; right:0; padding:18px 12px 10px; color:#fff; font-size:.78rem; letter-spacing:.025em; background:linear-gradient(transparent,rgba(0,0,0,.55)); opacity:0; transition:opacity .2s; pointer-events:none; }
+    .portfolio-foto:hover figcaption,.portfolio-foto:focus-within figcaption { opacity:1; }
     .portfolio-cta { text-align:center; }
-
+    @media(max-width:800px){.portfolio-grilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+    @media(max-width:480px){.portfolio-grilla{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.portfolio-foto{aspect-ratio:4/5}}
     /* TESTIMONIOS */
     .test-sec { background:var(--crema); }
     .test-grilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; max-width:960px; margin:0 auto; }
@@ -306,7 +302,7 @@ firebase.initializeApp({
       .sobre-texto-col { padding:32px 20px; }
       .footer-grid { grid-template-columns:1fr; gap:28px; }
       .bot-ventana { width:calc(100vw - 32px); right:16px; }
-      .portfolio-grilla { grid-template-columns:repeat(2,1fr); gap:8px; }
+      .portfolio-grilla { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
       .test-grilla { grid-template-columns:1fr; }
     }
   </style>
@@ -371,6 +367,14 @@ firebase.initializeApp({
     <h2>Álbumes recientes</h2>
     <p>Hacé clic en el evento para ver y comprar tus fotos</p>
   </div>
+  <div id="filtros-rinascere" style="display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:20px auto 26px;max-width:1000px">
+    <button type="button" data-categoria="espectaculos">🎤 Festivales y espectáculos</button>
+    <button type="button" data-categoria="eventos">🎉 Eventos</button>
+    <button type="button" data-categoria="deportes">🏃 Deportes</button>
+    <button type="button" data-categoria="retratos">📸 Retratos personalizados</button>
+    <select id="filtro-disciplina" aria-label="Disciplina deportiva" style="display:none;padding:10px;border-radius:8px"><option value="todos">Todos los deportes</option><option value="running">Running</option><option value="trail">Trail</option></select>
+  </div>
+  <style>#filtros-rinascere button{border:1px solid #b9913a;background:#191919;color:#e9c66a;border-radius:9px;padding:11px 13px;cursor:pointer}#filtros-rinascere button[aria-pressed=true]{background:#d4af37;color:#141414;font-weight:bold}#filtro-disciplina{background:#191919;color:#f5e7c8;border:1px solid #b9913a}</style>
   <div class="grilla-albumes" id="grilla"></div>
 </section>
 
@@ -402,7 +406,7 @@ firebase.initializeApp({
       <div class="sobre-datos">
         <div class="sobre-dato"><span>📍</span><span>Río Gallegos, Santa Cruz · Toda la región patagónica</span></div>
         <div class="sobre-dato"><span>📱</span><a href="https://wa.me/542966346212" target="_blank">+54 9 2966 346212</a></div>
-        <div class="sobre-dato"><span>🌐</span><span>🌐Viajo a otras ciudades de Argentina con coordinación previa</span></div>
+        <div class="sobre-dato"><span>🌐</span><span>Cobertura en toda Argentina</span></div>
       </div>
       <div class="sobre-btns">
         <a href="https://wa.me/542966346212" target="_blank" class="btn btn-wa">💬 Escribime</a>
@@ -551,28 +555,82 @@ firebase.initializeApp({
   // ── Subir foto personal a Cloudinary ──────────────────
   // ── Cargar foto personal guardada ─────────────────────
   async function cargarFotoPersonal() {
-    try {
-      const doc = await db.collection('configuracion').doc('sitio').get();
-      if (doc.exists && doc.data().fotoPersonalUrl) {
-        const url = doc.data().fotoPersonalUrl;
-        const img = document.getElementById('foto-personal-img');
-        img.src = url;
-        img.style.display = 'block';
-        document.getElementById('sobre-placeholder').style.display = 'none';
+    const img = document.getElementById('foto-personal-img');
+    const placeholder = document.getElementById('sobre-placeholder');
+    const fuentes = [
+      () => db.collection('configuracion').doc('sitio').get(),
+      () => db.collection('config').doc('portfolio').get()
+    ];
+    const urls = [];
+    for (const obtener of fuentes) {
+      try {
+        const doc = await obtener();
+        if (doc.exists) {
+          const data = doc.data();
+          const url = data.fotoPersonalUrl || data.profileUrl;
+          if (typeof url === 'string' && url.trim() && !urls.includes(url.trim())) urls.push(url.trim());
+        }
+      } catch (e) { console.warn('No se pudo leer una configuración de foto personal:', e); }
+    }
+    let indice = 0;
+    function siguiente() {
+      if (indice >= urls.length) {
+        img.style.display = 'none';
+        placeholder.style.display = '';
+        placeholder.textContent = urls.length ? 'La foto de presentación no está disponible. Revisá el enlace de la imagen en el administrador.' : 'Agregá tu fotografía desde el administrador.';
+        return;
       }
-    } catch(e) { /* silencioso */ }
+      img.onload = () => { img.style.display = 'block'; placeholder.style.display = 'none'; };
+      img.onerror = siguiente;
+      img.src = urls[indice++];
+    }
+    siguiente();
   }
 
   // ── Cargar álbumes desde Firebase ─────────────────────
 async function cargarAlbumes() {
     try {
-      const snap = await db.collection('albumes').get();
-      const lista = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      console.log('Álbumes cargados desde Firebase:', lista.length, lista);
-      renderAlbumes(lista.length > 0 ? lista : albumesEj);
+      // La colección nueva es la fuente principal y no contiene enlaces privados.
+      const publicSnap = await db.collection('albumesPublicos').where('esPublico', '==', true).get();
+      const porId = new Map(
+        publicSnap.docs.map(d => [d.id, { id: d.id, ...d.data(), publico: true }])
+      );
+
+      // Compatibilidad temporal: mientras se ejecuta la migración, completar
+      // los álbumes aún no copiados desde la colección histórica. Después de
+      // desplegar las reglas nuevas esta consulta puede ser denegada; no impide
+      // mostrar los documentos ya migrados.
+      try {
+        const legacySnap = await db.collection('albumes').where('esPublico', '==', true).get();
+        legacySnap.forEach(d => {
+          if (!porId.has(d.id)) porId.set(d.id, { id: d.id, ...d.data(), publico: true });
+        });
+      } catch (legacyError) {
+        console.info('Colección histórica cerrada o no disponible; se usan los álbumes migrados.');
+      }
+
+      // Los privados muestran solo portada y nombre; sus fotos y enlaces no son públicos.
+      try {
+        const respuesta=await fetch('/.netlify/functions/listar-portadas-privadas',{cache:'no-store'});
+        if(respuesta.ok){
+          const datos=await respuesta.json();
+          for(const a of (Array.isArray(datos.albumes)?datos.albumes:[])){
+            if(!porId.has(a.id))porId.set(a.id,{...a,publico:false});
+          }
+        }else console.warn('Catálogo privado no disponible:',respuesta.status);
+      }catch(errorPrivados){console.warn('No se pudieron cargar las portadas privadas:',errorPrivados)}
+      const lista = Array.from(porId.values()).sort((a,b) => {
+        const oa = Number.isFinite(Number(a.ordenPublicacion)) ? Number(a.ordenPublicacion) : 9999;
+        const ob = Number.isFinite(Number(b.ordenPublicacion)) ? Number(b.ordenPublicacion) : 9999;
+        return oa-ob || String(b.fecha||'').localeCompare(String(a.fecha||''));
+      });
+      console.log('Álbumes públicos cargados desde Firebase:', lista.length);
+      albumesDisponibles=lista;
+      filtrarAlbumes();
     } catch(e) {
       console.error('Error al cargar álbumes:', e);
-      renderAlbumes(albumesEj);
+      albumesDisponibles=[];
+      filtrarAlbumes();
     }
 }
 
@@ -581,6 +639,65 @@ async function cargarAlbumes() {
     { id:'ej2', nombre:"Trail Patagonia Extrema", fecha:"28 Jul 2025", lugar:"El Calafate", cantidadFotos:512, precio:2500, publico:true, slug:"trail-patagonia-ej2", portadaUrl:"https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" },
     { id:'ej3', nombre:"Ciclismo Ruta 40", fecha:"22 Sep 2025", lugar:"Ruta 40", cantidadFotos:178, precio:2500, publico:false, slug:"ciclismo-ruta40-ej3", portadaUrl:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
   ];
+
+  async function cargarSeccionesExtra(){
+    try{
+      const r=await fetch('/.netlify/functions/secciones-galeria');
+      if(!r.ok)return;
+      const data=await r.json(),barra=document.getElementById('filtros-rinascere');
+      const selector=barra.querySelector('#filtro-disciplina');
+      for(const sec of (data.secciones||[])){
+        if(!/^[a-z0-9-]{2,50}$/.test(sec.slug))continue;
+        const boton=document.createElement('button');
+        boton.type='button';boton.dataset.categoria=sec.slug;boton.textContent=sec.nombre;
+        boton.addEventListener('click',()=>{
+          categoriaActiva=sec.slug;
+          barra.querySelectorAll('[data-categoria]').forEach(x=>x.setAttribute('aria-pressed',String(x===boton)));
+          selector.style.display='none';filtrarAlbumes();
+        });
+        barra.insertBefore(boton,selector);
+      }
+    }catch(e){console.warn('Secciones adicionales no disponibles',e)}
+  }
+  cargarSeccionesExtra();
+  let albumesDisponibles=[],categoriaActiva='espectaculos',disciplinaActiva='todos';
+  const categoriaDe=a=>{
+    const explicit=String(a.categoria||a.tipoCategoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const texto=String(a.nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    // Excepciones solicitadas: no modificar los demás álbumes.
+    if(String(a.id||'')==='exACC5umMzj4SnaG7Vsr')return 'eventos';
+    if(String(a.id||'')==='XGWGo4VIq50iZSr5EzLt')return 'deportes';
+    if(/luciernaga\s+de\s+charly/.test(texto))return 'retratos';
+    if(/espectaculo|festival|musica|recital|show|concierto/.test(explicit)||(!explicit&&/festival|recital|concierto|show/.test(texto)))return 'espectaculos';
+    if(/deport|running|trail|carrera|maraton|ciclismo/.test(explicit)||(!explicit&&/running|trail|carrera|maraton|ciclismo/.test(texto)))return 'deportes';
+    if(/retrato|sesion|session|book|personalizad/.test(explicit)||(!explicit&&/retrato|sesion|session|book|personalizad/.test(texto)))return 'retratos';
+    if(explicit)return explicit;
+    return 'eventos';
+  };
+  function filtrarAlbumes(){
+    const filtrados=albumesDisponibles.filter(a=>{
+      if(categoriaActiva!=='todos'&&categoriaDe(a)!==categoriaActiva)return false;
+      if(categoriaActiva==='deportes'&&disciplinaActiva!=='todos'){
+        const d=[a.disciplina,a.nombre,a.tipoCategoria].filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+        const esRunning=/running|maraton|media maraton|carrera|atletismo|pedestre|10k|5k|21k|42k/.test(d);
+        const esTrail=/trail|montana|trekking|senderismo/.test(d);
+        const esOtros=/biciclet|ciclismo|cicloturismo|bici|triatlon|duatlon|natacion|futbol|basquet|voley|rugby|hockey|patin|gimnasia|tenis/.test(d);
+        if(disciplinaActiva==='running')return esRunning&&!esTrail&&!esOtros;
+        if(disciplinaActiva==='trail')return esTrail;
+        return true;
+      }
+      return true;
+    });
+    renderAlbumes(filtrados);
+  }
+  document.querySelectorAll('#filtros-rinascere [data-categoria]').forEach(b=>b.addEventListener('click',()=>{
+    categoriaActiva=b.dataset.categoria;
+    document.querySelectorAll('#filtros-rinascere [data-categoria]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    document.getElementById('filtro-disciplina').style.display=categoriaActiva==='deportes'?'block':'none';
+    filtrarAlbumes();
+  }));
+  document.getElementById('filtro-disciplina').addEventListener('change',e=>{disciplinaActiva=e.target.value;filtrarAlbumes()});
+  document.querySelector('#filtros-rinascere [data-categoria=espectaculos]').setAttribute('aria-pressed','true');
 
   function renderAlbumes(lista) {
     const g = document.getElementById('grilla');
@@ -603,7 +720,7 @@ async function cargarAlbumes() {
             imgSrc = `https://res.cloudinary.com/dwqvqpkbe/image/upload/w_600,q_70,f_auto/${a.fotos[0]}`;
           }
           return `
-       <a class="tarjeta" href="evento.html?album=${a.id}">
+       <a class="tarjeta" href="${a.publico ? `evento.html?album=${encodeURIComponent(a.id)}` : `#albumes`}" ${!a.publico ? 'aria-label="Álbum privado: acceso mediante enlace autorizado" onclick="alert(\'Este álbum es privado. Solicitá a Rinascere el enlace de acceso autorizado.\');return false;"' : ''}>
           <div class="t-img">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${a.nombre}" loading="lazy"
@@ -635,25 +752,72 @@ async function cargarAlbumes() {
   // ── Cargar portfolio desde Firebase ───────────────────
   async function cargarPortfolio() {
     const grilla = document.getElementById('portfolio-grilla');
-    const SLOTS = 9;
     try {
-      const snap = await db.collection('portfolio').orderBy('orden').limit(SLOTS).get();
-      const fotos = snap.docs.map(d => d.data());
-      let html = fotos.map(f => {
-        const url = f.url.startsWith('http') ? f.url
-          : `https://res.cloudinary.com/${CLOUD}/image/upload/w_600,q_80,f_auto/${f.url}`;
-        return `<div class="portfolio-foto"><img src="${url}" alt="${f.titulo||'Portfolio'}" loading="lazy"/></div>`;
-      }).join('');
-      // Completar slots vacíos con placeholders de carga
-      const vacios = SLOTS - fotos.length;
-      if (vacios > 0) {
-        html += Array(vacios).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+      // El administrador actual guarda fotos en /portfolio; el anterior en config/portfolio.
+      // Consultar ambos evita perder fotografías durante la transición.
+      const [actuales, anterior] = await Promise.allSettled([
+        db.collection('portfolio').get(),
+        db.collection('config').doc('portfolio').get()
+      ]);
+      const fotos = [];
+      if (actuales.status === 'fulfilled') {
+        actuales.value.docs.forEach(doc => {
+          const f = doc.data();
+          if (typeof f.url === 'string' && f.url.trim()) fotos.push({
+            url:f.url.trim(), titulo:f.titulo || '', orden:Number(f.orden) || 9999,
+            id:doc.id
+          });
+        });
       }
-      grilla.innerHTML = html;
+      fotos.sort((a,b)=>a.orden-b.orden || a.id.localeCompare(b.id));
+      if (anterior.status === 'fulfilled' && anterior.value.exists) {
+        const urls = anterior.value.data().portfolioUrls || [];
+        if (Array.isArray(urls)) urls.forEach((url,i)=>{
+          if (typeof url === 'string' && url.trim()) fotos.push({
+            url:url.trim(), titulo:'', orden:10000+i, id:'anterior-'+i
+          });
+        });
+      }
+      const vistas = new Set();
+      const unicas = fotos.filter(f => {
+        const clave = f.url.split('?')[0];
+        if (vistas.has(clave)) return false;
+        vistas.add(clave); return true;
+      });
+      if (!unicas.length) {
+        grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777">Próximamente, una selección de mis trabajos.</p>';
+        return;
+      }
+      grilla.replaceChildren();
+      unicas.forEach((f,i) => {
+        const url = /^https?:\/\//i.test(f.url) ? f.url
+          : 'https://res.cloudinary.com/' + CLOUD + '/image/upload/w_900,q_85,f_auto/' + encodeURI(f.url);
+        const figura = document.createElement('figure');
+        figura.className = 'portfolio-foto';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = String(f.titulo || 'Fotografía del portfolio ' + (i+1));
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.onerror = () => {
+          figura.style.background = '#f1eee9';
+          img.style.display = 'none';
+          const aviso = document.createElement('span');
+          aviso.textContent = 'Fotografía ' + (i+1) + ' no disponible';
+          aviso.style.cssText = 'font-size:.8rem;color:#777;text-align:center;padding:15px';
+          figura.appendChild(aviso);
+        };
+        figura.appendChild(img);
+        if (f.titulo) {
+          const pie = document.createElement('figcaption');
+          pie.textContent = String(f.titulo);
+          figura.appendChild(pie);
+        }
+        grilla.appendChild(figura);
+      });
     } catch(e) {
       console.error('Error al cargar el portfolio desde Firebase:', e);
-      // Sin Firebase → mostrar placeholders
-      grilla.innerHTML = Array(6).fill(`<div class="portfolio-foto-vacia"><span style="font-size:1.4rem">📸</span><span>Próximamente</span></div>`).join('');
+      grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777">No se pudo cargar el portfolio en este momento.</p>';
     }
   }
 
@@ -694,8 +858,8 @@ async function cargarAlbumes() {
     ],
     fotos:[
       {bot:"Tus fotos ya están listas ✨\n¿Cómo querés buscarlas?",ops:["Por número de dorsal 🔢","Ver todos los álbumes 📷","Necesito ayuda 🙋"]},
-      {bot:"Cuando encuentres tus favoritas 💛\nPodés comprarlas y descargarlas al instante en alta calidad ✨\n¿Necesitás ayuda para encontrarlas?",ops:["Sí, ayudame 🙋","Ya las encontré 💳","Hablar con Verónica 💬"]},
-      {bot:"El proceso es muy simple 💛\n1️⃣ Seleccionás las fotos\n2️⃣ Pagás con Mercado Pago\n3️⃣ Descargás en alta calidad ✨\n¿Vamos a los álbumes?",ops:["Ir a los álbumes 📷","Hablar con Verónica 💬"]}
+      {bot:"Cuando encuentres tus favoritas 💛\nPodés elegirlas, hacer tu pedido y recibir el acceso tras confirmar la transferencia ✨\n¿Necesitás ayuda para encontrarlas?",ops:["Sí, ayudame 🙋","Ya las encontré 💳","Hablar con Verónica 💬"]},
+      {bot:"El proceso es muy simple 💛\n1️⃣ Seleccionás las fotos\n2️⃣ Transferís a Naranja X (alias verogfotos.nx.arg) y nos avisás\n3️⃣ Cuando confirmamos la acreditación, recibís el acceso a las fotos ✨\n¿Vamos a los álbumes?",ops:["Ir a los álbumes 📷","Hablar con Verónica 💬"]}
     ]
   };
 
