@@ -944,10 +944,13 @@
                 document.getElementById('linkDriveGratis').href = albumData.driveLink;
 
             } else if (albumData.metodo === 'por_unidad') {
-                document.getElementById('tituloInfo').textContent = '🛒 Elegí tus fotografías';
-                document.getElementById('descripcionInfo').textContent = 'Seleccioná las fotos de la galería y consultá el subtotal en tu carrito. La descarga se habilita después de confirmar la transferencia.';
                 if (albumData.entregaIndividualActiva !== true || !Array.isArray(albumData.fotosPreview) || !albumData.fotosPreview.length) {
-                    document.getElementById('descripcionInfo').textContent = 'La venta por fotografía todavía requiere que la fotógrafa configure y habilite las muestras y originales de este álbum.';
+                    // Mantener la funcionalidad en el administrador sin mostrar avisos de configuración a clientes.
+                    document.getElementById('seccionNormal').style.display = 'none';
+                    document.getElementById('carritoFotos').style.display = 'none';
+                } else {
+                    document.getElementById('tituloInfo').textContent = '🛒 Elegí tus fotografías';
+                    document.getElementById('descripcionInfo').textContent = 'Seleccioná las fotos de la galería y consultá el subtotal en tu carrito. La descarga se habilita después de confirmar la transferencia.';
                 }
 
             } else if (albumData.metodo === 'precio_fijo') {
